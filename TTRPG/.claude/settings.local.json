@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node *)",
+      "Bash(grep -n \"icon = '🤖'\" \"C:\\\\\\\\Users\\\\\\\\TXY999\\\\\\\\OneDrive\\\\\\\\Desktop\\\\\\\\TTRPG\\\\\\\\app.js\")",
+      "Bash(sed -i 's/⏳ 正在从 D&D 5e API 获取数据.../正在从 D\\\\\\\\&D 5e API 获取数据.../g' app.js)",
+      "Bash(sed -i 's/⏳ 获取详情中.../获取详情中.../g' app.js)"
+    ]
+  }
+}

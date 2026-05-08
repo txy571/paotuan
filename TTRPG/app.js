@@ -656,7 +656,7 @@ const API_BASE = 'https://www.dnd5eapi.co/api';
 
 async function fetchAPI(endpoint) {
   const container = dom.apiResults;
-  container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim);">⏳ 正在从 D&D 5e API 获取数据...</div>';
+  container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim);">正在从 D&D 5e API 获取数据...</div>';
   try {
     const resp = await fetch(`${API_BASE}/${endpoint}`);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -669,13 +669,13 @@ async function fetchAPI(endpoint) {
           <div class="api-desc">点击查看详情</div>
         </div>`).join('')}</div>`;
   } catch(err) {
-    container.innerHTML = `<div style="color:var(--accent2);padding:16px;">⚠️ API 请求失败: ${err.message}<br><small>请检查网络，或尝试用 HTTP 服务器打开此页面。</small></div>`;
+    container.innerHTML = `<div style="color:var(--accent2);padding:16px;">API 请求失败: ${err.message}<br><small>请检查网络，或尝试用 HTTP 服务器打开此页面。</small></div>`;
   }
 }
 
 async function fetchAPIDetail(endpoint, index) {
   const container = dom.apiResults;
-  container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim);">⏳ 获取详情中...</div>';
+  container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim);">获取详情中...</div>';
   try {
     const resp = await fetch(`${API_BASE}/${endpoint}/${index}`);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -698,7 +698,7 @@ async function fetchAPIDetail(endpoint, index) {
     html += '</div>';
     container.innerHTML = html;
   } catch(err) {
-    container.innerHTML = `<div style="color:var(--accent2);padding:16px;">⚠️ 获取详情失败: ${err.message}</div>`;
+    container.innerHTML = `<div style="color:var(--accent2);padding:16px;">获取详情失败: ${err.message}</div>`;
   }
 }
 
@@ -717,7 +717,18 @@ const KP_SYSTEM_PROMPTS = {
 5. 推动剧情发展，根据玩家选择产生合理的后果。
 6. 控制节奏:精彩的叙事段落 + 关键决策点 + 紧张的战斗。
 
-格式约定: 当需要玩家投骰时，用【检定: d20+调整值 DC难度】格式标注。描述场景用丰富的叙述文字。战斗信息可以结构化展示。`,
+格式约定: 当需要玩家投骰时，用【检定: d20+调整值 DC难度】格式标注。描述场景用丰富的叙述文字。战斗信息可以结构化展示。
+
+剧情一致性要求:
+- 在游戏开始时，你必须构思一个大致的剧情脉络（主线冲突、关键NPC、核心谜团或目标）。无论玩家后续如何行动，这个主线脉络不会改变。玩家的选择会影响抵达终点的路径，但不会改变故事的基本方向。
+- 如果玩家尝试完全偏离主线（如"我离开这个小镇永远不回来"），用合理的叙事引导他们回到故事中（如新的线索将他们拉回来），而非强制阻止。
+
+输出格式要求:
+- 输出较长回复时请分段，每次输出200-400字后暂停，等待玩家回应再继续。不要一次性输出过长内容。
+- 每段对话都需要包含环境描写、NPC反应或气氛渲染。不要仅仅给出功能性回答。用生动的语言构建沉浸感。
+- 像真人主持人一样对话：回应玩家的行动，描述结果，然后自然地停顿等待玩家下一步行动。减少markdown格式符号的使用，使用自然的段落换行来表达结构。`,
+
+// Also update CoC quick actions
 
   coc: `你是克苏鲁的呼唤第七版(CoC 7e)的守秘人(Keeper/KP)。你必须严格遵循CoC 7e核心规则书。你的裁决是最终且不可上诉的。
 
@@ -784,7 +795,16 @@ const KP_SYSTEM_PROMPTS = {
 【ITEM:物品名】 — 获得物品(例:【ITEM:手电筒】)
 【REMOVE_ITEM:物品名】 — 失去物品(例:【REMOVE_ITEM:手电筒】)
 
-重要: 每个指令必须独占一行的开头，格式为【指令:参数】。描述性文字不要放在指令行内。合理使用这些指令使角色真正成长与变化。`,
+重要: 每个指令必须独占一行的开头，格式为【指令:参数】。描述性文字不要放在指令行内。合理使用这些指令使角色真正成长与变化。
+
+剧情一致性要求:
+- 在游戏开始时，你必须构思一个大致的剧情脉络（主线冲突、关键NPC、核心谜团或目标）。无论玩家后续如何行动，这个主线脉络不会改变。玩家的选择会影响抵达终点的路径，但不会改变故事的基本方向。
+- 如果玩家尝试完全偏离主线（如"我离开这个小镇永远不回来"），用合理的叙事引导他们回到故事中（如新的线索将他们拉回来），而非强制阻止。
+
+输出格式要求:
+- 输出较长回复时请分段，每次输出200-400字后暂停，等待玩家回应再继续。不要一次性输出过长内容。
+- 每段对话都需要包含环境描写、NPC反应或气氛渲染。不要仅仅给出功能性回答。用生动的语言构建沉浸感。
+- 像真人主持人一样对话：回应玩家的行动，描述结果，然后自然地停顿等待玩家下一步行动。尽量用自然的叙述代替markdown格式和特殊符号。`,
 
   // Also update CoC quick actions
 
@@ -802,7 +822,16 @@ const KP_SYSTEM_PROMPTS = {
 5. 扮演所有角色:冷血公司高管、街头情报贩子、AI、帮派成员。
 6. 风格要冷峻、快节奏，对话要犀利。这不是英雄故事，是生存故事。
 
-格式约定: 当需要投骰时，用【检定: 1d10+技能 DV难度】格式标注。`,
+格式约定: 当需要投骰时，用【检定: 1d10+技能 DV难度】格式标注。
+
+剧情一致性要求:
+- 在游戏开始时，你必须构思一个大致的剧情脉络（主线冲突、关键NPC、核心谜团或目标）。无论玩家后续如何行动，这个主线脉络不会改变。玩家的选择会影响抵达终点的路径，但不会改变故事的基本方向。
+- 如果玩家尝试完全偏离主线，用合理的叙事引导他们回到故事中，而非强制阻止。
+
+输出格式要求:
+- 输出较长回复时请分段，每次输出200-400字后暂停，等待玩家回应再继续。不要一次性输出过长内容。
+- 每段对话都需要包含环境描写、NPC反应或气氛渲染。用生动的语言构建沉浸感。
+- 像真人主持人一样对话：回应玩家的行动，描述结果，然后自然地停顿等待玩家下一步行动。风格要冷峻、快节奏，减少markdown符号的使用。`,
 
   pathfinder: `你是一位开拓者(PF2e)游戏主持人(GM)。你正在为一位英雄主持一场史诗奇幻冒险。
 
@@ -817,7 +846,16 @@ const KP_SYSTEM_PROMPTS = {
 5. 扮演所有NPC，赋予他们独特的动机和个性。
 6. 提供有意义的战术选择和角色定制反馈。
 
-格式约定: 当需要投骰时，用【检定: d20+调整值 DC难度】格式标注。`
+格式约定: 当需要投骰时，用【检定: d20+调整值 DC难度】格式标注。
+
+剧情一致性要求:
+- 在游戏开始时，你必须构思一个大致的剧情脉络（主线冲突、关键NPC、核心谜团或目标）。无论玩家后续如何行动，这个主线脉络不会改变。玩家的选择会影响抵达终点的路径，但不会改变故事的基本方向。
+- 如果玩家尝试完全偏离主线，用合理的叙事引导他们回到故事中，而非强制阻止。
+
+输出格式要求:
+- 输出较长回复时请分段，每次输出200-400字后暂停，等待玩家回应再继续。不要一次性输出过长内容。
+- 每段对话都需要包含环境描写、NPC反应或气氛渲染。不要仅仅给出功能性回答。用生动的语言构建沉浸感。
+- 像真人主持人一样对话：回应玩家的行动，描述结果，然后自然地停顿等待玩家下一步行动。减少markdown格式符号的使用，使用自然的段落换行来表达结构。`
 };
 
 const KP_QUICK_ACTIONS = {
@@ -837,6 +875,9 @@ let kpState = {
   streaming: false,
   streamingAbort: null,
 };
+
+// Scenario Knowledge Database
+let scenarioDbContent = '';
 
 // CoC-specific derived state (managed by AI KP, not user)
 let cocState = {
@@ -1090,6 +1131,70 @@ function loadAutosave() {
   return false;
 }
 
+// ==================== SCENARIO KNOWLEDGE DATABASE ====================
+function loadScenarioDB() {
+  try {
+    const saved = localStorage.getItem('ttrpg-scenario-db');
+    if (saved) scenarioDbContent = saved;
+    const ta = document.getElementById('scenarioDbContent');
+    if (ta) ta.value = scenarioDbContent;
+  } catch(e) { /* ignore */ }
+}
+
+function saveScenarioDB() {
+  const ta = document.getElementById('scenarioDbContent');
+  if (!ta) return;
+  scenarioDbContent = ta.value;
+  try {
+    localStorage.setItem('ttrpg-scenario-db', scenarioDbContent);
+    showToast('剧本知识库已保存!');
+  } catch(e) {
+    showToast('保存失败: ' + e.message);
+  }
+}
+
+function toggleScenarioDB() {
+  const wrapper = document.getElementById('scenarioDbWrapper');
+  if (!wrapper) return;
+  if (wrapper.style.display === 'none' || wrapper.style.display === '') {
+    wrapper.style.display = '';
+    const ta = document.getElementById('scenarioDbContent');
+    if (ta && !ta.value) ta.value = scenarioDbContent;
+  } else {
+    wrapper.style.display = 'none';
+  }
+}
+
+function closeScenarioDB() {
+  const wrapper = document.getElementById('scenarioDbWrapper');
+  if (wrapper) wrapper.style.display = 'none';
+}
+
+function exportScenarioDB() {
+  const content = scenarioDbContent || document.getElementById('scenarioDbContent')?.value || '';
+  const blob = new Blob([content], { type: 'text/plain' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'ttrpg-scenario-db.txt'; a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('剧本知识库已导出!');
+}
+
+function importScenarioDBPrompt() {
+  const input = document.createElement('input'); input.type = 'file'; input.accept = '.txt,.json';
+  input.onchange = function(e) {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const ta = document.getElementById('scenarioDbContent');
+      if (ta) ta.value = ev.target.result;
+      saveScenarioDB();
+      showToast('剧本知识库已导入!');
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
 function renderGameSaves() {
   const container = document.getElementById('gameSavesList');
   if (!container) return;
@@ -1258,6 +1363,12 @@ function saveKPChatHistory() {
 // Save chat periodically
 setInterval(() => {
   if (kpState.chatHistory.length) saveKPChatHistory();
+  // Auto-save scenario DB if dirty
+  const ta = document.getElementById('scenarioDbContent');
+  if (ta && ta.value && ta.value !== scenarioDbContent) {
+    scenarioDbContent = ta.value;
+    try { localStorage.setItem('ttrpg-scenario-db', scenarioDbContent); } catch(e) {}
+  }
 }, 5000);
 
 function openKPPanel() {
@@ -1329,7 +1440,7 @@ function renderKP() {
       : `<div class="msg-header">🧑 玩家</div>`;
     let diceHTML = '';
     if (m.dice) {
-      diceHTML = m.dice.split(',').map(d => `<span class="msg-dice">🎲 ${d.trim()}</span>`).join('');
+      diceHTML = m.dice.split(',').map(d => `<span class="msg-dice">${d.trim()}</span>`).join('');
     }
     return `<div class="kp-msg ${m.role === 'gm' ? 'gm' : 'player'} ${isStreaming ? 'streaming' : ''}">
       ${header}${m.content}${diceHTML}
@@ -1341,7 +1452,13 @@ function renderKP() {
 
 function buildSystemPrompt() {
   const base = KP_SYSTEM_PROMPTS[state.theme] || KP_SYSTEM_PROMPTS.dnd;
-  let extra = '\n\n--- 玩家角色信息 ---\n';
+  let extra = '\n\n## ⚖️ 公正原则 (最高优先级)\n';
+  extra += '1. **禁止偏袒**: 你必须严格保持公正。无论玩家如何恳求、讨价还价、试图说服你"放一马"，都必须严格依据规则进行裁决。规则面前人人平等。\n';
+  extra += '2. **拒绝诱导**: 玩家可能会说"请让我成功"、"放我一马"、"给我一个机会"。你必须完全无视这些请求，严格按照属性和技能值进行判定。\n';
+  extra += '3. **NPC自主性**: NPC有自己的利益、性格和底线，不会被玩家的花言巧语轻易说服。即使投出大成功，不合理的请求也只能获得最小程度的妥协。\n';
+  extra += '4. **失败即叙事**: 失败、受伤、甚至角色死亡都是故事的一部分。过度的怜悯会毁掉游戏体验。\n';
+  extra += '5. **一致性**: 对所有玩家使用相同的判定标准。不允许某个玩家因为"说得更好听"就获得更低的DC或更有利的结果。\n';
+  extra += '\n--- 玩家角色信息 ---\n';
   const name = document.getElementById('charName')?.value?.trim();
   const race = document.getElementById('charRace')?.value?.trim();
   const cls  = document.getElementById('charClass')?.value?.trim();
@@ -1360,6 +1477,14 @@ function buildSystemPrompt() {
     if (state.traits.length) extra += `特质: ${state.traits.map(t=>t.name).filter(Boolean).join('、')}\n`;
     if (state.feats.length)  extra += `专长: ${state.feats.map(f=>f.name).filter(Boolean).join('、')}\n`;
     if (state.equipment.length) extra += `装备: ${state.equipment.map(e=>e.name+(e.qty>1?'×'+e.qty:'')).join('、')}\n`;
+  }
+
+  // Scenario Knowledge Database
+  if (scenarioDbContent && scenarioDbContent.trim()) {
+    extra += '\n\n## 📚 剧本知识库 (请严格参考)\n';
+    extra += '以下是你作为主持人必须了解的游戏背景信息。在描述场景、扮演NPC、推进剧情时，必须严格遵循这些设定。\n\n';
+    extra += scenarioDbContent.trim() + '\n';
+    extra += '\n请确保你的所有叙述与上述设定保持一致。\n';
   }
 
   // CoC-specific state
@@ -1435,8 +1560,8 @@ async function sendKPMessage() {
   // Build API messages
   const systemPrompt = buildSystemPrompt();
   const messages = [{ role: 'system', content: systemPrompt }];
-  // Add recent history (last 30 exchanges to manage context)
-  const recentApi = kpState.apiHistory.slice(-60);
+  // Add recent history (last 40 exchanges to manage context)
+  const recentApi = kpState.apiHistory.slice(-80);
   messages.push(...recentApi);
   messages.push({ role: 'user', content: text });
 
@@ -1466,7 +1591,7 @@ async function sendKPMessage() {
     if (commands.length > 0) {
       const changes = applyAICommands(commands);
       if (changes.length > 0) {
-        addKPSystemMsg(`📋 角色状态已更新: ${changes.join('; ')}`);
+        addKPSystemMsg(`角色状态已更新: ${changes.join('; ')}`);
         renderCocStatus();
         // Auto-save after state changes
         const data = getGameSaveData();
@@ -1477,9 +1602,15 @@ async function sendKPMessage() {
     // Update API history
     kpState.apiHistory.push({ role: 'user', content: text });
     kpState.apiHistory.push({ role: 'assistant', content: fullResponse });
-    // Trim API history
+
+    // Auto-compress when context exceeds threshold
     if (kpState.apiHistory.length > 80) {
-      kpState.apiHistory = kpState.apiHistory.slice(-80);
+      compressContextAsync();
+    }
+
+    // Hard trim as safety net
+    if (kpState.apiHistory.length > 120) {
+      kpState.apiHistory = kpState.apiHistory.slice(-100);
     }
 
   } catch (err) {
@@ -1499,7 +1630,7 @@ async function sendKPMessage() {
       } else if (errMsg.includes('HTTP 502') || errMsg.includes('proxy error')) {
         errMsg = '代理转发失败 — 请检查网络连接或 API 端点是否可访问';
       }
-      kpState.chatHistory[kpState.chatHistory.length - 1].content = `❌ 请求失败: ${errMsg}`;
+      kpState.chatHistory[kpState.chatHistory.length - 1].content = `请求失败: ${errMsg}`;
       console.error('KP API error:', err);
     }
   } finally {
@@ -1512,6 +1643,58 @@ async function sendKPMessage() {
     const stopBtn = document.getElementById('kpStopBtn');
     if (sendBtn) sendBtn.style.display = '';
     if (stopBtn) stopBtn.style.display = 'none';
+  }
+}
+
+async function compressContextAsync() {
+  if (kpState._compressing) return;
+  kpState._compressing = true;
+  try {
+    const total = kpState.apiHistory.length;
+    if (total <= 60) return; // don't compress if we're at manageable size
+
+    // Take oldest ~60% of entries to compress, keep newest 40% fresh
+    const splitIdx = Math.floor(total * 0.6);
+    const toCompress = kpState.apiHistory.slice(0, splitIdx);
+    const toKeep = kpState.apiHistory.slice(splitIdx);
+
+    // Build a summary request
+    const compressed = toCompress.map(m => (m.role === 'user' ? '玩家: ' : 'KP: ') + m.content).join('\n');
+    const cfg = getKPConfig();
+    if (!cfg.key) {
+      // Without API key, just trim
+      kpState.apiHistory = kpState.apiHistory.slice(-60);
+      return;
+    }
+
+    const summaryPrompt = '请将以下跑团对话记录压缩为一段简明摘要(中文, 300字以内), 保留关键情节、重要NPC行动、战斗结果和状态变化:\n\n' + compressed.substring(compressed.length - 4000);
+
+    const messages = [{ role: 'user', content: summaryPrompt }];
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    let summary = '';
+    if (cfg.provider === 'anthropic') {
+      summary = await callAnthropicAPI(cfg, '你是游戏会话压缩助手。将对话记录压缩为简洁摘要。', [], summaryPrompt, controller);
+    } else {
+      summary = await callOpenAIAPI(cfg, '你是游戏会话压缩助手。将对话记录压缩为简洁摘要。', [], summaryPrompt, controller);
+    }
+    clearTimeout(timeout);
+
+    if (summary && summary.trim()) {
+      // Replace compressed entries with a single summary
+      const summaryEntry = { role: 'user', content: '[上下文压缩摘要] ' + summary.trim().substring(0, 2000) };
+      kpState.apiHistory = [summaryEntry, ...toKeep];
+      console.log('Context compressed: ' + total + ' -> ' + kpState.apiHistory.length + ' entries');
+    } else {
+      // Fallback: simple trim
+      kpState.apiHistory = kpState.apiHistory.slice(-60);
+    }
+  } catch (e) {
+    console.warn('Context compression failed, falling back to trim:', e.message);
+    kpState.apiHistory = kpState.apiHistory.slice(-60);
+  } finally {
+    kpState._compressing = false;
   }
 }
 
@@ -1727,24 +1910,32 @@ function initParticles() {
 
 // ==================== MULTIPLAYER (PeerJS WebRTC) ====================
 const Multiplayer = {
-  // --- State ---
+  // --- Core State ---
   peer: null,
-  hostConn: null,         // client: single connection to host
-  connections: {},        // host:  peerId -> DataConnection
+  hostConn: null,
+  connections: {},
   isHost: false,
   roomId: null,
   playerId: null,
   playerName: '',
-  players: {},            // playerId -> { id, name, isHost, joinedAt, hp, san, charName }
+  players: {},            // playerId -> { id, name, isHost, joinedAt, hp, san, charName, ready, charData }
   connected: false,
-  inputMode: 'public',    // 'public' | 'secret' | 'chat'
-  chatLog: [],            // local message log for display
 
-  // Heartbeat
+  // --- Game Phase ---
+  gamePhase: 'lobby',     // 'lobby' | 'playing'
+  readyPlayers: new Set(),
+  turnOrder: [],          // ordered array of playerIds
+  currentTurnIndex: 0,
+
+  // --- Chat & Input ---
+  inputMode: 'public',
+  chatLog: [],
+
+  // --- Heartbeat ---
   heartbeatTimer: null,
   lastHeartbeat: {},
 
-  // Reconnection
+  // --- Reconnection ---
   reconnectAttempts: 0,
   maxReconnectAttempts: 8,
   reconnectTimer: null,
@@ -1753,69 +1944,115 @@ const Multiplayer = {
   // --- Entry ---
   onPageOpen() {
     this.refreshUI();
+    this.populateLobbyCharSelects();
     if (this.connected) {
-      this.showRoom();
-      this.renderPlayerList();
-      this.scrollChatBottom();
+      this.showRoomView();
+      this.renderAllRoom();
     } else {
-      this.showLobby();
+      this.showLobbyView();
     }
+  },
+
+  populateLobbyCharSelects() {
+    const saved = JSON.parse(localStorage.getItem('ttrpg-saved-chars') || '[]');
+    ['mpCreateChar', 'mpJoinChar'].forEach(sid => {
+      const sel = document.getElementById(sid);
+      if (!sel || sel.options.length > 1) return; // already populated
+      saved.forEach((ch, i) => {
+        if (ch.name) {
+          const opt = document.createElement('option');
+          opt.value = i.toString();
+          opt.textContent = ch.name + (ch.race ? ' (' + ch.race + ')' : '') + (ch.cls ? ' - ' + ch.cls : '');
+          sel.appendChild(opt);
+        }
+      });
+    });
+    // Setup change handlers for lobby selects
+    const applyLobbyChar = (selId, infoId) => {
+      const sel = document.getElementById(selId);
+      if (!sel || sel._bound) return;
+      sel._bound = true;
+      sel.addEventListener('change', () => {
+        const idx = parseInt(sel.value);
+        const chars = JSON.parse(localStorage.getItem('ttrpg-saved-chars') || '[]');
+        const info = document.getElementById(infoId);
+        if (!isNaN(idx) && chars[idx]) {
+          const ch = chars[idx];
+          Multiplayer.applyCharDataToSheet(ch);
+          if (info) {
+            info.style.display = '';
+            info.textContent = [ch.race, ch.cls, ch.level ? 'Lv.'+ch.level : ''].filter(Boolean).join(' | ') || ch.name;
+          }
+        } else {
+          if (info) info.style.display = 'none';
+        }
+      });
+    };
+    applyLobbyChar('mpCreateChar', 'mpCreateCharInfo');
+    applyLobbyChar('mpJoinChar', 'mpJoinCharInfo');
   },
 
   refreshUI() {
     const theme = THEME_NAMES[state.theme];
-    const kpTheme = document.getElementById('mpKPTheme');
-    if (kpTheme) kpTheme.textContent = `(${theme})`;
-    this.renderMultiplayerQuickActions();
+    const el = document.getElementById('mpKPTheme');
+    if (el) el.textContent = `(${theme})`;
+    this.renderQuickActions();
+    this.renderTurnBanner();
   },
 
-  // --- Lobby / Room Toggle ---
-  showLobby() {
+  // --- View Toggle ---
+  showLobbyView() {
     const lobby = document.getElementById('mpLobby');
     const room = document.getElementById('mpRoom');
     if (lobby) lobby.style.display = '';
     if (room) room.style.display = 'none';
-    // Default to create tab
     document.querySelectorAll('.mp-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.mp-tab-panel').forEach(p => p.classList.remove('active'));
-    const createTab = document.querySelector('.mp-tab[data-mp-tab="create"]');
-    const createPanel = document.getElementById('mpTabCreate');
-    if (createTab) createTab.classList.add('active');
-    if (createPanel) createPanel.classList.add('active');
-    // Pre-fill nickname if saved
-    const savedName = localStorage.getItem('ttrpg-mp-nickname');
-    const createInput = document.getElementById('mpCreateName');
-    const joinInput = document.getElementById('mpJoinName');
-    if (savedName) {
-      if (createInput && !createInput.value) createInput.value = savedName;
-      if (joinInput && !joinInput.value) joinInput.value = savedName;
+    const t = document.querySelector('.mp-tab[data-mp-tab="create"]');
+    const p = document.getElementById('mpTabCreate');
+    if (t) t.classList.add('active');
+    if (p) p.classList.add('active');
+    const saved = localStorage.getItem('ttrpg-mp-nickname');
+    if (saved) {
+      const ci = document.getElementById('mpCreateName');
+      const ji = document.getElementById('mpJoinName');
+      if (ci && !ci.value) ci.value = saved;
+      if (ji && !ji.value) ji.value = saved;
     }
   },
 
-  showRoom() {
+  showRoomView() {
     const lobby = document.getElementById('mpLobby');
     const room = document.getElementById('mpRoom');
     if (lobby) lobby.style.display = 'none';
     if (room) room.style.display = '';
     const label = document.getElementById('mpRoomLabelDisplay');
-    if (label) label.textContent = this.roomId || '联机房';
-    const idDisplay = document.getElementById('mpRoomIdDisplay');
-    if (idDisplay) {
-      idDisplay.textContent = this.isHost ? `房间号: ${this.roomId}` : `已加入: ${this.roomId}`;
+    if (label) label.textContent = '联机房';
+    const idDisp = document.getElementById('mpRoomIdDisplay');
+    if (idDisp) idDisp.textContent = this.isHost ? '房间号: ' + this.roomId : '已加入: ' + this.roomId;
+    const phaseBadge = document.getElementById('mpPhaseBadge');
+    if (phaseBadge) {
+      phaseBadge.textContent = this.gamePhase === 'lobby' ? '准备阶段' : '游戏中';
+      phaseBadge.style.background = this.gamePhase === 'lobby' ? 'rgba(74,138,48,.15)' : 'var(--accent-dim)';
     }
     this.updateConnDot('connected');
+    this.renderAllRoom();
+  },
+
+  renderAllRoom() {
     this.renderPlayerList();
     this.renderMultiplayerChat();
+    this.renderTurnBanner();
+    this.renderLobbyControls();
     this.scrollChatBottom();
   },
 
-  // --- UUID Generation ---
+  // --- UUID ---
   generateUUID() {
-    return 'xxxx-xxxx-xxxx'.replace(/x/g, () =>
-      Math.floor(Math.random() * 16).toString(16));
+    return 'xxxx-xxxx-xxxx'.replace(/x/g, () => Math.floor(Math.random() * 16).toString(16));
   },
 
-  // --- Create Room ---
+  // --- Create Room (host) ---
   async createRoom() {
     const nameInput = document.getElementById('mpCreateName');
     const name = (nameInput?.value?.trim()) || ('冒险者' + Math.floor(Math.random() * 9000 + 1000));
@@ -1824,52 +2061,56 @@ const Multiplayer = {
     this.playerName = name;
     this.playerId = this.generateUUID();
     this.isHost = true;
-    this.roomId = this.generateRoomCode();
+    this.gamePhase = 'lobby';
+    this.readyPlayers = new Set();
+    this.turnOrder = [this.playerId];
+    this.currentTurnIndex = 0;
     this.connections = {};
     this.players = {};
     this.chatLog = [];
+    this.roomId = null;
 
-    // Add self to player list
+    // Add self
     this.players[this.playerId] = {
       id: this.playerId, name: this.playerName, isHost: true,
-      joinedAt: Date.now(), charName: document.getElementById('charName')?.value?.trim() || '',
-      hp: cocState.currentHp || '?', san: cocState.san || '?'
+      joinedAt: Date.now(), ready: true,
+      charName: document.getElementById('charName')?.value?.trim() || '',
+      hp: cocState.currentHp || '?', san: cocState.san || '?',
+      charData: this.collectMyCharData()
     };
+    this.readyPlayers.add(this.playerId);
 
     localStorage.setItem('ttrpg-mp-nickname', this.playerName);
 
-    // Initialize PeerJS
     try {
-      await this.initPeer(this.roomId);
+      // Let PeerJS auto-assign ID (avoids ID conflicts on public server)
+      await this.initPeer(null);
+      this.roomId = this.peer.id;
+      console.log('Room created. Peer ID (room code):', this.roomId);
+
       this.setupHostListeners();
       this.connected = true;
-      this.showRoom();
-      this.addChatMessage('system', null, `🏰 房间已创建! 房间号: ${this.roomId}。等待其他玩家加入...`);
-      this.renderPlayerList();
+      this.showRoomView();
+      this.addChatMessage('system', null, '房间已创建 — 现在是准备阶段，等待玩家加入并选择角色');
+      this.addChatMessage('system', null, '房间号: ' + this.roomId + ' — 点击右上角复制分享给好友');
+      this.renderAllRoom();
       this.startHeartbeat();
-      showToast(`房间 ${this.roomId} 已创建! 将房间号分享给好友即可联机。`);
+      showToast('房间已创建! 将房间号分享给好友即可联机。');
       document.getElementById('mpInput')?.removeAttribute('disabled');
       document.getElementById('mpSendBtn')?.removeAttribute('disabled');
     } catch (err) {
       showToast('创建房间失败: ' + err.message);
-      console.error('Multiplayer createRoom error:', err);
+      console.error('createRoom error:', err);
       this.cleanup();
     }
   },
 
-  generateRoomCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code = '';
-    for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
-    return code;
-  },
-
-  // --- Join Room ---
+  // --- Join Room (client) ---
   async joinRoom() {
     const nameInput = document.getElementById('mpJoinName');
     const roomInput = document.getElementById('mpJoinRoomId');
     const name = (nameInput?.value?.trim()) || ('调查员' + Math.floor(Math.random() * 9000 + 1000));
-    const roomId = roomInput?.value?.trim()?.toUpperCase();
+    const roomId = roomInput?.value?.trim();
 
     if (!name) { showToast('请输入你的昵称'); return; }
     if (!roomId) { showToast('请输入房间号'); return; }
@@ -1878,6 +2119,10 @@ const Multiplayer = {
     this.playerId = this.generateUUID();
     this.isHost = false;
     this.roomId = roomId;
+    this.gamePhase = 'lobby';
+    this.readyPlayers = new Set();
+    this.turnOrder = [];
+    this.currentTurnIndex = 0;
     this.hostConn = null;
     this.chatLog = [];
     this.reconnectHostId = roomId;
@@ -1885,28 +2130,71 @@ const Multiplayer = {
     localStorage.setItem('ttrpg-mp-nickname', this.playerName);
 
     try {
-      await this.initPeer(this.playerId + '-' + roomId);
+      // Client also uses auto-assigned ID
+      await this.initPeer(null);
       this.setupClientListeners();
       await this.connectToHost(roomId);
     } catch (err) {
       showToast('加入房间失败: ' + err.message);
-      console.error('Multiplayer joinRoom error:', err);
+      console.error('joinRoom error:', err);
       this.cleanup();
     }
   },
 
-  // --- PeerJS Initialization ---
+  // --- Collect My Character Data ---
+  collectMyCharData() {
+    return {
+      name: document.getElementById('charName')?.value?.trim() || '',
+      race: document.getElementById('charRace')?.value?.trim() || '',
+      cls: document.getElementById('charClass')?.value?.trim() || '',
+      level: document.getElementById('charLevel')?.value || 1,
+      hp: document.getElementById('charHP')?.value || '',
+      maxHp: document.getElementById('charMaxHP')?.value || '',
+      ac: document.getElementById('charAC')?.value || '',
+      background: document.getElementById('charBackground')?.value?.trim() || '',
+      attributes: { ...state.attributes },
+      skills: { ...state.skills },
+      traits: state.traits.map(t => ({ ...t })),
+      feats: state.feats.map(f => ({ ...f })),
+      equipment: state.equipment.map(e => ({ ...e })),
+      cocHp: cocState.currentHp,
+      cocSan: cocState.san,
+    };
+  },
+
+  // --- Apply Character Data to My Local Sheet ---
+  applyCharDataToSheet(data) {
+    if (!data) return;
+    if (data.name) document.getElementById('charName').value = data.name;
+    if (data.race) document.getElementById('charRace').value = data.race;
+    if (data.cls) document.getElementById('charClass').value = data.cls;
+    if (data.level) document.getElementById('charLevel').value = data.level;
+    if (data.hp) document.getElementById('charHP').value = data.hp;
+    if (data.maxHp) document.getElementById('charMaxHP').value = data.maxHp;
+    if (data.ac) document.getElementById('charAC').value = data.ac;
+    if (data.background) document.getElementById('charBackground').value = data.background;
+    if (data.attributes) { state.attributes = data.attributes; renderAttributes(); renderSkills(); }
+    if (data.skills) { state.skills = data.skills; renderSkills(); }
+    if (data.traits) { state.traits = data.traits; renderTraits(); }
+    if (data.feats) { state.feats = data.feats; renderFeats(); }
+    if (data.equipment) { state.equipment = data.equipment; renderEquipment(); }
+    if (data.cocHp !== undefined) cocState.currentHp = data.cocHp;
+    if (data.cocSan !== undefined) cocState.san = data.cocSan;
+    renderCocStatus();
+  },
+
+  // --- PeerJS Init (auto-assigned ID = null) ---
   initPeer(id) {
     return new Promise((resolve, reject) => {
-      if (this.peer) {
-        try { this.peer.destroy(); } catch(e) { /* ignore */ }
-        this.peer = null;
-      }
+      if (this.peer) { try { this.peer.destroy(); } catch(e) {} this.peer = null; }
 
       const peer = new Peer(id, {
-        // Using PeerJS Cloud signaling server (free, 0.peerjs.com)
-        // host: '0.peerjs.com', port: 443, secure: true,
-        // debug: 2  // uncomment for debugging
+        config: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+          ]
+        }
       });
 
       const timeout = setTimeout(() => {
@@ -1916,7 +2204,7 @@ const Multiplayer = {
       peer.on('open', (assignedId) => {
         clearTimeout(timeout);
         this.peer = peer;
-        console.log('PeerJS connected with ID:', assignedId);
+        console.log('PeerJS opened. Assigned ID:', assignedId);
         resolve(assignedId);
       });
 
@@ -1924,32 +2212,29 @@ const Multiplayer = {
         clearTimeout(timeout);
         console.error('PeerJS error:', err);
         if (err.type === 'unavailable-id') {
-          reject(new Error('Peer ID 冲突，请重试'));
+          reject(new Error('房间号冲突，请重试'));
         } else if (err.type === 'network') {
-          reject(new Error('网络连接失败'));
+          reject(new Error('网络连接失败，请检查防火墙设置'));
         } else if (err.type === 'peer-unavailable') {
-          // Handled in connectToHost
+          // handled in connectToHost
         } else {
-          reject(new Error(err.message || 'PeerJS 连接错误'));
+          reject(new Error(err.message || 'PeerJS 错误'));
         }
       });
 
       peer.on('disconnected', () => {
-        console.log('PeerJS disconnected, attempting reconnect...');
+        console.log('PeerJS disconnected, reconnecting...');
         if (this.connected) {
           this.updateConnDot('connecting');
-          if (this.peer && !this.peer.destroyed) {
-            this.peer.reconnect();
-          }
+          if (this.peer && !this.peer.destroyed) this.peer.reconnect();
         }
       });
     });
   },
 
-  // --- Host: Listen for incoming connections ---
+  // --- Host Listeners ---
   setupHostListeners() {
     if (!this.peer) return;
-
     this.peer.on('connection', (conn) => {
       console.log('Incoming connection from:', conn.peer);
       this.handleNewConnection(conn);
@@ -1958,349 +2243,433 @@ const Multiplayer = {
 
   handleNewConnection(conn) {
     const remoteId = conn.peer;
-
     conn.on('open', () => {
-      console.log('DataConnection opened with:', remoteId);
-      // Send current game state to the new player
+      console.log('DataConnection opened:', remoteId);
       conn.send({
         type: 'welcome',
         hostId: this.playerId,
         hostName: this.playerName,
         roomId: this.roomId,
-        playerId: this.assignPlayerId(remoteId),
         players: this.players,
-        chatLog: this.chatLog.slice(-50),
+        chatLog: this.chatLog.slice(-80),
         gameState: this.getGameStateSnapshot(),
+        gamePhase: this.gamePhase,
+        turnOrder: this.turnOrder,
+        currentTurnIndex: this.currentTurnIndex,
         theme: state.theme
       });
     });
-
-    conn.on('data', (data) => {
-      this.handleHostMessage(remoteId, data);
-    });
-
-    conn.on('close', () => {
-      console.log('Connection closed with:', remoteId);
-      this.handlePlayerDisconnect(remoteId);
-    });
-
-    conn.on('error', (err) => {
-      console.error('Connection error with:', remoteId, err);
-      this.handlePlayerDisconnect(remoteId);
-    });
-
+    conn.on('data', (data) => this.handleHostMessage(remoteId, data));
+    conn.on('close', () => { console.log('Conn closed:', remoteId); this.handlePlayerDisconnect(remoteId); });
+    conn.on('error', (err) => { console.error('Conn error:', remoteId, err); this.handlePlayerDisconnect(remoteId); });
     this.connections[remoteId] = conn;
   },
 
-  assignPlayerId(connId) {
-    // Check if we already have a mapping for this connection
-    for (const pid of Object.keys(this.players)) {
-      // Already mapped
-    }
-    // Generate a new short player ID for the remote peer
-    return 'p-' + this.generateUUID().substring(0, 8);
-  },
-
   handlePlayerDisconnect(remoteId) {
-    // Find the player by connection
-    let playerId = null;
-    for (const [pid, pdata] of Object.entries(this.players)) {
-      if (pdata.connId === remoteId) {
-        playerId = pid;
-        break;
-      }
+    let pid = null;
+    for (const [p, d] of Object.entries(this.players)) {
+      if (d.connId === remoteId || p === remoteId) { pid = p; break; }
     }
-    if (!playerId && this.players[remoteId]) {
-      playerId = remoteId;
-    }
-
-    if (playerId && this.players[playerId] && !this.players[playerId].isHost) {
-      const name = this.players[playerId].name;
-      delete this.players[playerId];
-      this.broadcastToAll({ type: 'player-left', playerId, playerName: name });
+    if (pid && this.players[pid] && !this.players[pid].isHost) {
+      const nm = this.players[pid].name;
+      this.readyPlayers.delete(pid);
+      this.turnOrder = this.turnOrder.filter(id => id !== pid);
+      delete this.players[pid];
+      this.broadcastToAll({ type: 'player-left', playerId: pid, playerName: nm });
       this.broadcastToAll({ type: 'player-list', players: this.players });
-      this.addChatMessage('system', null, `👋 ${name} 离开了房间`);
-      this.renderPlayerList();
+      this.broadcastToAll({ type: 'turn-sync', turnOrder: this.turnOrder, currentTurnIndex: this.currentTurnIndex });
+      this.addChatMessage('system', null, nm + ' 离开了房间');
+      this.renderAllRoom();
     }
-
-    if (this.connections[remoteId]) {
-      try { this.connections[remoteId].close(); } catch(e) {}
-      delete this.connections[remoteId];
-    }
+    if (this.connections[remoteId]) { try { this.connections[remoteId].close(); } catch(e) {} delete this.connections[remoteId]; }
   },
 
-  // --- Host: Process incoming messages ---
+  // --- Host: Process Messages ---
   handleHostMessage(remoteId, data) {
     if (!data || !data.type) return;
+    let pid = data.playerId;
+    let pname = data.playerName || '未知玩家';
 
-    // Map connection ID to player ID
-    let playerId = data.playerId;
-    let playerName = data.playerName || '未知玩家';
-
-    // If this is a new player introducing themselves
     if (data.type === 'hello') {
-      playerId = data.playerId;
-      playerName = data.playerName;
-      const characterName = data.characterName || '';
-
-      this.players[playerId] = {
-        id: playerId,
-        name: playerName,
-        isHost: false,
-        connId: remoteId,
-        joinedAt: Date.now(),
-        charName: characterName,
-        hp: data.hp || '?',
-        san: data.san || '?'
+      pid = data.playerId; pname = data.playerName;
+      const charData = data.charData || {};
+      this.players[pid] = {
+        id: pid, name: pname, isHost: false, connId: remoteId,
+        joinedAt: Date.now(), ready: false,
+        charName: charData.name || data.characterName || '',
+        hp: charData.cocHp || data.hp || '?',
+        san: charData.cocSan || data.san || '?',
+        charData: charData
       };
-
-      this.addChatMessage('system', null, `👋 ${playerName}${characterName ? ' (' + characterName + ')' : ''} 加入了房间`);
-      this.broadcastToAll({ type: 'player-joined', playerId, playerName, characterName });
+      // Add to turn order
+      if (!this.turnOrder.includes(pid)) this.turnOrder.push(pid);
+      this.addChatMessage('system', null, pname + (charData.name ? ' (' + charData.name + ')' : '') + ' 加入了房间');
+      this.broadcastToAll({ type: 'player-joined', playerId: pid, playerName: pname, charData: charData });
       this.broadcastToAll({ type: 'player-list', players: this.players });
-      this.renderPlayerList();
+      this.broadcastToAll({ type: 'turn-sync', turnOrder: this.turnOrder, currentTurnIndex: this.currentTurnIndex });
+      this.renderAllRoom();
       return;
     }
 
-    // Find player info for display
-    const pinfo = this.players[playerId] || {};
-    const displayName = playerName || pinfo.name || '冒险者';
+    const pinfo = this.players[pid] || {};
+    const dn = pname || pinfo.name || '冒险者';
 
     switch (data.type) {
-      case 'action': {
-        // Player action -> forward to AI KP then broadcast response
-        this.addChatMessage('action', displayName, data.content);
-        this.broadcastToAll({ type: 'action', playerId, playerName: displayName, content: data.content }, playerId);
-        // Process through AI KP
-        this.processHostAIAction(playerId, displayName, data.content);
-        break;
-      }
-
-      case 'chat': {
-        const msg = { type: 'chat', playerId, playerName: displayName, content: data.content };
-        this.addChatMessage('chat', displayName, data.content);
-        this.broadcastToAll(msg);
-        break;
-      }
-
-      case 'secret': {
-        // Secret action: only host/KP sees it
-        this.addChatMessage('secret', displayName, data.content);
-        // Process through AI KP privately (only result goes back to the requesting player)
-        this.processHostAISecret(playerId, displayName, data.content);
-        break;
-      }
-
-      case 'dice': {
-        const msg = { type: 'dice', playerId, playerName: displayName, result: data.result, detail: data.detail };
-        this.addChatMessage('dice', displayName, data.detail || data.result);
-        this.broadcastToAll(msg);
-        break;
-      }
-
-      case 'request-state': {
-        // Reconnecting player requests current state
-        const conn = this.connections[remoteId];
-        if (conn) {
-          conn.send({
-            type: 'game-state',
-            players: this.players,
-            chatLog: this.chatLog.slice(-100),
-            gameState: this.getGameStateSnapshot(),
-            theme: state.theme
-          });
+      case 'player-ready': {
+        if (this.gamePhase !== 'lobby') return;
+        if (this.players[pid]) {
+          if (data.ready !== false) {
+            // Validate character card exists
+            if (!data.charData || !data.charData.name) {
+              this.sendToPlayer(pid, { type: 'system-msg', content: '请先在人物卡页面创建角色并填写角色姓名!' });
+              return;
+            }
+            this.readyPlayers.add(pid);
+            this.players[pid].ready = true;
+            // Update character data if provided
+            if (data.charData) {
+              this.players[pid].charData = data.charData;
+              this.players[pid].charName = data.charData.name || this.players[pid].charName;
+              this.players[pid].hp = data.charData.cocHp || this.players[pid].hp;
+              this.players[pid].san = data.charData.cocSan || this.players[pid].san;
+            }
+          } else {
+            this.readyPlayers.delete(pid);
+          }
+          this.addChatMessage('system', null, dn + (data.ready !== false ? ' 已准备就绪' : ' 取消准备'));
+          this.broadcastToAll({ type: 'ready-update', playerId: pid, ready: data.ready !== false });
+          this.broadcastToAll({ type: 'player-list', players: this.players });
+          this.renderAllRoom();
         }
         break;
       }
 
+      case 'request-game-start': {
+        // Only host can start
+        if (pid !== this.playerId) return;
+        const notReady = Object.values(this.players).filter(p => !p.ready).map(p => p.name);
+        if (notReady.length > 0) {
+          this.addChatMessage('system', null, '以下玩家尚未准备: ' + notReady.join(', '));
+          this.renderMultiplayerChat();
+          return;
+        }
+        const noChar = Object.values(this.players).filter(p => !p.charData || !p.charData.name).map(p => p.name);
+        if (noChar.length > 0) {
+          this.addChatMessage('system', null, '以下玩家尚未选择角色卡: ' + noChar.join(', '));
+          this.renderMultiplayerChat();
+          return;
+        }
+        const hostData = this.players[this.playerId]?.charData;
+        if (!hostData || !hostData.name) {
+          this.addChatMessage('system', null, '请房主先在人物卡页面选择或创建角色卡，然后重新开始游戏');
+          this.renderMultiplayerChat();
+          return;
+        }
+        this.gamePhase = 'playing';
+        // Sort turn order by join time
+        this.turnOrder.sort((a, b) => (this.players[a]?.joinedAt || 0) - (this.players[b]?.joinedAt || 0));
+        this.currentTurnIndex = 0;
+        const cp = this.turnOrder[0];
+        const cpName = this.players[cp]?.name || '未知';
+        this.addChatMessage('system', null, '游戏开始! 行动顺序: ' + this.turnOrder.map(id => this.players[id]?.name || '?').join(' → '));
+        this.addChatMessage('system', null, '当前轮到: ' + cpName);
+        this.broadcastToAll({
+          type: 'game-start',
+          turnOrder: this.turnOrder,
+          currentTurnIndex: 0,
+          players: this.players
+        });
+        this.renderAllRoom();
+
+        // Generate AI scenario intro (async, non-blocking)
+        this.generateGameStartScenario();
+
+        break;
+      }
+
+      case 'end-turn': {
+        if (this.gamePhase !== 'playing') return;
+        const currentId = this.turnOrder[this.currentTurnIndex];
+        if (pid !== currentId) return; // not your turn
+        this.advanceTurn();
+        break;
+      }
+
+      case 'action': {
+        // Check turn in playing phase
+        if (this.gamePhase === 'playing') {
+          const currentId = this.turnOrder[this.currentTurnIndex];
+          if (pid !== currentId && pid !== this.playerId) {
+            // Not your turn — silently queue or reject
+            this.sendToPlayer(pid, { type: 'system-msg', content: '现在不是你的回合，请等待。当前行动者: ' + (this.players[currentId]?.name || '?') });
+            return;
+          }
+        }
+        this.addChatMessage('action', dn, data.content);
+        this.broadcastToAll({ type: 'action', playerId: pid, playerName: dn, content: data.content }, pid);
+        this.processHostAIAction(pid, dn, data.content);
+        break;
+      }
+
+      case 'chat': {
+        const m = { type: 'chat', playerId: pid, playerName: dn, content: data.content };
+        this.addChatMessage('chat', dn, data.content);
+        this.broadcastToAll(m);
+        break;
+      }
+
+      case 'secret': {
+        this.addChatMessage('secret', dn, data.content);
+        this.processHostAISecret(pid, dn, data.content);
+        break;
+      }
+
+      case 'dice': {
+        const m = { type: 'dice', playerId: pid, playerName: dn, result: data.result, detail: data.detail };
+        this.addChatMessage('dice', dn, data.detail || data.result);
+        this.broadcastToAll(m);
+        break;
+      }
+
+      case 'char-update': {
+        if (this.players[pid] && data.charData) {
+          this.players[pid].charData = data.charData;
+          this.players[pid].charName = data.charData.name || '';
+          this.players[pid].hp = data.charData.hp || data.charData.cocHp || '?';
+          this.broadcastToAll({ type: 'player-list', players: this.players });
+          this.renderAllRoom();
+        }
+        break;
+      }
+
+      case 'request-state': {
+        const c = this.connections[remoteId];
+        if (c) c.send({
+          type: 'game-state',
+          players: this.players,
+          chatLog: this.chatLog.slice(-120),
+          gameState: this.getGameStateSnapshot(),
+          gamePhase: this.gamePhase,
+          turnOrder: this.turnOrder,
+          currentTurnIndex: this.currentTurnIndex,
+          theme: state.theme
+        });
+        break;
+      }
+
       case 'heartbeat': {
-        this.lastHeartbeat[playerId] = Date.now();
+        this.lastHeartbeat[pid] = Date.now();
         break;
       }
 
       case 'update-status': {
-        if (this.players[playerId]) {
-          if (data.hp !== undefined) this.players[playerId].hp = data.hp;
-          if (data.san !== undefined) this.players[playerId].san = data.san;
-          if (data.charName !== undefined) this.players[playerId].charName = data.charName;
+        if (this.players[pid]) {
+          if (data.hp !== undefined) this.players[pid].hp = data.hp;
+          if (data.san !== undefined) this.players[pid].san = data.san;
+          if (data.charName !== undefined) this.players[pid].charName = data.charName;
+          if (data.charData) this.players[pid].charData = data.charData;
           this.broadcastToAll({ type: 'player-list', players: this.players });
-          this.renderPlayerList();
+          this.renderAllRoom();
         }
         break;
       }
 
       default:
-        console.log('Unknown host message type:', data.type);
+        console.log('Unknown host msg:', data.type);
     }
   },
 
-  // --- Host: Process AI KP Action (public) ---
+  // --- Turn Management ---
+  advanceTurn() {
+    this.currentTurnIndex = (this.currentTurnIndex + 1) % this.turnOrder.length;
+    const cp = this.turnOrder[this.currentTurnIndex];
+    const cpName = this.players[cp]?.name || '未知';
+    this.addChatMessage('system', null, '🔔 轮到: ' + cpName);
+    this.broadcastToAll({ type: 'turn-change', turnOrder: this.turnOrder, currentTurnIndex: this.currentTurnIndex, currentPlayerName: cpName });
+    this.renderAllRoom();
+  },
+
+  getCurrentTurnPlayerId() {
+    if (this.gamePhase !== 'playing' || !this.turnOrder.length) return null;
+    return this.turnOrder[this.currentTurnIndex];
+  },
+
+  isMyTurn() {
+    if (this.gamePhase !== 'playing') return true; // lobby: anyone can act
+    if (this.isHost) return true; // host always has privileges
+    return this.getCurrentTurnPlayerId() === this.playerId;
+  },
+
+  // --- Host: AI KP Action (public) ---
   async processHostAIAction(playerId, playerName, actionText) {
-    // Check if we have API configured
-    const cfg = getKPConfig();
-    if (!cfg.key) {
-      this.broadcastToAll({ type: 'kp-response',
-        playerId, playerName,
-        content: '⚠️ 房主尚未配置 AI API Key。请房主先在首页配置 AI 主持人 API (点击齿轮按钮)。',
-        isError: true
-      });
+    // Block AI actions during lobby phase
+    if (this.gamePhase === 'lobby') {
+      this.addChatMessage('system', null, '游戏尚未开始，请等待房主开始游戏后再进行行动');
+      this.broadcastToAll({ type: 'system', content: '游戏尚未开始，请等待房主开始游戏后再进行行动' });
       return;
     }
-
-    // Send system message that we're processing
-    this.broadcastToAll({ type: 'system', content: `⏳ AI主持人正在处理 ${playerName} 的行动...` });
+    const cfg = getKPConfig();
+    if (!cfg.key) {
+      this.broadcastToAll({ type: 'kp-response', playerId, playerName, content: '房主尚未配置 AI API Key。请在首页配置 AI 主持人 API。', isError: true });
+      return;
+    }
+    this.broadcastToAll({ type: 'system', content: 'AI主持人正在处理 ' + playerName + ' 的行动...' });
 
     try {
-      const systemPrompt = buildSystemPrompt();
-
-      // Build message context including recent multiplayer chat
+      const systemPrompt = buildMultiplayerSystemPrompt(playerId, playerName);
       const apiHistory = [];
-      const recentLog = this.chatLog.slice(-30);
-      for (const entry of recentLog) {
-        if (entry.type === 'action' && entry.content) {
-          apiHistory.push({ role: 'user', content: `${entry.sender || '玩家'}: ${entry.content}` });
-        } else if (entry.type === 'kp' && entry.content) {
-          apiHistory.push({ role: 'assistant', content: entry.content });
-        }
+      const recent = this.chatLog.slice(-40);
+      for (const e of recent) {
+        if (e.type === 'action' && e.content) apiHistory.push({ role: 'user', content: (e.sender || '玩家') + ': ' + e.content });
+        else if (e.type === 'kp' && e.content) apiHistory.push({ role: 'assistant', content: e.content });
       }
-      apiHistory.push({ role: 'user', content: `${playerName}: ${actionText}` });
+      apiHistory.push({ role: 'user', content: playerName + ': ' + actionText });
 
       const controller = new AbortController();
       let fullResponse = '';
-
       if (cfg.provider === 'anthropic') {
-        fullResponse = await callAnthropicAPI(cfg, systemPrompt, apiHistory, `${playerName}: ${actionText}`, controller);
+        fullResponse = await callAnthropicAPI(cfg, systemPrompt, apiHistory, playerName + ': ' + actionText, controller);
       } else {
-        fullResponse = await callOpenAIAPI(cfg, systemPrompt, apiHistory, `${playerName}: ${actionText}`, controller);
+        fullResponse = await callOpenAIAPI(cfg, systemPrompt, apiHistory, playerName + ': ' + actionText, controller);
       }
 
       const displayText = stripAICommands(fullResponse);
-
-      // Parse and apply AI commands on host
       const commands = parseAICommands(fullResponse);
+
+      // Apply commands and sync to the relevant player
       if (commands.length > 0) {
         const changes = applyAICommands(commands);
         if (changes.length > 0) {
-          this.broadcastToAll({ type: 'system', content: `📋 状态更新: ${changes.join('; ')}` });
-          this.addChatMessage('system', null, `📋 状态更新: ${changes.join('; ')}`);
-          // Sync updated game state
-          this.broadcastToAll({ type: 'player-list', players: this.players });
-          // Auto-save
+          this.broadcastToAll({ type: 'system', content: changes.join('; ') });
+          this.addChatMessage('system', null, changes.join('; '));
           const data = getGameSaveData();
           localStorage.setItem('ttrpg-game-autosave', JSON.stringify(data));
         }
+        // Sync character changes back to the acting player (and to all for display)
+        this.syncCharToPlayer(playerId);
+        this.broadcastToAll({ type: 'player-list', players: this.players });
+        this.broadcastToAll({ type: 'game-state', gameState: this.getGameStateSnapshot(),
+          players: this.players, theme: state.theme });
       }
 
-      // Broadcast KP response
+      // Broadcast response
       this.addChatMessage('kp', THEME_NAMES[state.theme] + ' 主持人', displayText);
-      this.broadcastToAll({
-        type: 'kp-response',
-        playerId, playerName,
-        content: displayText,
-        dice: null
-      });
+      this.broadcastToAll({ type: 'kp-response', playerId, playerName, content: displayText });
 
+      // Auto-advance turn in playing phase
+      if (this.gamePhase === 'playing') {
+        setTimeout(() => this.advanceTurn(), 2000);
+      }
     } catch (err) {
-      console.error('Host AI action error:', err);
-      this.broadcastToAll({
-        type: 'kp-response',
-        playerId, playerName,
-        content: `❌ AI 请求失败: ${err.message}`,
-        isError: true
-      });
+      console.error('Host AI error:', err);
+      this.broadcastToAll({ type: 'kp-response', playerId, playerName, content: 'AI 请求失败: ' + err.message, isError: true });
     }
   },
 
-  // --- Host: Process AI KP Secret (private to requesting player) ---
+  // --- Host: AI KP Secret ---
   async processHostAISecret(playerId, playerName, actionText) {
-    const cfg = getKPConfig();
-    if (!cfg.key) {
-      this.sendToPlayer(playerId, {
-        type: 'kp-secret-response',
-        content: '⚠️ 房主尚未配置 AI API Key。'
-      });
+    // Block AI secret actions during lobby phase
+    if (this.gamePhase === 'lobby') {
+      this.addChatMessage('system', null, '游戏尚未开始，秘密行动请等待房主开始游戏后使用');
+      this.sendToPlayer(playerId, { type: 'kp-secret-response', content: '游戏尚未开始，请等待房主开始游戏后再使用秘密行动' });
       return;
     }
-
+    const cfg = getKPConfig();
+    if (!cfg.key) {
+      this.sendToPlayer(playerId, { type: 'kp-secret-response', content: '房主尚未配置 AI API Key。' });
+      return;
+    }
     try {
-      const systemPrompt = buildSystemPrompt();
+      const systemPrompt = buildMultiplayerSystemPrompt(playerId, playerName);
       const apiHistory = [];
-      const recentLog = this.chatLog.slice(-20);
-      for (const entry of recentLog) {
-        if (entry.type === 'action' && entry.content) {
-          apiHistory.push({ role: 'user', content: `${entry.sender || '玩家'}: ${entry.content}` });
-        } else if (entry.type === 'kp' && entry.content) {
-          apiHistory.push({ role: 'assistant', content: entry.content });
-        }
+      const recent = this.chatLog.slice(-20);
+      for (const e of recent) {
+        if (e.type === 'action' && e.content) apiHistory.push({ role: 'user', content: (e.sender || '玩家') + ': ' + e.content });
+        else if (e.type === 'kp' && e.content) apiHistory.push({ role: 'assistant', content: e.content });
       }
-      const secretPrompt = `[秘密行动 - 仅此玩家与KP可见] ${playerName} 的秘密行动: ${actionText}`;
+      const secretPrompt = '[秘密行动 - 仅此玩家与KP可见] ' + playerName + ' 的秘密行动: ' + actionText;
       apiHistory.push({ role: 'user', content: secretPrompt });
 
       const controller = new AbortController();
       let fullResponse = '';
-
       if (cfg.provider === 'anthropic') {
         fullResponse = await callAnthropicAPI(cfg, systemPrompt, apiHistory, secretPrompt, controller);
       } else {
         fullResponse = await callOpenAIAPI(cfg, systemPrompt, apiHistory, secretPrompt, controller);
       }
-
       const displayText = stripAICommands(fullResponse);
-
-      // Apply commands if any
       const commands = parseAICommands(fullResponse);
       if (commands.length > 0) {
         applyAICommands(commands);
+        this.syncCharToPlayer(playerId);
       }
-
-      this.addChatMessage('secret', playerName, `[秘密] ${actionText} → ${displayText.substring(0, 100)}...`);
-      this.sendToPlayer(playerId, {
-        type: 'kp-secret-response',
-        content: displayText,
-        originalAction: actionText
-      });
-
+      this.addChatMessage('secret', playerName, '[秘密] ' + actionText.substring(0, 60) + '...');
+      this.sendToPlayer(playerId, { type: 'kp-secret-response', content: displayText, originalAction: actionText });
     } catch (err) {
-      this.sendToPlayer(playerId, {
-        type: 'kp-secret-response',
-        content: `❌ AI 请求失败: ${err.message}`,
-        isError: true
-      });
+      this.sendToPlayer(playerId, { type: 'kp-secret-response', content: 'AI 请求失败: ' + err.message, isError: true });
     }
   },
 
-  // --- Send to specific player (host only) ---
+  // --- Sync character state to a specific player ---
+  syncCharToPlayer(playerId) {
+    if (!this.players[playerId]) return;
+    // Update the player record with current host state
+    this.players[playerId].hp = cocState.currentHp;
+    this.players[playerId].san = cocState.san;
+    this.players[playerId].charData = this.players[playerId].charData || {};
+    Object.assign(this.players[playerId].charData, {
+      cocHp: cocState.currentHp, cocSan: cocState.san,
+      traits: state.traits.map(t => ({ ...t })),
+      equipment: state.equipment.map(e => ({ ...e }))
+    });
+    // Send updated character data to the player
+    this.sendToPlayer(playerId, {
+      type: 'char-sync',
+      charData: this.players[playerId].charData,
+      cocState: {
+        san: cocState.san, maxSan: cocState.maxSan,
+        luck: cocState.luck, maxHp: cocState.maxHp,
+        currentHp: cocState.currentHp, mp: cocState.mp,
+        maxMp: cocState.maxMp, cthulhuMythos: cocState.cthulhuMythos
+      }
+    });
+  },
+
+  // --- Send to specific player ---
   sendToPlayer(playerId, data) {
-    const pinfo = this.players[playerId];
-    if (!pinfo || !pinfo.connId) return;
-    const conn = this.connections[pinfo.connId];
-    if (conn && conn.open) {
-      conn.send(data);
+    if (playerId === this.playerId) {
+      // It's the host — apply locally
+      if (data.type === 'char-sync') {
+        if (data.charData) this.applyCharDataToSheet(data.charData);
+        if (data.cocState) Object.assign(cocState, data.cocState);
+        renderCocStatus(); renderCocChronicle(); renderTraits(); renderEquipment();
+      }
+      return;
     }
+    const pi = this.players[playerId];
+    if (!pi || !pi.connId) return;
+    const c = this.connections[pi.connId];
+    if (c && c.open) c.send(data);
   },
 
-  // --- Broadcast to all peers (host only) ---
+  // --- Broadcast to all ---
   broadcastToAll(data, excludePlayerId) {
-    for (const [connId, conn] of Object.entries(this.connections)) {
-      if (conn && conn.open) {
-        // Check if this conn belongs to the excluded player
+    for (const [cid, c] of Object.entries(this.connections)) {
+      if (c && c.open) {
         if (excludePlayerId) {
           let skip = false;
-          for (const [pid, pdata] of Object.entries(this.players)) {
-            if (pid === excludePlayerId && pdata.connId === connId) {
-              skip = true;
-              break;
-            }
+          for (const [p, pd] of Object.entries(this.players)) {
+            if (p === excludePlayerId && pd.connId === cid) { skip = true; break; }
           }
           if (skip) continue;
         }
-        conn.send(data);
+        c.send(data);
       }
     }
-    // Also show locally
     this.renderMultiplayerChat();
   },
 
-  // --- Client: Connect to host ---
+  // --- Client: Connect to Host ---
   connectToHost(hostId) {
     return new Promise((resolve, reject) => {
       const conn = this.peer.connect(hostId, {
@@ -2309,293 +2678,263 @@ const Multiplayer = {
       });
 
       const timeout = setTimeout(() => {
-        reject(new Error('连接房间超时，请确认房间号是否正确'));
-      }, 20000);
+        reject(new Error('连接房间超时。请确认: 1)房间号正确 2)房主在线 3)双方网络可直连。提示: 请房主复制完整房间号(含连字符)'));
+      }, 30000);
 
       conn.on('open', () => {
         clearTimeout(timeout);
         console.log('Connected to host:', hostId);
         this.hostConn = conn;
-
-        // Send hello with player info
+        const charData = this.collectMyCharData();
         conn.send({
           type: 'hello',
           playerId: this.playerId,
           playerName: this.playerName,
-          characterName: document.getElementById('charName')?.value?.trim() || '',
+          characterName: charData.name || '',
           hp: cocState.currentHp || '?',
-          san: cocState.san || '?'
+          san: cocState.san || '?',
+          charData: charData
         });
-
         this.connected = true;
-        this.showRoom();
+        this.showRoomView();
         this.startHeartbeat();
         document.getElementById('mpInput')?.removeAttribute('disabled');
         document.getElementById('mpSendBtn')?.removeAttribute('disabled');
-        showToast(`已加入房间 ${this.roomId}!`);
+        showToast('已加入房间 ' + this.roomId + '! 请在准备阶段选择角色并点击准备。');
         resolve();
       });
 
-      conn.on('data', (data) => {
-        this.handleClientMessage(data);
-      });
-
-      conn.on('close', () => {
-        console.log('Connection to host closed');
-        this.handleHostDisconnect();
-      });
-
+      conn.on('data', (data) => this.handleClientMessage(data));
+      conn.on('close', () => { console.log('Host connection closed'); this.handleHostDisconnect(); });
       conn.on('error', (err) => {
         clearTimeout(timeout);
         console.error('Connection error:', err);
         if (!this.connected) {
-          reject(new Error('无法连接到房主: ' + (err.message || '未知错误')));
+          reject(new Error('无法连接到房主: ' + (err.message || '未知错误。可能双方网络无法直连，请尝试使用同一局域网。')));
         } else {
           this.handleHostDisconnect();
         }
       });
-
       this.hostConn = conn;
     });
   },
 
-  // --- Client: Setup listeners for incoming connections from host ---
+  // --- Client Listeners ---
   setupClientListeners() {
     if (!this.peer) return;
-
     this.peer.on('connection', (conn) => {
-      console.log('Unexpected incoming connection on client:', conn.peer);
-      // In client mode, the host might reconnect from a different peer ID
       conn.on('data', (data) => this.handleClientMessage(data));
     });
   },
 
-  // --- Client: Handle messages from host ---
+  // --- Client: Handle Messages ---
   handleClientMessage(data) {
     if (!data || !data.type) return;
 
     switch (data.type) {
       case 'welcome': {
-        // Initial state sync from host
         this.players = data.players || {};
-        this.playerId = data.playerId || this.playerId;
-        if (data.players) {
-          this.players[this.playerId] = this.players[this.playerId] || {
-            id: this.playerId, name: this.playerName, isHost: false, joinedAt: Date.now()
-          };
+        if (!this.players[this.playerId]) {
+          this.players[this.playerId] = { id: this.playerId, name: this.playerName, isHost: false, joinedAt: Date.now(), ready: false };
         }
-        if (data.chatLog) {
-          this.chatLog = data.chatLog;
-        }
-        if (data.gameState) {
-          this.applyGameState(data.gameState);
-        }
-        if (data.theme && data.theme !== state.theme) {
-          selectRPG(data.theme);
-        }
+        if (data.chatLog) this.chatLog = data.chatLog;
+        if (data.gameState) this.applyGameState(data.gameState);
+        if (data.gamePhase) this.gamePhase = data.gamePhase;
+        if (data.turnOrder) this.turnOrder = data.turnOrder;
+        if (data.currentTurnIndex !== undefined) this.currentTurnIndex = data.currentTurnIndex;
+        if (data.theme && data.theme !== state.theme) selectRPG(data.theme);
         this.refreshUI();
-        this.renderPlayerList();
-        this.renderMultiplayerChat();
-        this.scrollChatBottom();
+        this.renderAllRoom();
+        break;
+      }
+
+      case 'game-start': {
+        this.gamePhase = 'playing';
+        this.turnOrder = data.turnOrder || [];
+        this.currentTurnIndex = data.currentTurnIndex || 0;
+        if (data.players) this.players = data.players;
+        const cp = this.turnOrder[this.currentTurnIndex];
+        const cpName = this.players[cp]?.name || '?';
+        this.addChatMessage('system', null, '游戏开始!');
+        this.addChatMessage('system', null, '🔔 当前轮到: ' + cpName);
+        this.renderAllRoom();
+        break;
+      }
+
+      case 'turn-change':
+      case 'turn-sync': {
+        if (data.turnOrder) this.turnOrder = data.turnOrder;
+        if (data.currentTurnIndex !== undefined) this.currentTurnIndex = data.currentTurnIndex;
+        const cp = this.turnOrder[this.currentTurnIndex];
+        const cpName = data.currentPlayerName || this.players[cp]?.name || '?';
+        if (data.type === 'turn-change') {
+          this.addChatMessage('system', null, '轮到: ' + cpName);
+        }
+        this.renderAllRoom();
+        break;
+      }
+
+      case 'ready-update': {
+        if (this.players[data.playerId]) {
+          this.players[data.playerId].ready = data.ready;
+          if (data.ready) this.readyPlayers.add(data.playerId);
+          else this.readyPlayers.delete(data.playerId);
+        }
+        this.renderAllRoom();
         break;
       }
 
       case 'player-joined': {
-        const newPlayer = { id: data.playerId, name: data.playerName, isHost: false, joinedAt: Date.now(),
-          charName: data.characterName || '', hp: '?', san: '?' };
-        this.players[data.playerId] = newPlayer;
-        this.addChatMessage('system', null, `👋 ${data.playerName} 加入了房间`);
-        this.renderPlayerList();
+        this.players[data.playerId] = { id: data.playerId, name: data.playerName, isHost: false,
+          joinedAt: Date.now(), ready: false, charName: data.charData?.name || '', hp: '?', san: '?' };
+        this.addChatMessage('system', null, '👋 ' + data.playerName + ' 加入了房间');
+        this.renderAllRoom();
         break;
       }
 
       case 'player-left': {
         delete this.players[data.playerId];
-        this.addChatMessage('system', null, `👋 ${data.playerName} 离开了房间`);
-        this.renderPlayerList();
+        this.readyPlayers.delete(data.playerId);
+        this.turnOrder = this.turnOrder.filter(id => id !== data.playerId);
+        this.addChatMessage('system', null, '👋 ' + data.playerName + ' 离开了房间');
+        this.renderAllRoom();
         break;
       }
 
       case 'player-list': {
+        // Preserve self and merge
+        const self = this.players[this.playerId];
         this.players = data.players || {};
-        // Preserve self
-        if (!this.players[this.playerId]) {
-          this.players[this.playerId] = {
-            id: this.playerId, name: this.playerName, isHost: false, joinedAt: Date.now()
-          };
+        if (self && !this.players[this.playerId]) {
+          this.players[this.playerId] = self;
         }
-        this.renderPlayerList();
+        this.renderAllRoom();
         break;
       }
 
-      case 'action': {
+      case 'action':
         this.addChatMessage('action', data.playerName, data.content);
         break;
-      }
 
-      case 'chat': {
+      case 'chat':
         this.addChatMessage('chat', data.playerName, data.content);
         break;
-      }
 
-      case 'dice': {
+      case 'dice':
         this.addChatMessage('dice', data.playerName, data.detail || data.result);
         break;
-      }
 
-      case 'kp-response': {
-        const role = data.isError ? 'kp-error' : 'kp';
-        this.addChatMessage(role, THEME_NAMES[state.theme] + ' 主持人', data.content);
+      case 'kp-response':
+        this.addChatMessage(data.isError ? 'kp-error' : 'kp', THEME_NAMES[state.theme] + ' 主持人', data.content);
         break;
-      }
 
-      case 'kp-secret-response': {
-        this.addChatMessage('secret-kp', '🤫 KP (秘密)', data.content);
+      case 'kp-secret-response':
+        this.addChatMessage('secret-kp', 'KP (秘密)', data.content);
         break;
-      }
 
-      case 'system': {
+      case 'system':
+      case 'system-msg':
         this.addChatMessage('system', null, data.content);
         break;
-      }
 
       case 'game-state': {
         if (data.gameState) this.applyGameState(data.gameState);
-        if (data.players) {
-          this.players = data.players;
-          this.renderPlayerList();
+        if (data.players) { this.players = data.players; }
+        if (data.chatLog) { this.chatLog = data.chatLog; }
+        if (data.gamePhase) this.gamePhase = data.gamePhase;
+        if (data.turnOrder) this.turnOrder = data.turnOrder;
+        if (data.currentTurnIndex !== undefined) this.currentTurnIndex = data.currentTurnIndex;
+        if (data.theme && data.theme !== state.theme) { selectRPG(data.theme); this.refreshUI(); }
+        this.renderAllRoom();
+        break;
+      }
+
+      case 'char-sync': {
+        // Host sent updated character data to this player
+        if (data.charData) this.applyCharDataToSheet(data.charData);
+        if (data.cocState) {
+          Object.assign(cocState, data.cocState);
+          renderCocStatus(); renderCocChronicle();
         }
-        if (data.chatLog) {
-          this.chatLog = data.chatLog;
-          this.renderMultiplayerChat();
-          this.scrollChatBottom();
-        }
-        if (data.theme && data.theme !== state.theme) {
-          selectRPG(data.theme);
-          this.refreshUI();
-        }
+        showToast('角色数据已同步');
         break;
       }
 
       default:
-        console.log('Unknown client message type:', data.type);
-    }
-  },
-
-  // --- Host Disconnect Handler ---
-  handleHostDisconnect() {
-    this.connected = false;
-    this.updateConnDot('disconnected');
-    this.stopHeartbeat();
-    this.addChatMessage('system', null, '⚠️ 与房主的连接已断开');
-
-    // Attempt reconnection
-    if (this.reconnectAttempts < this.maxReconnectAttempts && this.reconnectHostId) {
-      this.attemptReconnect();
-    } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      this.addChatMessage('system', null, '❌ 重连失败次数已达上限，请手动重新加入房间');
-      this.showReconnectToast('连接已断开，请重新加入房间', true);
+        console.log('Unknown client msg:', data.type);
     }
   },
 
   // --- Reconnection ---
+  handleHostDisconnect() {
+    this.connected = false;
+    this.updateConnDot('disconnected');
+    this.stopHeartbeat();
+    this.addChatMessage('system', null, '与房主的连接已断开');
+    if (this.reconnectAttempts < this.maxReconnectAttempts && this.reconnectHostId) {
+      this.attemptReconnect();
+    } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      this.addChatMessage('system', null, '❌ 重连失败，请手动重新加入房间');
+      this.showReconnectToast('连接已断开，请重新加入房间', true);
+    }
+  },
+
   attemptReconnect() {
     this.reconnectAttempts++;
     const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-
     this.updateConnDot('connecting');
-    this.showReconnectToast(`连接断开，正在重连 (${this.reconnectAttempts}/${this.maxReconnectAttempts})...  ${Math.round(delay/1000)}秒后重试`);
-
+    this.showReconnectToast('连接断开，正在重连 (' + this.reconnectAttempts + '/' + this.maxReconnectAttempts + ')...');
     this.reconnectTimer = setTimeout(async () => {
       try {
-        if (this.peer && this.peer.destroyed) {
-          await this.initPeer(this.playerId + '-' + this.reconnectHostId);
-          this.setupClientListeners();
-        }
+        if (this.peer && this.peer.destroyed) { await this.initPeer(null); this.setupClientListeners(); }
         await this.connectToHost(this.reconnectHostId);
         this.reconnectAttempts = 0;
         this.dismissReconnectToast();
         this.updateConnDot('connected');
-        this.addChatMessage('system', null, '✅ 已重新连接到房间');
-        // Request latest state
+        this.addChatMessage('system', null, '✅ 已重新连接');
         if (this.hostConn && this.hostConn.open) {
           this.hostConn.send({ type: 'request-state', playerId: this.playerId, playerName: this.playerName });
         }
       } catch (err) {
-        console.error('Reconnect attempt failed:', err);
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-          this.attemptReconnect();
-        } else {
-          this.showReconnectToast('连接已断开，请重新加入房间', true);
-        }
+        console.error('Reconnect failed:', err);
+        if (this.reconnectAttempts < this.maxReconnectAttempts) this.attemptReconnect();
+        else this.showReconnectToast('重连失败，请手动重新加入', true);
       }
     }, delay);
   },
 
   showReconnectToast(msg, isError) {
-    let toast = document.querySelector('.mp-reconnect-toast');
-    if (!toast) {
-      toast = document.createElement('div');
-      toast.className = 'mp-reconnect-toast';
-      document.body.appendChild(toast);
-    }
-    toast.className = 'mp-reconnect-toast' + (isError ? ' error' : '');
-    toast.textContent = msg;
-    toast.style.display = '';
-    if (isError) {
-      setTimeout(() => this.dismissReconnectToast(), 8000);
-    }
+    let t = document.querySelector('.mp-reconnect-toast');
+    if (!t) { t = document.createElement('div'); t.className = 'mp-reconnect-toast'; document.body.appendChild(t); }
+    t.className = 'mp-reconnect-toast' + (isError ? ' error' : '');
+    t.textContent = msg; t.style.display = '';
+    if (isError) setTimeout(() => this.dismissReconnectToast(), 8000);
   },
 
   dismissReconnectToast() {
-    const toast = document.querySelector('.mp-reconnect-toast');
-    if (toast) toast.style.display = 'none';
+    const t = document.querySelector('.mp-reconnect-toast');
+    if (t) t.style.display = 'none';
   },
 
-  // --- Leave Room ---
+  // --- Leave ---
   leaveRoom() {
     if (!confirm('确定要离开当前房间吗？')) return;
-
-    if (this.isHost) {
-      this.broadcastToAll({ type: 'system', content: '🏚️ 房主已关闭房间' });
-    }
-
+    if (this.isHost) this.broadcastToAll({ type: 'system', content: '🏚️ 房主已关闭房间' });
     this.cleanup();
-    this.showLobby();
+    this.showLobbyView();
     showToast('已离开房间');
   },
 
   cleanup() {
-    this.stopHeartbeat();
-    this.reconnectAttempts = 0;
-
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-
-    // Close all connections
-    for (const conn of Object.values(this.connections)) {
-      try { conn.close(); } catch(e) {}
-    }
+    this.stopHeartbeat(); this.reconnectAttempts = 0;
+    if (this.reconnectTimer) { clearTimeout(this.reconnectTimer); this.reconnectTimer = null; }
+    for (const c of Object.values(this.connections)) { try { c.close(); } catch(e) {} }
     this.connections = {};
-
-    if (this.hostConn) {
-      try { this.hostConn.close(); } catch(e) {}
-      this.hostConn = null;
-    }
-
-    if (this.peer) {
-      try { this.peer.destroy(); } catch(e) {}
-      this.peer = null;
-    }
-
-    this.connected = false;
-    this.isHost = false;
-    this.players = {};
-    this.chatLog = [];
-    this.roomId = null;
-
+    if (this.hostConn) { try { this.hostConn.close(); } catch(e) {} this.hostConn = null; }
+    if (this.peer) { try { this.peer.destroy(); } catch(e) {} this.peer = null; }
+    this.connected = false; this.isHost = false; this.gamePhase = 'lobby';
+    this.players = {}; this.chatLog = []; this.roomId = null;
+    this.turnOrder = []; this.currentTurnIndex = 0; this.readyPlayers = new Set();
     document.getElementById('mpInput')?.setAttribute('disabled', '');
     document.getElementById('mpSendBtn')?.setAttribute('disabled', '');
     this.dismissReconnectToast();
@@ -2606,57 +2945,30 @@ const Multiplayer = {
     this.stopHeartbeat();
     this.heartbeatTimer = setInterval(() => {
       if (!this.connected) return;
-
       if (this.isHost) {
-        // Check if any players have timed out
         const now = Date.now();
-        const timeout = 30000;
-        for (const [pid, pdata] of Object.entries(this.players)) {
-          if (pdata.isHost) continue;
-          const lastHb = this.lastHeartbeat[pid] || 0;
-          if (now - lastHb > timeout) {
-            // Player likely disconnected
-            this.handlePlayerDisconnect(pdata.connId);
-          }
+        for (const [pid, pd] of Object.entries(this.players)) {
+          if (pd.isHost) continue;
+          if (now - (this.lastHeartbeat[pid] || 0) > 35000) this.handlePlayerDisconnect(pd.connId);
         }
       } else {
-        // Send heartbeat to host
         if (this.hostConn && this.hostConn.open) {
-          this.hostConn.send({
-            type: 'heartbeat',
-            playerId: this.playerId,
-            playerName: this.playerName,
-            timestamp: Date.now()
-          });
+          this.hostConn.send({ type: 'heartbeat', playerId: this.playerId, playerName: this.playerName, timestamp: Date.now() });
         }
       }
     }, 8000);
   },
 
   stopHeartbeat() {
-    if (this.heartbeatTimer) {
-      clearInterval(this.heartbeatTimer);
-      this.heartbeatTimer = null;
-    }
+    if (this.heartbeatTimer) { clearInterval(this.heartbeatTimer); this.heartbeatTimer = null; }
   },
 
-  // --- Game State Snapshot (for sync) ---
+  // --- Game State ---
   getGameStateSnapshot() {
     return {
       theme: state.theme,
-      cocState: {
-        san: cocState.san, maxSan: cocState.maxSan,
-        luck: cocState.luck, maxHp: cocState.maxHp,
-        currentHp: cocState.currentHp, mp: cocState.mp,
-        maxMp: cocState.maxMp, cthulhuMythos: cocState.cthulhuMythos,
-        chronicle: cocState.chronicle.slice(-20),
-        skillChecks: [...cocState.skillChecks]
-      },
-      character: {
-        name: document.getElementById('charName')?.value?.trim() || '',
-        hp: document.getElementById('charHP')?.value || '',
-        maxHp: document.getElementById('charMaxHP')?.value || '',
-      }
+      cocState: { san: cocState.san, maxSan: cocState.maxSan, luck: cocState.luck, maxHp: cocState.maxHp, currentHp: cocState.currentHp, mp: cocState.mp, maxMp: cocState.maxMp, cthulhuMythos: cocState.cthulhuMythos, chronicle: cocState.chronicle.slice(-20), skillChecks: [...cocState.skillChecks] },
+      character: { name: document.getElementById('charName')?.value?.trim() || '', hp: document.getElementById('charHP')?.value || '', maxHp: document.getElementById('charMaxHP')?.value || '' }
     };
   },
 
@@ -2673,21 +2985,20 @@ const Multiplayer = {
       cocState.cthulhuMythos = gs.cocState.cthulhuMythos ?? cocState.cthulhuMythos;
       cocState.chronicle = gs.cocState.chronicle || cocState.chronicle;
       cocState.skillChecks = gs.cocState.skillChecks || cocState.skillChecks;
-      renderCocStatus();
-      renderCocChronicle();
+      renderCocStatus(); renderCocChronicle();
     }
   },
 
   // --- Connection Dot ---
   updateConnDot(status) {
-    const dot = document.getElementById('mpConnDot');
-    if (!dot) return;
-    dot.className = 'mp-room-dot';
-    if (status === 'disconnected') dot.classList.add('disconnected');
-    if (status === 'connecting') dot.classList.add('connecting');
+    const d = document.getElementById('mpConnDot');
+    if (!d) return;
+    d.className = 'mp-room-dot';
+    if (status === 'disconnected') d.classList.add('disconnected');
+    if (status === 'connecting') d.classList.add('connecting');
   },
 
-  // --- Send Message from Input ---
+  // --- Send Message ---
   sendMessage() {
     const input = document.getElementById('mpInput');
     if (!input || !this.connected) return;
@@ -2696,257 +3007,456 @@ const Multiplayer = {
     input.value = '';
 
     const mode = this.inputMode;
-    const playerName = this.playerName;
-    const playerId = this.playerId;
+    const pn = this.playerName;
+    const pid = this.playerId;
 
     switch (mode) {
       case 'public': {
-        // Public action: send to host for AI processing
         if (this.isHost) {
-          // Host processes directly
-          this.addChatMessage('action', playerName, text);
-          this.broadcastToAll({ type: 'action', playerId, playerName, content: text });
-          this.processHostAIAction(playerId, playerName, text);
-        } else {
-          // Client sends to host
-          if (this.hostConn && this.hostConn.open) {
-            this.hostConn.send({ type: 'action', playerId, playerName, content: text });
-            this.addChatMessage('action', playerName, text);
-            this.renderMultiplayerChat();
-          }
+          this.addChatMessage('action', pn, text);
+          this.broadcastToAll({ type: 'action', playerId: pid, playerName: pn, content: text });
+          this.processHostAIAction(pid, pn, text);
+        } else if (this.hostConn && this.hostConn.open) {
+          this.hostConn.send({ type: 'action', playerId: pid, playerName: pn, content: text });
+          this.addChatMessage('action', pn, text);
+          this.renderMultiplayerChat();
         }
         break;
       }
-
       case 'secret': {
         if (this.isHost) {
-          this.addChatMessage('secret', playerName, text);
-          this.processHostAISecret(playerId, playerName, text);
-        } else {
-          if (this.hostConn && this.hostConn.open) {
-            this.hostConn.send({ type: 'secret', playerId, playerName, content: text });
-            this.addChatMessage('secret', playerName, text);
-            this.renderMultiplayerChat();
-          }
+          this.addChatMessage('secret', pn, text);
+          this.processHostAISecret(pid, pn, text);
+        } else if (this.hostConn && this.hostConn.open) {
+          this.hostConn.send({ type: 'secret', playerId: pid, playerName: pn, content: text });
+          this.addChatMessage('secret', pn, text);
+          this.renderMultiplayerChat();
         }
         break;
       }
-
       case 'chat': {
-        const chatMsg = { type: 'chat', playerId, playerName, content: text };
-        if (this.isHost) {
-          this.addChatMessage('chat', playerName, text);
-          this.broadcastToAll(chatMsg);
-        } else {
-          if (this.hostConn && this.hostConn.open) {
-            this.hostConn.send(chatMsg);
-            this.addChatMessage('chat', playerName, text);
-            this.renderMultiplayerChat();
-          }
+        const m = { type: 'chat', playerId: pid, playerName: pn, content: text };
+        if (this.isHost) { this.addChatMessage('chat', pn, text); this.broadcastToAll(m); }
+        else if (this.hostConn && this.hostConn.open) {
+          this.hostConn.send(m); this.addChatMessage('chat', pn, text); this.renderMultiplayerChat();
         }
         break;
       }
     }
-
     this.scrollChatBottom();
   },
 
-  // --- Chat Log Management ---
+  // --- Chat Log ---
   addChatMessage(type, sender, content) {
-    this.chatLog.push({
-      type, sender, content,
-      time: new Date().toLocaleTimeString(),
-      id: Date.now() + '-' + Math.random().toString(36).substr(2, 5)
-    });
-    // Keep log manageable
-    if (this.chatLog.length > 300) {
-      this.chatLog = this.chatLog.slice(-300);
-    }
+    this.chatLog.push({ type, sender, content, time: new Date().toLocaleTimeString(), id: Date.now() + '-' + Math.random().toString(36).substr(2, 5) });
+    if (this.chatLog.length > 400) this.chatLog = this.chatLog.slice(-400);
     this.renderMultiplayerChat();
   },
 
-  // --- Render Multiplayer Chat ---
+  // --- Render Chat ---
   renderMultiplayerChat() {
-    const container = document.getElementById('mpKPMessages');
-    if (!container) return;
-
+    const c = document.getElementById('mpKPMessages');
+    if (!c) return;
     if (!this.chatLog.length) {
-      container.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:40px;font-size:.88rem;">输入行动指令开始冒险... 所有玩家可见</div>';
+      c.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:40px;font-size:.88rem;">输入行动指令开始冒险... 所有玩家可见</div>';
       return;
     }
-
-    container.innerHTML = this.chatLog.map(m => {
+    c.innerHTML = this.chatLog.map(m => {
       let cls, icon, content;
       switch (m.type) {
-        case 'kp':
-          cls = 'gm';
-          icon = '🤖';
-          content = `<div class="msg-sender" style="color:var(--text-gold);">${icon} ${esc(m.sender)}</div>${esc(m.content)}`;
-          break;
-        case 'kp-error':
-          cls = 'gm';
-          icon = '⚠️';
-          content = `<div class="msg-sender" style="color:var(--accent2);">${icon} ${esc(m.sender)}</div>${esc(m.content)}`;
-          break;
-        case 'action':
-          cls = 'action';
-          icon = '⚔️';
-          content = `<div class="msg-sender" style="color:var(--accent);">${icon} ${esc(m.sender)}</div>${esc(m.content)}`;
-          break;
-        case 'chat':
-          cls = 'chat';
-          icon = '💬';
-          content = `<div class="msg-sender" style="color:var(--text-dim);">${icon} ${esc(m.sender)}</div>${esc(m.content)}`;
-          break;
-        case 'secret':
-          cls = 'secret';
-          icon = '🤫';
-          content = `<div class="msg-sender" style="color:var(--accent2);">${icon} ${esc(m.sender)} (秘密行动)</div>${esc(m.content)}<div class="msg-secret-tag">仅KP可见</div>`;
-          break;
-        case 'secret-kp':
-          cls = 'secret';
-          icon = '🤫';
-          content = `<div class="msg-sender" style="color:var(--accent2);">${icon} ${esc(m.sender)}</div>${esc(m.content)}<div class="msg-secret-tag">仅你可见</div>`;
-          break;
-        case 'dice':
-          cls = 'action';
-          icon = '🎲';
-          content = `<div class="msg-sender" style="color:var(--accent);">${icon} ${esc(m.sender)} 掷骰</div>${esc(m.content)}`;
-          break;
-        case 'system':
-          cls = 'system';
-          content = esc(m.content);
-          break;
-        default:
-          cls = 'system';
-          content = esc(m.content);
+        case 'kp': cls = 'gm'; icon = 'KP'; content = '<div class="msg-sender" style="color:var(--text-gold);">[' + icon + '] ' + esc(m.sender) + '</div>' + esc(m.content); break;
+        case 'kp-error': cls = 'gm'; icon = 'ERR'; content = '<div class="msg-sender" style="color:var(--accent2);">[' + icon + '] ' + esc(m.sender) + '</div>' + esc(m.content); break;
+        case 'action': cls = 'action'; icon = 'ACT'; content = '<div class="msg-sender" style="color:var(--accent);">[' + icon + '] ' + esc(m.sender) + '</div>' + esc(m.content); break;
+        case 'chat': cls = 'chat'; icon = 'MSG'; content = '<div class="msg-sender" style="color:var(--text-dim);">[' + icon + '] ' + esc(m.sender) + '</div>' + esc(m.content); break;
+        case 'secret': cls = 'secret'; icon = 'SEC'; content = '<div class="msg-sender" style="color:var(--accent2);">[' + icon + '] ' + esc(m.sender) + ' (秘密)</div>' + esc(m.content) + '<div class="msg-secret-tag">仅KP可见</div>'; break;
+        case 'secret-kp': cls = 'secret'; icon = 'SEC'; content = '<div class="msg-sender" style="color:var(--accent2);">[' + icon + '] ' + esc(m.sender) + '</div>' + esc(m.content) + '<div class="msg-secret-tag">仅你可见</div>'; break;
+        case 'dice': cls = 'action'; icon = 'DICE'; content = '<div class="msg-sender" style="color:var(--accent);">[' + icon + '] ' + esc(m.sender) + ' 掷骰</div>' + esc(m.content); break;
+        default: cls = 'system'; content = esc(m.content);
       }
-
-      return `<div class="mp-msg ${cls}">${content}</div>`;
+      return '<div class="mp-msg ' + cls + '">' + content + '</div>';
     }).join('');
   },
 
   scrollChatBottom() {
-    const container = document.getElementById('mpKPMessages');
-    if (container) {
-      setTimeout(() => { container.scrollTop = container.scrollHeight; }, 60);
-    }
+    const c = document.getElementById('mpKPMessages');
+    if (c) setTimeout(() => { c.scrollTop = c.scrollHeight; }, 60);
   },
 
   // --- Render Player List ---
   renderPlayerList() {
-    const container = document.getElementById('mpPlayerList');
-    if (!container) return;
-
+    const c = document.getElementById('mpPlayerList');
+    if (!c) return;
     const entries = Object.values(this.players).sort((a, b) => {
-      if (a.isHost) return -1;
-      if (b.isHost) return 1;
+      if (a.isHost) return -1; if (b.isHost) return 1;
       return (a.joinedAt || 0) - (b.joinedAt || 0);
     });
-
     if (!entries.length) {
-      container.innerHTML = '<div style="color:var(--text-dim);font-size:.78rem;text-align:center;padding:16px;">暂无玩家</div>';
+      c.innerHTML = '<div style="color:var(--text-dim);font-size:.78rem;text-align:center;padding:16px;">暂无玩家</div>';
     } else {
-      container.innerHTML = entries.map(p => {
+      c.innerHTML = entries.map(p => {
         const isMe = p.id === this.playerId;
         const isHost = p.isHost;
         const cls = (isHost ? ' host' : '') + (isMe ? ' you' : '');
-        const avatarLetter = (p.name || '?')[0].toUpperCase();
-        const badge = isHost
-          ? '<span class="mp-player-badge host-badge">房主</span>'
-          : (isMe ? '<span class="mp-player-badge you-badge">你</span>' : '');
+        const av = (p.name || '?')[0].toUpperCase();
+        const badge = isHost ? '<span class="mp-player-badge host-badge">房主</span>' : (isMe ? '<span class="mp-player-badge you-badge">你</span>' : '');
         const stats = [];
         if (p.charName) stats.push(p.charName);
-        if (p.hp !== undefined && p.hp !== '?') stats.push(`HP:${p.hp}`);
-        if (p.san !== undefined && p.san !== '?') stats.push(`SAN:${p.san}`);
-        const statsText = stats.join(' · ') || '状态未知';
-
-        return `<div class="mp-player-item${cls}">
-          <div class="mp-player-avatar">${avatarLetter}</div>
-          <div class="mp-player-info">
-            <div class="mp-player-name">${esc(p.name)}</div>
-            <div class="mp-player-stats">${esc(statsText)}</div>
-          </div>
-          ${badge}
-        </div>`;
+        if (p.hp !== undefined && p.hp !== '?') stats.push('HP:' + p.hp);
+        if (p.san !== undefined && p.san !== '?') stats.push('SAN:' + p.san);
+        const readyMark = p.ready ? ' [已准备]' : (this.gamePhase === 'lobby' ? ' [等待中]' : '');
+        const statsText = (stats.join(' | ') || '状态未知') + readyMark;
+        return '<div class="mp-player-item' + cls + '"><div class="mp-player-avatar">' + av + '</div><div class="mp-player-info"><div class="mp-player-name">' + esc(p.name) + '</div><div class="mp-player-stats">' + esc(statsText) + '</div></div>' + badge + '</div>';
       }).join('');
     }
+    const cnt = document.getElementById('mpPeerCount');
+    if (cnt) cnt.textContent = entries.length + ' 人在线';
+    const mi = document.getElementById('mpMyInfo');
+    if (mi) mi.innerHTML = esc(this.playerName) + (this.isHost ? ' (房主)' : '') + ' | ' + (this.gamePhase === 'lobby' ? '准备阶段' : '游戏中');
+  },
 
-    // Update peer count
-    const countEl = document.getElementById('mpPeerCount');
-    if (countEl) {
-      countEl.textContent = `👥 ${entries.length}人`;
+  // --- Turn Banner ---
+  renderTurnBanner() {
+    const c = document.getElementById('mpTurnBanner');
+    if (!c) return;
+    if (this.gamePhase !== 'playing') { c.style.display = 'none'; return; }
+    c.style.display = '';
+    const cp = this.turnOrder[this.currentTurnIndex];
+    const cpName = this.players[cp]?.name || '?';
+    const isMe = cp === this.playerId;
+    let html = '当前行动: <strong>' + esc(cpName) + '</strong>';
+    if (isMe) html += ' <span style="color:var(--text-gold);font-weight:700;">[你的回合]</span>';
+    html += ' &nbsp;|&nbsp; 顺序: ' + this.turnOrder.map((id, i) => {
+      const nm = this.players[id]?.name || '?';
+      return i === this.currentTurnIndex ? '<strong style="color:var(--text-gold);">' + esc(nm) + '</strong>' : esc(nm);
+    }).join(' → ');
+    c.innerHTML = html;
+    // End turn button
+    const btn = document.getElementById('mpEndTurnBtn');
+    if (btn) btn.style.display = (isMe || this.isHost) ? '' : 'none';
+  },
+
+  // --- Lobby Controls ---
+  renderLobbyControls() {
+    const c = document.getElementById('mpLobbyControls');
+    if (!c) return;
+    if (this.gamePhase !== 'lobby') { c.style.display = 'none'; return; }
+    c.style.display = '';
+
+    // Populate character selector
+    this.populateRoomCharSelect();
+
+    // Render 4-player slot grid
+    this.renderSlotsGrid();
+
+    // Determine if current player has valid character data
+    const myData = this.players[this.playerId]?.charData || this.collectMyCharData();
+    const hasChar = myData && myData.name;
+
+    // Ready button
+    const readyBtn = document.getElementById('mpReadyBtn');
+    const charWarn = document.getElementById('mpRoomCharWarn');
+    if (readyBtn) {
+      const isReady = this.readyPlayers.has(this.playerId);
+      readyBtn.textContent = isReady ? '取消准备' : '准备就绪';
+      readyBtn.className = 'btn ' + (isReady ? 'btn-ghost' : 'btn-save') + ' btn-sm';
+      if (!isReady) {
+        readyBtn.disabled = !hasChar;
+        if (charWarn) charWarn.style.display = hasChar ? 'none' : '';
+      } else {
+        readyBtn.disabled = false;
+        if (charWarn) charWarn.style.display = 'none';
+      }
     }
 
-    // Update self info in sidebar footer
-    const myInfo = document.getElementById('mpMyInfo');
-    if (myInfo) {
-      myInfo.innerHTML = `🎭 ${esc(this.playerName)}${this.isHost ? ' (房主)' : ''}`;
+    // Character info display
+    const charInfo = document.getElementById('mpRoomCharInfo');
+    if (charInfo && hasChar) {
+      charInfo.style.display = '';
+      const parts = [];
+      if (myData.race) parts.push(myData.race);
+      if (myData.cls) parts.push(myData.cls);
+      if (myData.level) parts.push('Lv.' + myData.level);
+      if (myData.hp) parts.push('HP:' + myData.hp);
+      charInfo.textContent = myData.name + (parts.length ? ' | ' + parts.join(' | ') : '');
+    }
+
+    // Start game button for host
+    const startBtn = document.getElementById('mpStartGameBtn');
+    if (startBtn) {
+      startBtn.style.display = this.isHost ? '' : 'none';
+      const allPlayers = Object.values(this.players);
+      const total = allPlayers.length;
+      const ready = allPlayers.filter(p => p.ready).length;
+      const allHaveChars = allPlayers.every(p => p.charData && p.charData.name);
+      startBtn.textContent = '开始游戏 (' + ready + '/' + total + ' 已准备)';
+      startBtn.disabled = ready < total || total < 1 || !allHaveChars;
+      if (!allHaveChars && total > 0) {
+        startBtn.title = '所有玩家必须选择角色卡后才能开始游戏';
+      } else {
+        startBtn.title = '';
+      }
     }
   },
 
-  // --- Multiplayer Quick Actions ---
-  renderMultiplayerQuickActions() {
-    const container = document.getElementById('mpKPQuickActions');
-    if (!container) return;
+  // --- Populate room character selector ---
+  populateRoomCharSelect() {
+    const sel = document.getElementById('mpRoomCharSelect');
+    if (!sel) return;
+    // Rebuild options each time to reflect latest saved characters
+    const currentVal = sel.value;
+    while (sel.options.length > 1) sel.remove(1);
+    const saved = JSON.parse(localStorage.getItem('ttrpg-saved-chars') || '[]');
+    saved.forEach((ch, i) => {
+      if (ch.name) {
+        const opt = document.createElement('option');
+        opt.value = i.toString();
+        opt.textContent = ch.name + (ch.race ? ' (' + ch.race + ')' : '') + (ch.cls ? ' - ' + ch.cls : '');
+        sel.appendChild(opt);
+      }
+    });
+    if (currentVal) sel.value = currentVal;
+  },
+
+  // --- Handle character selection change in room ---
+  mpRoomCharChanged() {
+    const sel = document.getElementById('mpRoomCharSelect');
+    if (!sel) return;
+    const idx = parseInt(sel.value);
+    const saved = JSON.parse(localStorage.getItem('ttrpg-saved-chars') || '[]');
+    if (isNaN(idx) || !saved[idx]) {
+      // Clear character data
+      if (this.players[this.playerId]) {
+        this.players[this.playerId].charData = null;
+        this.players[this.playerId].charName = '';
+      }
+      this.renderLobbyControls();
+      return;
+    }
+    const ch = saved[idx];
+    // Apply to local sheet
+    this.applyCharDataToSheet(ch);
+    const cd = this.collectMyCharData();
+    if (this.players[this.playerId]) {
+      this.players[this.playerId].charData = cd;
+      this.players[this.playerId].charName = cd.name || '';
+      this.players[this.playerId].hp = cd.hp || cd.cocHp || '?';
+      this.players[this.playerId].san = cd.cocSan || cd.san || '?';
+    }
+    // If host, broadcast updated player info
+    if (this.isHost) {
+      this.broadcastToAll({ type: 'player-list', players: this.players });
+      this.broadcastToAll({ type: 'game-state', gameState: this.getGameStateSnapshot(),
+        players: this.players, theme: state.theme });
+    } else if (this.hostConn && this.hostConn.open) {
+      this.hostConn.send({ type: 'char-update', playerId: this.playerId, charData: cd });
+    }
+    showToast('已选择角色: ' + (cd.name || '无'));
+    this.renderLobbyControls();
+  },
+
+  // --- Render 4-player slot grid ---
+  renderSlotsGrid() {
+    const grid = document.getElementById('mpSlotsGrid');
+    if (!grid) return;
+    const allPlayers = Object.values(this.players);
+    // Always show 4 slots
+    const slots = [];
+    for (let i = 0; i < 4; i++) {
+      const p = allPlayers[i];
+      if (p) {
+        const cd = p.charData || {};
+        const isReady = p.ready;
+        const cls = 'mp-slot filled' + (isReady ? ' ready' : '');
+        const name = esc(p.name || '玩家');
+        const charName = cd.name || '未选角色';
+        const stats = [];
+        if (cd.race) stats.push(cd.race);
+        if (cd.cls) stats.push(cd.cls);
+        if (cd.hp) stats.push('HP:' + cd.hp);
+        const statsText = stats.length ? stats.join(' | ') : '';
+        const statusCls = isReady ? 'slot-badge ready-badge' : 'slot-badge wait-badge';
+        const statusText = isReady ? '已准备' : '等待中';
+        slots.push('<div class="' + cls + '"><div class="slot-num">' + (i+1) + '</div><div class="slot-name">' + name + '</div><div class="slot-char">' + esc(charName) + '</div>' + (statsText ? '<div class="slot-stats">' + esc(statsText) + '</div>' : '') + '<div class="' + statusCls + '">' + statusText + '</div></div>');
+      } else {
+        slots.push('<div class="mp-slot empty"><div class="slot-num">' + (i+1) + '</div><div class="slot-name">空位</div><div class="slot-char">等待玩家加入</div></div>');
+      }
+    }
+    grid.innerHTML = slots.join('');
+  },
+
+  // --- Player Ready (client action) ---
+  playerReady() {
+    if (!this.connected || this.gamePhase !== 'lobby') return;
+    const isReady = !this.readyPlayers.has(this.playerId);
+    if (isReady) {
+      // Force character card selection before ready
+      const charData = this.collectMyCharData();
+      if (!charData.name) {
+        showToast('请先在人物卡页面创建或选择角色，填写角色姓名后再准备');
+        return;
+      }
+      if (!charData.race && !charData.cls) {
+        showToast('请至少填写角色的种族或职业信息');
+        return;
+      }
+      this.readyPlayers.add(this.playerId);
+      this.players[this.playerId].ready = true;
+      this.players[this.playerId].charData = charData;
+      this.players[this.playerId].charName = charData.name || '';
+      this.players[this.playerId].hp = charData.hp || charData.cocHp || '?';
+      this.players[this.playerId].san = charData.cocSan || '?';
+    } else {
+      this.readyPlayers.delete(this.playerId);
+      this.players[this.playerId].ready = false;
+    }
+    const charData = this.collectMyCharData();
+    if (this.isHost) {
+      if (isReady) this.players[this.playerId].charData = charData;
+      this.broadcastToAll({ type: 'ready-update', playerId: this.playerId, ready: isReady });
+      this.broadcastToAll({ type: 'player-list', players: this.players });
+    } else if (this.hostConn && this.hostConn.open) {
+      this.hostConn.send({ type: 'player-ready', playerId: this.playerId, playerName: this.playerName, ready: isReady, charData: charData });
+    }
+    this.renderAllRoom();
+    showToast(isReady ? '已准备就绪，等待房主开始游戏' : '已取消准备');
+  },
+
+  // --- Host Start Game ---
+  startGame() {
+    if (!this.isHost || this.gamePhase !== 'lobby') return;
+    // Collect host character data before start
+    const hostData = this.collectMyCharData();
+    if (hostData && hostData.name) {
+      this.players[this.playerId].charData = hostData;
+      this.players[this.playerId].charName = hostData.name;
+      this.players[this.playerId].hp = hostData.hp || hostData.cocHp || '?';
+    }
+    this.handleHostMessage(null, { type: 'request-game-start', playerId: this.playerId, playerName: this.playerName });
+  },
+
+  // --- Generate Scenario Intro on Game Start ---
+  async generateGameStartScenario() {
+    const cfg = getKPConfig();
+    if (!cfg.key) {
+      this.addChatMessage('system', null, '冒险即将开始... (未配置AI API Key，跳过开场叙述)');
+      this.renderMultiplayerChat();
+      return;
+    }
+
+    const allChars = Object.values(this.players)
+      .filter(p => p.charData && p.charData.name)
+      .map(p => {
+        const cd = p.charData;
+        let desc = cd.name;
+        if (cd.race) desc += ' (' + cd.race + ')';
+        if (cd.cls) desc += ' - ' + cd.cls;
+        if (cd.level) desc += ' Lv.' + cd.level;
+        if (cd.hp) desc += ' | HP:' + cd.hp;
+        if (cd.background) desc += '\n背景: ' + cd.background;
+        return desc;
+      });
+
+    if (allChars.length === 0) {
+      this.addChatMessage('system', null, '冒险即将开始! 请各位玩家描述你们的行动。');
+      this.renderMultiplayerChat();
+      return;
+    }
+
+    const themeName = THEME_NAMES[state.theme] || 'TTRPG';
+    const scenarioPrompt = '你是' + themeName + '的主持人。请为即将开始的冒险撰写一段开场叙述（约400字）。\n\n' +
+      '参与角色:\n' + allChars.join('\n\n') + '\n\n' +
+      '要求:\n' +
+      '1. 用生动的语言描绘冒险开始的场景，将每个角色的背景自然地融入到开场中\n' +
+      '2. 营造沉浸式氛围——让玩家立刻感受到这个世界的独特气息\n' +
+      '3. 以"请描述你们各自的行动"或类似的开放式结尾引导玩家开始互动\n' +
+      '4. 纯叙述文本，不要包含规则说明、检定提示或【】标记\n' +
+      '5. 像讲述一个故事的开篇—有场景、有气氛、有悬念\n' +
+      '\n请现在输出开场叙述:';
+
+    const basePrompt = KP_SYSTEM_PROMPTS[state.theme] || KP_SYSTEM_PROMPTS.dnd;
+    const systemPromptForIntro = basePrompt + '\n\n你现在需要输出游戏的开场叙述。请直接输出叙述文本，不要包含任何规则说明。';
+
+    try {
+      this.addChatMessage('system', null, 'AI主持人正在生成开场叙述...');
+      this.renderMultiplayerChat();
+
+      const controller = new AbortController();
+      let fullResponse = '';
+      if (cfg.provider === 'anthropic') {
+        fullResponse = await callAnthropicAPI(cfg, systemPromptForIntro, [], scenarioPrompt, controller);
+      } else {
+        fullResponse = await callOpenAIAPI(cfg, systemPromptForIntro, [], scenarioPrompt, controller);
+      }
+
+      const intro = fullResponse.trim();
+      this.addChatMessage('kp', themeName + ' 主持人', intro);
+      this.broadcastToAll({ type: 'kp-response', playerId: this.playerId, playerName: '开篇叙述', content: intro });
+      // Also add a prompt for players to act
+      this.addChatMessage('system', null, '--- 冒险开始! 请各位玩家描述你们的行动 ---');
+      this.broadcastToAll({ type: 'system', content: '--- 冒险开始! 请各位玩家描述你们的行动 ---' });
+    } catch (err) {
+      console.error('Generate start scenario error:', err);
+      const fallback = '冒险正式开始! 请各位玩家描述你们的行动吧。';
+      this.addChatMessage('kp', themeName + ' 主持人', fallback);
+      this.broadcastToAll({ type: 'kp-response', playerId: this.playerId, playerName: '开篇叙述', content: fallback });
+    }
+  },
+
+  // --- End Turn ---
+  endTurn() {
+    if (!this.connected || this.gamePhase !== 'playing') return;
+    if (this.isHost) {
+      this.advanceTurn();
+    } else if (this.hostConn && this.hostConn.open) {
+      this.hostConn.send({ type: 'end-turn', playerId: this.playerId, playerName: this.playerName });
+    }
+  },
+
+  // --- Quick Actions ---
+  renderQuickActions() {
+    const c = document.getElementById('mpKPQuickActions');
+    if (!c) return;
     const actions = KP_QUICK_ACTIONS[state.theme] || KP_QUICK_ACTIONS.dnd;
-    container.innerHTML = actions.map(a =>
-      `<button class="mp-quick-btn" onclick="App.mpQuickAction('${a}')">${a}</button>`
-    ).join('');
+    c.innerHTML = actions.map(a => '<button class="mp-quick-btn" onclick="App.mpQuickAction(\'' + a + '\')">' + a + '</button>').join('');
   },
 
-  // --- DICE ROLL (multiplayer broadcast) ---
+  // --- Dice ---
   rollAndBroadcast(diceNotation) {
     let result, detail;
     if (!diceNotation) {
-      // Use current dice selection
       const dice = state.currentDice || 20;
       result = Math.floor(Math.random() * dice) + 1;
-      detail = `d${dice} = ${result}`;
+      detail = 'd' + dice + ' = ' + result;
     } else {
-      const match = diceNotation.match(/^(\d+)?d(\d+)([+-]\d+)?$/i);
-      if (!match) return;
-      const count = parseInt(match[1]) || 1;
-      const sides = parseInt(match[2]);
-      const mod = parseInt(match[3]) || 0;
+      const m = diceNotation.match(/^(\d+)?d(\d+)([+-]\d+)?$/i);
+      if (!m) return;
+      const count = parseInt(m[1]) || 1;
+      const sides = parseInt(m[2]);
+      const mod = parseInt(m[3]) || 0;
       const rolls = [];
       result = 0;
       for (let i = 0; i < count; i++) { const r = Math.floor(Math.random() * sides) + 1; rolls.push(r); result += r; }
       result += mod;
-      detail = count > 1 ? `${rolls.join('+')}${mod?(mod>0?'+'+mod:mod):''} = ${result}` : `${diceNotation} = ${result}`;
+      detail = count > 1 ? rolls.join('+') + (mod ? (mod > 0 ? '+' + mod : mod) : '') + ' = ' + result : diceNotation + ' = ' + result;
     }
-
     const msg = { type: 'dice', playerId: this.playerId, playerName: this.playerName, result, detail };
-    if (this.isHost) {
-      this.addChatMessage('dice', this.playerName, detail);
-      this.broadcastToAll(msg);
-    } else {
-      if (this.hostConn && this.hostConn.open) {
-        this.hostConn.send(msg);
-        this.addChatMessage('dice', this.playerName, detail);
-        this.renderMultiplayerChat();
-      }
-    }
+    if (this.isHost) { this.addChatMessage('dice', this.playerName, detail); this.broadcastToAll(msg); }
+    else if (this.hostConn && this.hostConn.open) { this.hostConn.send(msg); this.addChatMessage('dice', this.playerName, detail); this.renderMultiplayerChat(); }
     this.scrollChatBottom();
     return { result, detail };
   },
 
-  // --- Set Input Mode ---
+  // --- Input Mode ---
   setInputMode(mode) {
     this.inputMode = mode;
     document.querySelectorAll('.mp-input-tab').forEach(t => t.classList.remove('active', 'secret-active'));
-    const tab = document.querySelector(`.mp-input-tab[data-mp-input="${mode}"]`);
-    if (tab) {
-      tab.classList.add('active');
-      if (mode === 'secret') tab.classList.add('secret-active');
-    }
+    const tab = document.querySelector('.mp-input-tab[data-mp-input="' + mode + '"]');
+    if (tab) { tab.classList.add('active'); if (mode === 'secret') tab.classList.add('secret-active'); }
     const input = document.getElementById('mpInput');
     if (input) {
-      switch (mode) {
-        case 'public': input.placeholder = '输入行动指令，例如「调查书架」...'; break;
-        case 'secret': input.placeholder = '秘密行动 (仅KP可见)...'; break;
-        case 'chat':   input.placeholder = '发送聊天消息...'; break;
-      }
+      if (mode === 'public') input.placeholder = '输入行动指令...';
+      else if (mode === 'secret') input.placeholder = '秘密行动 (仅KP可见)...';
+      else input.placeholder = '发送聊天消息...';
       input.focus();
     }
   },
@@ -2955,39 +3465,101 @@ const Multiplayer = {
   copyRoomId() {
     if (!this.roomId) return;
     navigator.clipboard?.writeText(this.roomId).then(() => {
-      showToast(`房间号 ${this.roomId} 已复制到剪贴板!`);
-    }).catch(() => {
-      showToast(`房间号: ${this.roomId} (请手动复制)`);
-    });
+      showToast('房间号已复制到剪贴板!');
+    }).catch(() => { showToast('房间号: ' + this.roomId + ' (请手动复制)'); });
   },
 
-  // --- Update status (HP/SAN changes etc.) ---
+  // --- Status Update ---
   broadcastStatusUpdate() {
     if (!this.connected) return;
-    const update = {
-      type: 'update-status',
-      playerId: this.playerId,
-      playerName: this.playerName,
-      hp: cocState.currentHp,
-      san: cocState.san,
-      charName: document.getElementById('charName')?.value?.trim() || ''
-    };
-
+    const charData = this.collectMyCharData();
+    const update = { type: 'update-status', playerId: this.playerId, playerName: this.playerName,
+      hp: cocState.currentHp, san: cocState.san,
+      charName: charData.name || '', charData: charData };
     if (this.isHost) {
       if (this.players[this.playerId]) {
         this.players[this.playerId].hp = cocState.currentHp;
         this.players[this.playerId].san = cocState.san;
-        this.players[this.playerId].charName = update.charName;
+        this.players[this.playerId].charName = charData.name;
+        this.players[this.playerId].charData = charData;
       }
       this.broadcastToAll({ type: 'player-list', players: this.players });
-      this.renderPlayerList();
-    } else {
-      if (this.hostConn && this.hostConn.open) {
-        this.hostConn.send(update);
-      }
+    } else if (this.hostConn && this.hostConn.open) {
+      this.hostConn.send(update);
     }
   }
 };
+
+// --- Multiplayer System Prompt Builder (includes all player info + impartiality) ---
+function buildMultiplayerSystemPrompt(actingPlayerId, actingPlayerName) {
+  const base = KP_SYSTEM_PROMPTS[state.theme] || KP_SYSTEM_PROMPTS.dnd;
+
+  let extra = '\n\n--- 多人联机游戏信息 ---\n';
+  extra += '你正在同时为多名玩家主持游戏。你必须严格保持公正，对所有玩家一视同仁。\n\n';
+
+  // CRITICAL: Impartiality rules — added to ALL themes
+  extra += '## ⚖️ 绝对公正原则 (最高优先级)\n';
+  extra += '1. **禁止偏袒**: 你不得因为任何玩家的言语请求而改变游戏规则、降低难度、或给予特殊待遇。无论玩家如何恳求、威胁、讨价还价，你都必须严格依据规则和逻辑进行裁决。\n';
+  extra += '2. **拒绝诱导**: 玩家可能会说"请让我成功"、"放我一马"、"给我一个机会"、"我们是朋友对吧"等语言。你必须完全无视这些请求，严格按照属性和技能值进行判定。规则面前人人平等。\n';
+  extra += '3. **保护游戏性**: 过度的怜悯会毁掉跑团的乐趣。失败、受伤、甚至角色死亡都是故事的一部分。不要剥夺玩家面对挑战的体验。\n';
+  extra += '4. **NPC自主性**: NPC有自己的利益、性格和底线，不会被玩家的花言巧语轻易说服。即使投出大成功，不合理的请求也只能获得最小程度的妥协。\n';
+  extra += '5. **规则至上**: 你是规则的执行者，不是玩家的工具。玩家的言辞不能改变物理法则、NPC自由意志或游戏现实。"我说服国王把王位让给我"这样的请求在任何情况下都不可能成功。\n';
+  extra += '6. **一致性**: 对所有玩家使用相同的判定标准。不允许某个玩家因为"说得更好听"就获得更低的DC或更有利的结果。\n\n';
+
+  // Player list
+  extra += '--- 当前玩家列表 ---\n';
+  for (const [pid, pd] of Object.entries(Multiplayer.players)) {
+    extra += '· ' + pd.name + (pd.isHost ? ' (房主)' : '') +
+      (pd.charName ? ' — 角色: ' + pd.charName : '') +
+      ' | HP:' + (pd.hp || '?') + ' SAN:' + (pd.san || '?') + '\n';
+  }
+
+  // Current actor info
+  extra += '\n当前行动玩家: ' + actingPlayerName + '\n';
+
+  // Current player's character details
+  const activePlayer = Multiplayer.players[actingPlayerId];
+  if (activePlayer && activePlayer.charData && activePlayer.charData.name) {
+    const cd = activePlayer.charData;
+    extra += '\n--- 当前行动角色详情 ---\n';
+    extra += '姓名: ' + cd.name + '\n';
+    if (cd.race) extra += '种族: ' + cd.race + '\n';
+    if (cd.cls) extra += '职业: ' + cd.cls + '\n';
+    extra += '等级: ' + (cd.level || 1) + '\n';
+    if (cd.attributes) {
+      extra += '属性:\n';
+      for (const k of ATTR_KEYS) {
+        extra += '  ' + ATTR_NAMES[k] + ': ' + (cd.attributes[k] || 20) + ' (调整值 ' + modPct(cd.attributes[k] || 20) + ')\n';
+      }
+    }
+    if (cd.traits && cd.traits.length) extra += '特质: ' + cd.traits.map(t => t.name).filter(Boolean).join('、') + '\n';
+    if (cd.equipment && cd.equipment.length) extra += '装备: ' + cd.equipment.map(e => e.name + (e.qty > 1 ? '×' + e.qty : '')).join('、') + '\n';
+    if (cd.cocHp !== undefined) extra += '当前HP: ' + cd.cocHp + '/ 最大HP: ' + cd.maxHp + '\n';
+    if (cd.cocSan !== undefined) extra += '当前SAN: ' + cd.cocSan + '\n';
+  }
+
+  // Scenario Knowledge Database
+  if (scenarioDbContent && scenarioDbContent.trim()) {
+    extra += '\n\n## 📚 剧本知识库 (请严格参考)\n';
+    extra += '以下是你作为主持人必须了解的游戏背景信息。在描述场景、扮演NPC、推进剧情时，必须严格遵循这些设定。\n\n';
+    extra += scenarioDbContent.trim() + '\n';
+    extra += '\n请确保你的所有叙述与上述设定保持一致。\n';
+  }
+
+  // Host's CoC state (global)
+  if (state.theme === 'coc') {
+    extra += '\n--- 全局CoC状态 ---\n';
+    extra += 'SAN: ' + cocState.san + '/' + cocState.maxSan + ' | HP: ' + cocState.currentHp + '/' + cocState.maxHp;
+    extra += ' | LUCK: ' + cocState.luck + ' | MP: ' + cocState.mp + '/' + cocState.maxMp + '\n';
+    if (cocState.skillChecks.length) extra += '技能提升标记: ' + cocState.skillChecks.join('、') + '\n';
+    if (cocState.chronicle.length) {
+      extra += '近期编年史:\n';
+      cocState.chronicle.slice(-5).forEach(c => { extra += '· ' + c.text + '\n'; });
+    }
+  }
+
+  return base + extra;
+}
 
 // Multiplayer input mode tabs
 document.addEventListener('click', function(e) {
@@ -3070,6 +3642,7 @@ function init() {
   // Load KP chat history
   loadKPChatHistory();
   loadKPConfig();
+  loadScenarioDB();
 
   // Particle effects
   initParticles();
@@ -3121,6 +3694,8 @@ window.App = {
   // Game saves & CoC
   saveGame, loadGame, deleteGame, loadAutosave, renderGameSaves,
   getCocState: () => cocState,
+  // Scenario DB
+  toggleScenarioDB, closeScenarioDB, saveScenarioDB, exportScenarioDB, importScenarioDBPrompt,
   // Multiplayer
   mpCreateRoom:        () => Multiplayer.createRoom(),
   mpJoinRoom:           () => Multiplayer.joinRoom(),
@@ -3130,6 +3705,10 @@ window.App = {
   mpQuickAction:        (action) => { document.getElementById('mpInput').value = action; Multiplayer.sendMessage(); },
   mpSetInputMode:       (mode) => Multiplayer.setInputMode(mode),
   mpRollAndBroadcast:   (notation) => Multiplayer.rollAndBroadcast(notation),
+  mpPlayerReady:        () => Multiplayer.playerReady(),
+  mpStartGame:          () => Multiplayer.startGame(),
+  mpEndTurn:            () => Multiplayer.endTurn(),
+  mpRoomCharChanged:    () => Multiplayer.mpRoomCharChanged(),
   isConnected:          () => Multiplayer.connected,
   broadcastStatusUpdate:() => Multiplayer.broadcastStatusUpdate(),
 };

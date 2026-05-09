@@ -297,14 +297,17 @@ async function detectProxy() {
     } catch {}
   }
 
-  // 2) Local development server
-  try {
-    const resp = await fetch('/__ttrpg_ping__', { method: 'GET', signal: AbortSignal.timeout(2000) });
-    if (resp.ok && resp.headers.get('X-TTRPG-Server') === '1') {
-      _proxyBase = '/api/proxy';
-      return _proxyBase;
-    }
-  } catch {}
+  // 2) Local development server — only check on localhost to avoid 404 console noise on static hosts
+  const host = location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.') || host.startsWith('10.')) {
+    try {
+      const resp = await fetch('/__ttrpg_ping__', { method: 'GET', signal: AbortSignal.timeout(2000) });
+      if (resp.ok && resp.headers.get('X-TTRPG-Server') === '1') {
+        _proxyBase = '/api/proxy';
+        return _proxyBase;
+      }
+    } catch {}
+  }
 
   // 3) No proxy — call APIs directly (all major providers support CORS)
   _proxyBase = null;

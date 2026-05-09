@@ -115,7 +115,12 @@ export function getKPConfig() {
   } else {
     model = document.getElementById('kpModelOpenAI')?.value || 'gpt-4o';
   }
-  const endpoint = 'https://api.openai.com/v1/chat/completions';
+  let endpoint;
+  if (model.startsWith('deepseek-')) {
+    endpoint = 'https://api.deepseek.com/v1/chat/completions';
+  } else {
+    endpoint = 'https://api.openai.com/v1/chat/completions';
+  }
   return { provider, key, model, endpoint };
 }
 
@@ -500,15 +505,15 @@ export async function sendKPMessage() {
       if (errMsg === 'Failed to fetch' || err.name === 'TypeError') {
         errMsg = '无法连接本地服务器 — 请确保 TTRPG 的启动窗口没有关闭，然后刷新页面重试';
       } else if (errMsg.includes('HTTP 404')) {
-        errMsg = 'API 端点返回 404 — 请检查 KP 设置中的「API 端点」地址是否正确';
+        errMsg = 'API 端点返回 404 — 请检查模型是否与 API 提供商匹配';
       } else if (errMsg.includes('upstream api returned 404')) {
-        errMsg = '上游 API 返回 404 — 请检查 API 端点 URL 和模型名称是否匹配';
+        errMsg = 'API 端点返回 404 — 请检查模型名称是否匹配当前 API 提供商';
       } else if (errMsg.includes('HTTP 405')) {
-        errMsg = 'API 端点返回 405 (Method Not Allowed) — 请检查 KP 设置中的「API 端点」地址是否正确，可能需要包含完整路径如 /v1/chat/completions';
+        errMsg = 'API 端点返回 405 (Method Not Allowed) — 请检查模型与 API 提供商是否匹配';
       } else if (errMsg.includes('HTTP 401') || errMsg.includes('HTTP 403')) {
         errMsg = 'API Key 无效或无权访问 — 请检查 KP 设置中的 API Key';
       } else if (errMsg.includes('HTTP 502') || errMsg.includes('proxy error')) {
-        errMsg = '代理转发失败 — 请检查网络连接或 API 端点是否可访问';
+        errMsg = '代理转发失败 — 请检查网络连接是否正常';
       }
       kpState.chatHistory[kpState.chatHistory.length - 1].content = `请求失败: ${errMsg}`;
       console.error('KP API error:', err);

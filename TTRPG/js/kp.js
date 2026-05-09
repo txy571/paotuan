@@ -506,6 +506,8 @@ export async function sendKPMessage() {
         errMsg = 'API 端点返回 404 — 请检查 KP 设置中的「API 端点」地址是否正确';
       } else if (errMsg.includes('upstream api returned 404')) {
         errMsg = '上游 API 返回 404 — 请检查 API 端点 URL 和模型名称是否匹配';
+      } else if (errMsg.includes('HTTP 405')) {
+        errMsg = 'API 端点返回 405 (Method Not Allowed) — 请检查 KP 设置中的「API 端点」地址是否正确，可能需要包含完整路径如 /v1/chat/completions';
       } else if (errMsg.includes('HTTP 401') || errMsg.includes('HTTP 403')) {
         errMsg = 'API Key 无效或无权访问 — 请检查 KP 设置中的 API Key';
       } else if (errMsg.includes('HTTP 502') || errMsg.includes('proxy error')) {

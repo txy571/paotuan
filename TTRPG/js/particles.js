@@ -1,202 +1,161 @@
 // ==================== STARFIELD BACKGROUND ====================
-// Multi-layer particle system simulating a realistic night sky:
-//   Layer 6 (deepest) — very dim, dense far-field dust
-//   Layer 5 — dim stars, slow drift
-//   Layer 4 — medium stars, subtle twinkle
-//   Layer 3 — brighter mid-field, occasional color tint
-//   Layer 2 — bright stars with glow halos
-//   Layer 1 (nearest) — very bright, large glow, strong twinkle
+// Multi-layer particle system simulating a realistic night sky.
+//
+// Layers (deepest → nearest):
+//   8 — ultra-deep field dust (tiny, dense)
+//   7 — very dim distant stars
+//   6 — dim field stars
+//   5 — medium-faint stars, subtle twinkle
+//   4 — medium stars, color tint
+//   3 — brighter mid-field, glow halos
+//   2 — bright stars, prominent glow
+//   1 — very bright, large halo, strong twinkle
+//
+// Features: Milky Way band, nebula blobs, shooting stars, stellar color spectrum.
 
 let running = false;
 let frameCount = 0;
 
-// Stellar color temperatures: O(blue) B(blue-white) A(white) F(yellow-white) G(yellow) K(orange) M(red)
-const STELLAR_COLORS = [
-  '#9db4ff', // O/B — hot blue (rare, ~1%)
-  '#aac3ff', '#b7cdff', '#c4d5ff', // B/A — blue-white (~5%)
-  '#cad8ff', '#dae2ff', '#e8ecff', // A — white (~15%)
-  '#fff9f0', '#fff5e8', '#fff2e0', // F — yellow-white (~20%)
-  '#ffe8c8', '#ffddb0', '#ffd29a', // G — yellow (~20%)
-  '#ffc885', '#ffbc72', '#ffb060', // K — orange (~25%)
-  '#ff9e4f', '#ff8c3e', '#ff7a30', '#ff6822', // M — red-orange (~14%)
+// ── Stellar color temperatures (O B A F G K M) ──
+const STELLAR = [
+  '#9db4ff', // O/B blue (rare)
+  '#a8bfff','#b3c8ff','#bfd0ff','#cad8ff', // B/A blue-white
+  '#d4e0ff','#dde6ff','#e6ecff','#eff2ff', // A white
+  '#faf8f5','#fff6ed','#fff4e8','#fff0e0', // F yellow-white
+  '#ffedd5','#ffe8c8','#ffe3bb','#ffddb0', // G yellow
+  '#ffd7a3','#ffd096','#ffc885','#ffc075', // K orange
+  '#ffb765','#ffae55','#ffa345','#ff9835','#ff8c25','#ff7a18', // M red-orange
 ];
 
-function randomStarColor() {
+function starColor() {
   const r = Math.random();
-  if (r < 0.01) return STELLAR_COLORS[0];            // O/B blue
-  if (r < 0.06) return STELLAR_COLORS[Math.floor(Math.random() * 3) + 1];   // B/A blue-white
-  if (r < 0.21) return STELLAR_COLORS[Math.floor(Math.random() * 3) + 4];   // A white
-  if (r < 0.41) return STELLAR_COLORS[Math.floor(Math.random() * 3) + 7];   // F yellow-white
-  if (r < 0.61) return STELLAR_COLORS[Math.floor(Math.random() * 3) + 10];  // G yellow
-  if (r < 0.86) return STELLAR_COLORS[Math.floor(Math.random() * 3) + 13];  // K orange
-  return STELLAR_COLORS[Math.floor(Math.random() * 4) + 16];                  // M red
+  if (r < 0.008) return STELLAR[0];                         // O/B
+  if (r < 0.05)  return STELLAR[Math.floor(Math.random()*4)+1];   // B/A
+  if (r < 0.20)  return STELLAR[Math.floor(Math.random()*4)+5];   // A
+  if (r < 0.42)  return STELLAR[Math.floor(Math.random()*4)+9];   // F
+  if (r < 0.64)  return STELLAR[Math.floor(Math.random()*4)+13];  // G
+  if (r < 0.88)  return STELLAR[Math.floor(Math.random()*4)+17];  // K
+  return STELLAR[Math.floor(Math.random()*6)+21];                   // M
 }
 
-// Per-layer config — tuned for a 1920×1080 viewport (multiplied by area ratio on smaller screens)
-function getLayerCounts(cw, ch) {
-  const area = cw * ch;
-  const base = 1920 * 1080;
-  const scale = Math.max(0.4, area / base);
+// ── Layer config (counts for 1920×1080, scaled by viewport area) ──
+function layerCounts(cw, ch) {
+  const s = Math.max(0.35, (cw * ch) / (1920 * 1080));
   return {
-    6: Math.round(450 * scale),  // deepest — very dim
-    5: Math.round(300 * scale),  // dim
-    4: Math.round(180 * scale),  // medium
-    3: Math.round(90 * scale),   // bright mid
-    2: Math.round(40 * scale),   // bright with glow
-    1: Math.round(18 * scale),   // nearest — large glow
+    8: Math.round(600 * s),  // ultra-deep dust
+    7: Math.round(450 * s),  // very dim
+    6: Math.round(320 * s),  // dim
+    5: Math.round(200 * s),  // medium-faint
+    4: Math.round(120 * s),  // medium
+    3: Math.round(60 * s),   // bright mid
+    2: Math.round(28 * s),   // bright
+    1: Math.round(14 * s),   // nearest bright
   };
 }
 
+// ── Milky Way density — broad diagonal band with wavy edges ──
+function milkyWay(x, y, w, h) {
+  const cx = w * 0.38, cy = h * 0.45;
+  const baseAngle = 0.6;
+  const wave = 0.25 * Math.sin(x * 0.0008 + y * 0.0003) + 0.15 * Math.cos(y * 0.0006);
+  const angle = baseAngle + wave;
+  const dx = (x - cx) / w;
+  const dy = (y - cy) / h;
+  const dist = Math.abs(dx * Math.cos(angle) - dy * Math.sin(angle));
+  // Core + wide halo
+  const core = Math.exp(-dist * dist * 12);
+  const halo = 0.4 * Math.exp(-dist * dist * 2.5);
+  return Math.min(1, 0.45 + 0.55 * (core + halo));
+}
+
+// ── Nebula blobs — large, very faint colored patches ──
+const nebulae = [];
+function initNebulae(w, h) {
+  nebulae.length = 0;
+  for (let i = 0; i < 5; i++) {
+    nebulae.push({
+      x: Math.random() * w, y: Math.random() * h,
+      rx: 120 + Math.random() * 280,
+      ry: 60 + Math.random() * 160,
+      alpha: 0.015 + Math.random() * 0.03,
+      hue: [210, 280, 340, 30, 180][i], // blue, purple, pink, orange, teal
+      phase: Math.random() * Math.PI * 2,
+    });
+  }
+}
+
+// ── Shooting stars ──
+let shooters = [];
+function spawnShooter(w, h) {
+  return {
+    x: Math.random() * w,
+    y: Math.random() * h * 0.6,
+    vx: (Math.random() * 3 + 4) * (Math.random() < 0.5 ? 1 : -1),
+    vy: (Math.random() * 1.5 + 1) * (Math.random() < 0.5 ? 1 : -1),
+    life: 1,
+    decay: 0.008 + Math.random() * 0.02,
+    len: 40 + Math.random() * 80,
+  };
+}
+
+// ── Star creation ──
 let stars = [];
 let constellations = [];
 
-function milkyWayDensity(x, y, w, h) {
-  // Diagonal band simulating Milky Way
-  const cx = w * 0.35, cy = h * 0.4;
-  const angle = 0.55 + 0.3 * Math.cos(x * 0.0004) + 0.2 * Math.sin(y * 0.0005);
-  const dx = (x - cx) / w;
-  const dy = (y - cy) / h;
-  const distFromAxis = Math.abs(dx * Math.cos(angle) - dy * Math.sin(angle)) * 2.5;
-  return 0.5 + 0.5 * Math.exp(-distFromAxis * distFromAxis * 3);
-}
-
 function createStar(layer, cw, ch) {
-  // Non-uniform distribution skewed toward Milky Way band
-  let x, y;
-  const density = milkyWayDensity(x = Math.random() * cw, y = Math.random() * ch, cw, ch);
-  if (Math.random() > density) {
-    x = Math.random() * cw;
-    y = Math.random() * ch;
-  }
+  let x = Math.random() * cw, y = Math.random() * ch;
+  const mw = milkyWay(x, y, cw, ch);
+  if (Math.random() > mw) { x = Math.random() * cw; y = Math.random() * ch; }
 
-  const baseSize = (7 - layer) * 0.45; // layer 6→0.45, layer 1→2.7
-
-  switch (layer) {
-    case 6:
-      return {
-        layer: 6,
-        x, y,
-        size: Math.random() * 0.6 + 0.2,
-        baseOpacity: Math.random() * 0.15 + 0.04,
-        opacity: 0,
-        speedX: (Math.random() - 0.5) * 0.015,
-        speedY: (Math.random() - 0.5) * 0.015,
-        twinkleSpeed: Math.random() * 0.002 + 0.0005,
-        twinklePhase: Math.random() * Math.PI * 2,
-        color: randomStarColor(),
-        glow: false,
-      };
-    case 5:
-      return {
-        layer: 5,
-        x, y,
-        size: Math.random() * 0.7 + 0.4,
-        baseOpacity: Math.random() * 0.25 + 0.1,
-        opacity: 0,
-        speedX: (Math.random() - 0.5) * 0.03,
-        speedY: (Math.random() - 0.5) * 0.03,
-        twinkleSpeed: Math.random() * 0.003 + 0.001,
-        twinklePhase: Math.random() * Math.PI * 2,
-        color: randomStarColor(),
-        glow: false,
-      };
-    case 4:
-      return {
-        layer: 4,
-        x, y,
-        size: Math.random() * 0.9 + 0.5,
-        baseOpacity: Math.random() * 0.35 + 0.15,
-        opacity: 0,
-        speedX: (Math.random() - 0.5) * 0.06,
-        speedY: (Math.random() - 0.5) * 0.06,
-        twinkleSpeed: Math.random() * 0.005 + 0.002,
-        twinklePhase: Math.random() * Math.PI * 2,
-        color: randomStarColor(),
-        glow: false,
-      };
-    case 3:
-      return {
-        layer: 3,
-        x, y,
-        size: Math.random() * 1.2 + 0.7,
-        baseOpacity: Math.random() * 0.35 + 0.35,
-        opacity: 0,
-        speedX: (Math.random() - 0.5) * 0.1,
-        speedY: (Math.random() - 0.5) * 0.1,
-        twinkleSpeed: Math.random() * 0.008 + 0.004,
-        twinklePhase: Math.random() * Math.PI * 2,
-        color: randomStarColor(),
-        glow: true,
-      };
-    case 2:
-      return {
-        layer: 2,
-        x, y,
-        size: Math.random() * 1.8 + 1.0,
-        baseOpacity: Math.random() * 0.3 + 0.5,
-        opacity: 0,
-        speedX: (Math.random() - 0.5) * 0.15,
-        speedY: (Math.random() - 0.5) * 0.15,
-        twinkleSpeed: Math.random() * 0.015 + 0.006,
-        twinklePhase: Math.random() * Math.PI * 2,
-        color: randomStarColor(),
-        glow: true,
-        glowSize: 3,
-      };
-    case 1:
-      return {
-        layer: 1,
-        x, y,
-        size: Math.random() * 2.5 + 1.5,
-        baseOpacity: Math.random() * 0.3 + 0.65,
-        opacity: 0,
-        speedX: (Math.random() - 0.5) * 0.2,
-        speedY: (Math.random() - 0.5) * 0.2,
-        twinkleSpeed: Math.random() * 0.025 + 0.01,
-        twinklePhase: Math.random() * Math.PI * 2,
-        color: Math.random() < 0.4 ? '#ffffff' : randomStarColor(),
-        glow: true,
-        glowSize: 6,
-      };
-    default:
-      return null;
-  }
+  const siz = [0, 2.8, 1.8, 1.3, 0.95, 0.7, 0.5, 0.35, 0.22][layer];
+  const sz = siz * (0.5 + Math.random() * 0.5);
+  const op = [0, 0.72, 0.55, 0.42, 0.30, 0.20, 0.12, 0.07, 0.04][layer];
+  const boost = Math.random() < 0.08 ? 1.4 : 1; // occasional brighter stars
+  return {
+    layer, x, y,
+    size: Math.max(0.18, sz + (Math.random() - 0.5) * sz * 0.5),
+    baseOpacity: op * (0.6 + Math.random() * 0.4) * boost,
+    opacity: 0,
+    vx: (Math.random() - 0.5) * layer * 0.025,
+    vy: (Math.random() - 0.5) * layer * 0.025,
+    twFreq: (0.0003 + Math.random() * 0.001) * (9 - layer),
+    twPhase: Math.random() * Math.PI * 2,
+    twAmp: (9 - layer) * (0.04 + Math.random() * 0.04),
+    color: starColor(),
+    glow: layer <= 3,
+    glowR: layer === 1 ? 5.5 : layer === 2 ? 3.5 : 2,
+  };
 }
 
-function generateConstellations() {
-  const nearStars = stars.filter(s => s.layer <= 3);
+function makeConstellations() {
+  const pool = stars.filter(s => s.layer <= 4);
   const pairs = [];
-  const maxDist = Math.min(window.innerWidth, window.innerHeight) * 0.25;
+  const maxD = Math.min(window.innerWidth, window.innerHeight) * 0.22;
   const used = new Set();
-  for (let i = 0; i < 6; i++) {
-    const a = nearStars[Math.floor(Math.random() * nearStars.length)];
-    // Find a nearby star for more natural constellations
-    let best = null, bestDist = Infinity;
-    for (let tries = 0; tries < 30; tries++) {
-      const b = nearStars[Math.floor(Math.random() * nearStars.length)];
+  for (let i = 0; i < 7; i++) {
+    const a = pool[Math.floor(Math.random() * pool.length)];
+    let best = null, bestD = Infinity;
+    for (let t = 0; t < 40; t++) {
+      const b = pool[Math.floor(Math.random() * pool.length)];
       if (b === a || used.has(b)) continue;
       const d = Math.hypot(a.x - b.x, a.y - b.y);
-      if (d < maxDist && d < bestDist && d > 20) { best = b; bestDist = d; }
+      if (d < maxD && d < bestD && d > 15) { best = b; bestD = d; }
     }
-    if (best) {
-      pairs.push({ a, b: best });
-      used.add(best);
-    }
+    if (best) { pairs.push({ a, b: best }); used.add(best); }
   }
   return pairs;
 }
 
 function initStars(cw, ch) {
   stars = [];
-  const counts = getLayerCounts(cw, ch);
-  for (let layer = 6; layer >= 1; layer--) {
-    for (let i = 0; i < counts[layer]; i++) {
-      stars.push(createStar(layer, cw, ch));
-    }
-  }
-  constellations = generateConstellations();
+  const lc = layerCounts(cw, ch);
+  for (let l = 8; l >= 1; l--)
+    for (let i = 0; i < lc[l]; i++)
+      stars.push(createStar(l, cw, ch));
+  constellations = makeConstellations();
 }
 
+// ── Main ──
 export function initParticles() {
   const canvas = document.getElementById('particles');
   if (!canvas) return;
@@ -211,83 +170,127 @@ export function initParticles() {
   window.addEventListener('resize', resize);
 
   initStars(w, h);
+  initNebulae(w, h);
 
-  // Rotate constellation pairs every 25s
-  setInterval(() => { constellations = generateConstellations(); }, 25000);
+  setInterval(() => { constellations = makeConstellations(); }, 22000);
 
-  function getAccent() {
+  function accent() {
     return getComputedStyle(document.body).getPropertyValue('--accent').trim() || '#d4943a';
   }
 
-  function drawGlow(x, y, radius, color, intensity) {
-    const r = radius * intensity;
-    const gradient = ctx.createRadialGradient(x, y, 0, x, y, r);
-    const hex = color.length === 7 ? color : '#ffffff';
-    gradient.addColorStop(0, hex);
-    gradient.addColorStop(0.15, hex + '55');
-    gradient.addColorStop(0.5, hex + '11');
-    gradient.addColorStop(1, 'transparent');
-    ctx.fillStyle = gradient;
-    ctx.globalAlpha = 0.6;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fill();
+  // Glow halo for bright stars
+  function drawGlow(x, y, r, color, intensity) {
+    const R = r * intensity;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, R);
+    const hx = color.length === 7 ? color : '#ffffff';
+    g.addColorStop(0, hx + '44');
+    g.addColorStop(0.2, hx + '18');
+    g.addColorStop(0.6, hx + '04');
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
     ctx.globalAlpha = 1;
+  }
+
+  // Nebula blob
+  function drawNebula(n) {
+    const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, Math.max(n.rx, n.ry));
+    const pulse = 0.85 + 0.15 * Math.sin(frameCount * 0.0004 + n.phase);
+    const a = n.alpha * pulse;
+    g.addColorStop(0, `hsla(${n.hue},60%,60%,${a})`);
+    g.addColorStop(0.3, `hsla(${n.hue},50%,50%,${a*0.5})`);
+    g.addColorStop(0.7, `hsla(${n.hue},40%,40%,${a*0.12})`);
+    g.addColorStop(1, 'transparent');
+    ctx.save();
+    ctx.translate(n.x, n.y);
+    ctx.scale(1, n.ry / Math.max(1, n.rx));
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0, 0, n.rx, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  // Shooting star
+  function drawShooter(s) {
+    const tailX = s.x - s.vx * s.len;
+    const tailY = s.y - s.vy * s.len;
+    const g = ctx.createLinearGradient(s.x, s.y, tailX, tailY);
+    g.addColorStop(0, `rgba(255,255,255,${0.9*s.life})`);
+    g.addColorStop(0.3, `rgba(255,255,240,${0.5*s.life})`);
+    g.addColorStop(1, 'transparent');
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(s.x, s.y);
+    ctx.lineTo(tailX, tailY);
+    ctx.stroke();
+    // Head glow
+    drawGlow(s.x, s.y, 1.5, '#ffffff', 3 * s.life);
   }
 
   function animate() {
     ctx.clearRect(0, 0, w, h);
-    const accent = getAccent();
+    const acc = accent();
     frameCount++;
 
-    // Subtle parallax — depth layers shift at different rates
-    const parallaxX = Math.sin(frameCount * 0.0003) * 0.15;
-    const parallaxY = Math.cos(frameCount * 0.00025) * 0.1;
+    const px = Math.sin(frameCount * 0.00025) * 0.12;
+    const py = Math.cos(frameCount * 0.0002) * 0.08;
 
-    // Constellation lines (behind stars)
-    ctx.strokeStyle = accent + '0A';
-    ctx.lineWidth = 0.4;
+    // Nebulae (deepest background)
+    for (const n of nebulae) drawNebula(n);
+
+    // Constellation lines
+    ctx.strokeStyle = acc + '09';
+    ctx.lineWidth = 0.35;
     for (const { a, b } of constellations) {
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
     }
 
-    // Draw stars, deepest layer first
+    // Stars — sort by layer (deepest first)
     const sorted = [...stars].sort((a, b) => a.layer - b.layer);
     for (const s of sorted) {
-      // Twinkle — deeper layers twinkle less
-      const twinkleAmp = (7 - s.layer) * 0.06; // layer 6→0.06, layer 1→0.36
-      const noise = Math.sin(frameCount * s.twinkleSpeed + s.twinklePhase);
-      s.opacity = s.baseOpacity * (1 - twinkleAmp + twinkleAmp * (0.5 + 0.5 * noise));
+      // Twinkle
+      const n = Math.sin(frameCount * s.twFreq + s.twPhase);
+      s.opacity = s.baseOpacity * (1 - s.twAmp + s.twAmp * (0.5 + 0.5 * n));
 
-      // Slow drift
-      const driftScale = (7 - s.layer) * 0.02;
-      s.x += s.speedX + parallaxX * driftScale;
-      s.y += s.speedY + parallaxY * driftScale;
-      if (s.x < -5) s.x = w + 5;
-      if (s.x > w + 5) s.x = -5;
-      if (s.y < -5) s.y = h + 5;
-      if (s.y > h + 5) s.y = -5;
+      // Drift + parallax
+      const ds = (9 - s.layer) * 0.015;
+      s.x += s.vx + px * ds;
+      s.y += s.vy + py * ds;
+      if (s.x < -8) s.x = w + 8;
+      if (s.x > w + 8) s.x = -8;
+      if (s.y < -8) s.y = h + 8;
+      if (s.y > h + 8) s.y = -8;
 
       // Glow behind bright stars
-      if (s.glow && s.opacity > 0.25) {
-        drawGlow(s.x, s.y, s.size, s.color, s.glowSize || 2.5);
-      }
+      if (s.glow && s.opacity > 0.22)
+        drawGlow(s.x, s.y, s.size, s.color, s.glowR);
 
-      // Skip faintest stars occasionally for natural feel
-      if (s.layer >= 5 && s.opacity < 0.04 && Math.random() < 0.3) continue;
+      // Skip ultra-faint stars randomly (simulates atmospheric extinction)
+      if (s.layer >= 7 && s.opacity < 0.03 && Math.random() < 0.35) continue;
 
-      // Draw star
+      // Draw
       ctx.beginPath();
-      const drawSize = s.size * (s.layer <= 2 && s.opacity > 0.5 ? 1.3 : 1);
-      ctx.arc(s.x, s.y, Math.max(0.3, drawSize), 0, Math.PI * 2);
+      const ds2 = s.size * (s.layer <= 2 && s.opacity > 0.45 ? 1.35 : 1);
+      ctx.arc(s.x, s.y, Math.max(0.2, ds2), 0, Math.PI * 2);
       ctx.fillStyle = s.color;
-      ctx.globalAlpha = Math.max(0.03, s.opacity);
+      ctx.globalAlpha = Math.max(0.025, s.opacity);
       ctx.fill();
     }
     ctx.globalAlpha = 1;
+
+    // Shooting stars
+    if (Math.random() < 0.003 && shooters.length < 2) {
+      shooters.push(spawnShooter(w, h));
+    }
+    for (let i = shooters.length - 1; i >= 0; i--) {
+      const s = shooters[i];
+      s.x += s.vx; s.y += s.vy;
+      s.life -= s.decay;
+      if (s.life <= 0) shooters.splice(i, 1);
+      else drawShooter(s);
+    }
+
     running = true;
     requestAnimationFrame(animate);
   }
@@ -295,10 +298,9 @@ export function initParticles() {
   animate();
 }
 
-// Handle resize: regenerate star positions (keep relative positions for stability)
 window.addEventListener('resize', () => {
   if (!running) return;
-  const cw = window.innerWidth;
-  const ch = window.innerHeight;
+  const cw = window.innerWidth, ch = window.innerHeight;
   initStars(cw, ch);
+  initNebulae(cw, ch);
 });

@@ -98,6 +98,10 @@
               <label>API Key</label>
               <input type="password" id="kpApiKey" placeholder="输入你的 API Key...">
             </div>
+            <div>
+              <label>Worker URL (API代理 + 联机中继)</label>
+              <input type="text" id="kpWorkerUrl" placeholder="https://your-app.workers.dev">
+            </div>
             <div><button class="btn btn-save btn-sm" data-action="kp:saveConfig" style="height:42px;">保存配置</button></div>
           </div>
 
@@ -440,7 +444,7 @@
               请先选择角色卡
             </button>
             <p class="mp-hint">房间创建后将自动生成房间号，分享给好友即可加入。</p>
-            <p class="mp-hint mp-tech-note">使用 WebRTC (PeerJS) 点对点连接 · 信令服务器: 0.peerjs.com</p>
+            <p class="mp-hint mp-tech-note">使用 Cloudflare Worker WebSocket 中继 · 无需局域网或公网 IP · 稳定低延迟</p>
           </div>
         </div>
 
@@ -555,7 +559,6 @@
   </section>
 </div>
 
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>

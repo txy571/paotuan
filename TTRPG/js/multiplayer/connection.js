@@ -1,17 +1,16 @@
-// ==================== MULTIPLAYER: CONNECTION ====================
+// ==================== MULTIPLAYER: WEBSOCKET RELAY CONNECTION ====================
+// Replaces PeerJS WebRTC with Cloudflare Worker + Durable Objects WebSocket relay.
+// No NAT issues, no P2P — all messages pass through the relay server.
 import { state, cocState } from '../state.js';
 import { showToast } from '../utils.js';
-import { selectRPG, navigateTo } from '../theme.js';
 import { renderCocStatus, renderCocChronicle } from '../coc-status.js';
 import { renderTraits, renderEquipment } from '../character.js';
 
-// Shared state (populated by index.js)
+// Shared state
 export const M = {
-  peer: null,
-  hostConn: null,
-  connections: {},
+  ws: null,              // WebSocket to relay
   isHost: false,
-  roomId: null,
+  roomId: null,          // room code
   playerId: null,
   playerName: '',
   players: {},
@@ -23,81 +22,189 @@ export const M = {
   inputMode: 'public',
   chatLog: [],
   heartbeatTimer: null,
-  lastHeartbeat: {},
   reconnectAttempts: 0,
   maxReconnectAttempts: 5,
   reconnectTimer: null,
-  reconnectHostId: null,
-  messageQueue: [],
+  reconnectRoomId: null,
 };
 
-// ── UUID ───────────────────────────────────────────
+// ── Relay URL ────────────────────────────────────────
+function getRelayUrl() {
+  // Derive WebSocket relay URL from proxy worker URL, or use configured relay URL
+  let workerOrigin = localStorage.getItem('ttrpg-relay-url');
+  if (!workerOrigin) {
+    const proxyUrl = localStorage.getItem('ttrpg-proxy-url');
+    if (proxyUrl) {
+      try { workerOrigin = new URL(proxyUrl).origin; } catch {}
+    }
+  }
+  if (!workerOrigin) return null;
+  const origin = workerOrigin.replace(/\/$/, '');
+  return origin.replace(/^https?:\/\//, (origin.startsWith('https') ? 'wss' : 'ws')) + '://' + origin.split('://')[1];
+}
+
+// ── UUID ────────────────────────────────────────────
 export function generateUUID() {
   return 'xxxx-xxxx-xxxx'.replace(/x/g, () => Math.floor(Math.random() * 16).toString(16));
 }
 
-// ── PeerJS Init ────────────────────────────────────
-export function initPeer(id) {
+// Short room code (6 alphanumeric chars)
+export function generateRoomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+// ── Connect to relay ─────────────────────────────────
+export function connectRelay(roomCode, isHost) {
   return new Promise((resolve, reject) => {
-    if (M.peer) { try { M.peer.destroy(); } catch(e) {} M.peer = null; }
-    const peer = new Peer(id, {
-      config: {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
-        ]
+    const base = getRelayUrl();
+    if (!base) {
+      reject(new Error('未配置中继服务器。请在首页 KP 设置中填写 Cloudflare Worker URL（代理端点）。'));
+      return;
+    }
+
+    const wsUrl = base + '/room/' + roomCode;
+    const ws = new WebSocket(wsUrl);
+    let resolved = false;
+
+    ws.onopen = () => {
+      M.ws = ws;
+      // Register with the room
+      ws.send(JSON.stringify({
+        type: '_join',
+        playerId: M.playerId,
+        playerName: M.playerName,
+        isHost: isHost,
+        charData: collectMyCharData(),
+      }));
+
+      // Wait for welcome message
+      const onMsg = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (data.type === 'welcome') {
+            ws.removeEventListener('message', onMsg);
+            M.connected = true;
+            M.roomId = roomCode;
+            M.isHost = isHost;
+            M.players = data.players || {};
+            if (!M.players[M.playerId]) {
+              M.players[M.playerId] = {
+                id: M.playerId, name: M.playerName, isHost: isHost,
+                joinedAt: Date.now(), ready: isHost,
+                charName: '', hp: cocState.currentHp || '?', san: cocState.san || '?',
+              };
+            }
+            resolved = true;
+            resolve(data);
+          }
+        } catch {}
+      };
+      ws.addEventListener('message', onMsg);
+
+      // Timeout
+      setTimeout(() => {
+        if (!resolved) {
+          ws.removeEventListener('message', onMsg);
+          reject(new Error('加入房间超时，请检查中继服务器是否正常运行'));
+        }
+      }, 15000);
+    };
+
+    ws.onerror = () => {
+      if (!resolved) { resolved = true; reject(new Error('无法连接中继服务器。请检查 Worker URL 是否正确，或是否已部署 Cloudflare Worker。')); }
+    };
+
+    ws.onclose = (e) => {
+      if (!resolved) {
+        resolved = true;
+        reject(new Error('中继服务器连接关闭 (code=' + e.code + ')。请检查网络连接。'));
+      } else {
+        M.connected = false;
+        if (M.heartbeatTimer) { clearInterval(M.heartbeatTimer); M.heartbeatTimer = null; }
+        document.dispatchEvent(new CustomEvent('mp-conn-dot', { detail: 'disconnected' }));
+        // Auto-reconnect for non-host
+        if (!isHost && M.reconnectAttempts < M.maxReconnectAttempts) {
+          scheduleReconnect(roomCode);
+        } else if (isHost) {
+          document.dispatchEvent(new CustomEvent('mp-host-disconnect'));
+        }
       }
-    });
-    const timeout = setTimeout(() => {
-      reject(new Error('连接信令服务器超时，请检查网络'));
-    }, 15000);
-    peer.on('open', (assignedId) => {
-      clearTimeout(timeout);
-      M.peer = peer;
-      resolve(assignedId);
-    });
-    peer.on('error', (err) => {
-      clearTimeout(timeout);
-      if (err.type === 'unavailable-id') reject(new Error('房间号冲突，请重试'));
-      else if (err.type === 'network') reject(new Error('网络连接失败，请检查防火墙设置'));
-      else reject(new Error(err.message || 'PeerJS 错误'));
-    });
-    peer.on('disconnected', () => {
-      if (M.connected) {
-        document.dispatchEvent(new CustomEvent('mp-conn-dot', { detail: 'connecting' }));
-        if (M.peer && !M.peer.destroyed) M.peer.reconnect();
-      }
-    });
+    };
   });
 }
 
-// ── Heartbeat ──────────────────────────────────────
+// ── Reconnection ─────────────────────────────────────
+function scheduleReconnect(roomCode) {
+  M.reconnectAttempts++;
+  M.reconnectRoomId = roomCode;
+  const delay = Math.min(2000 * Math.pow(2, M.reconnectAttempts - 1), 20000);
+  M.reconnectTimer = setTimeout(async () => {
+    try {
+      await connectRelay(roomCode, false);
+      M.reconnectAttempts = 0;
+      if (M.reconnectTimer) { clearTimeout(M.reconnectTimer); M.reconnectTimer = null; }
+      document.dispatchEvent(new CustomEvent('mp-reconnect-dismiss'));
+      document.dispatchEvent(new CustomEvent('mp-conn-dot', { detail: 'connected' }));
+      document.dispatchEvent(new CustomEvent('mp-start-heartbeat'));
+    } catch {
+      if (M.reconnectAttempts < M.maxReconnectAttempts) {
+        scheduleReconnect(roomCode);
+      } else {
+        document.dispatchEvent(new CustomEvent('mp-reconnect-toast', { detail: { msg: '重连失败，请手动重新加入房间', error: true } }));
+      }
+    }
+  }, delay);
+}
+
+export function attemptReconnect() {
+  if (M.reconnectRoomId) {
+    M.reconnectAttempts = 0;
+    scheduleReconnect(M.reconnectRoomId);
+  }
+}
+
+// ── Heartbeat ────────────────────────────────────────
 export function startHeartbeat() {
   stopHeartbeat();
   M.heartbeatTimer = setInterval(() => {
-    if (!M.connected) return;
-    if (M.isHost) {
-      const now = Date.now();
-      for (const [pid, pd] of Object.entries(M.players)) {
-        if (pd.isHost) continue;
-        if (now - (M.lastHeartbeat[pid] || 0) > 35000) {
-          document.dispatchEvent(new CustomEvent('mp-disconnect', { detail: { remoteId: pd.connId } }));
-        }
-      }
-    } else {
-      if (M.hostConn && M.hostConn.open) {
-        M.hostConn.send({ type: 'heartbeat', playerId: M.playerId, playerName: M.playerName, timestamp: Date.now() });
-      }
-    }
-  }, 8000 + Math.random() * 2000);
+    if (!M.connected || !M.ws || M.ws.readyState !== 1) return;
+    M.ws.send(JSON.stringify({ type: '_ping' }));
+  }, 20000);
 }
 
 export function stopHeartbeat() {
   if (M.heartbeatTimer) { clearInterval(M.heartbeatTimer); M.heartbeatTimer = null; }
 }
 
-// ── Connection Dot ─────────────────────────────────
+// ── Send ─────────────────────────────────────────────
+export function sendToRelay(data) {
+  if (M.ws && M.ws.readyState === 1) {
+    M.ws.send(JSON.stringify(data));
+  }
+}
+
+// ── Cleanup ──────────────────────────────────────────
+export function cleanup() {
+  stopHeartbeat();
+  M.reconnectAttempts = 0;
+  if (M.reconnectTimer) { clearTimeout(M.reconnectTimer); M.reconnectTimer = null; }
+  if (M.ws) {
+    try { M.ws.send(JSON.stringify({ type: '_leave' })); } catch {}
+    try { M.ws.close(); } catch {}
+    M.ws = null;
+  }
+  M.connected = false; M.isHost = false; M.gamePhase = 'lobby';
+  M.players = {}; M.chatLog = []; M.roomId = null;
+  M.turnOrder = []; M.currentTurnIndex = 0; M.readyPlayers = new Set();
+  document.getElementById('mpInput')?.setAttribute('disabled', '');
+  document.getElementById('mpSendBtn')?.setAttribute('disabled', '');
+  document.dispatchEvent(new CustomEvent('mp-reconnect-dismiss'));
+}
+
+// ── Connection dot ───────────────────────────────────
 export function updateConnDot(status) {
   const d = document.getElementById('mpConnDot');
   if (!d) return;
@@ -106,58 +213,7 @@ export function updateConnDot(status) {
   if (status === 'connecting') d.classList.add('connecting');
 }
 
-// ── Reconnection ──────────────────────────────────
-export function attemptReconnect() {
-  M.reconnectAttempts++;
-  const delay = Math.min(3000 * Math.pow(2, M.reconnectAttempts - 1), 30000);
-  updateConnDot('connecting');
-  document.dispatchEvent(new CustomEvent('mp-reconnect-toast', { detail: { msg: '连接断开，正在重连 (' + M.reconnectAttempts + '/' + M.maxReconnectAttempts + ')...', error: false } }));
-  M.reconnectTimer = setTimeout(async () => {
-    try {
-      if (M.peer && M.peer.destroyed) {
-        await initPeer(null);
-        document.dispatchEvent(new CustomEvent('mp-setup-client'));
-      }
-      // Trigger reconnection via event
-      document.dispatchEvent(new CustomEvent('mp-connect-host', { detail: M.reconnectHostId }));
-    } catch (err) {
-      if (M.reconnectAttempts < M.maxReconnectAttempts) attemptReconnect();
-      else document.dispatchEvent(new CustomEvent('mp-reconnect-toast', { detail: { msg: '重连失败，请手动重新加入', error: true } }));
-    }
-  }, delay);
-}
-
-// ── Cleanup ────────────────────────────────────────
-export function cleanup() {
-  stopHeartbeat();
-  M.reconnectAttempts = 0;
-  if (M.reconnectTimer) { clearTimeout(M.reconnectTimer); M.reconnectTimer = null; }
-  for (const c of Object.values(M.connections)) { try { c.close(); } catch(e) {} }
-  M.connections = {};
-  if (M.hostConn) { try { M.hostConn.close(); } catch(e) {} M.hostConn = null; }
-  if (M.peer) { try { M.peer.destroy(); } catch(e) {} M.peer = null; }
-  M.connected = false; M.isHost = false; M.gamePhase = 'lobby';
-  M.players = {}; M.chatLog = []; M.roomId = null;
-  M.turnOrder = []; M.currentTurnIndex = 0; M.readyPlayers = new Set();
-  M.messageQueue = [];
-  document.getElementById('mpInput')?.setAttribute('disabled', '');
-  document.getElementById('mpSendBtn')?.setAttribute('disabled', '');
-  document.dispatchEvent(new CustomEvent('mp-reconnect-dismiss'));
-}
-
-// ── Queue message ──────────────────────────────────
-export function queueMessage(data) {
-  if (M.messageQueue.length < 20) M.messageQueue.push(data);
-}
-
-export function flushMessageQueue() {
-  while (M.messageQueue.length > 0) {
-    const data = M.messageQueue.shift();
-    if (M.hostConn && M.hostConn.open) M.hostConn.send(data);
-  }
-}
-
-// ── Collect My Char Data ──────────────────────────
+// ── Collect / Apply character data ──────────────────
 export function collectMyCharData() {
   return {
     name: document.getElementById('charName')?.value?.trim() || '',
@@ -178,7 +234,6 @@ export function collectMyCharData() {
   };
 }
 
-// ── Apply Char Data ────────────────────────────────
 export function applyCharDataToSheet(data) {
   if (!data) return;
   const setV = (id, v) => { const el = document.getElementById(id); if (el && v !== undefined) el.value = v; };
@@ -200,7 +255,7 @@ export function applyCharDataToSheet(data) {
   renderCocStatus();
 }
 
-// ── Game State ─────────────────────────────────────
+// ── Game state snapshot ──────────────────────────────
 export function getGameStateSnapshot() {
   return {
     theme: state.theme,

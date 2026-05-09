@@ -138,8 +138,13 @@ export function saveKPConfig(cfg) {
   kpState.provider = cfg.provider;
   kpState.apiKey  = cfg.key;
   kpState.model   = cfg.model;
+  const workerUrl = (document.getElementById('kpWorkerUrl')?.value || '').trim();
+  if (workerUrl) {
+    localStorage.setItem('ttrpg-proxy-url', workerUrl);
+    localStorage.setItem('ttrpg-relay-url', workerUrl);
+  }
   localStorage.setItem('ttrpg-kp-config', JSON.stringify({
-    provider: cfg.provider, apiKey: cfg.key, model: cfg.model,
+    provider: cfg.provider, apiKey: cfg.key, model: cfg.model, workerUrl,
   }));
 }
 
@@ -153,6 +158,10 @@ export function loadKPConfig() {
     if (provEl) provEl.value = kpState.provider;
     const keyEl = document.getElementById('kpApiKey');
     if (keyEl && kpState.apiKey) keyEl.value = kpState.apiKey;
+    const wuEl = document.getElementById('kpWorkerUrl');
+    if (wuEl) {
+      wuEl.value = saved.workerUrl || localStorage.getItem('ttrpg-proxy-url') || '';
+    }
 
     if (kpState.provider === 'anthropic') {
       const mEl = document.getElementById('kpModelAnthropic');

@@ -1,0 +1,11 @@
+name = "paotuan"
+main = "worker.js"
+compatibility_date = "2025-05-01"
+
+[[durable_objects.bindings]]
+name = "GAME_ROOM"
+class_name = "GameRoom"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["GameRoom"]

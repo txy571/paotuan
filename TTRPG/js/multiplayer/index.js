@@ -1,21 +1,20 @@
 // ==================== MULTIPLAYER NAMESPACE ====================
-import { M, initPeer, startHeartbeat, stopHeartbeat, cleanup as connCleanup,
-         updateConnDot, attemptReconnect, collectMyCharData, applyCharDataToSheet,
-         getGameStateSnapshot, applyGameState, generateUUID, queueMessage, flushMessageQueue } from './connection.js';
-import { setupHostListeners, handleHostMessage, advanceTurn, getCurrentTurnPlayerId, isMyTurn,
-         broadcastToAll, sendToPlayer, syncCharToPlayer, processHostAIAction, processHostAISecret } from './host.js';
-import { setupClientListeners, connectToHost } from './client.js';
+// Transport: Cloudflare Worker WebSocket relay (Durable Objects).
+// No P2P, no NAT issues — all messages flow through the relay server.
+import { M, generateUUID, generateRoomCode, connectRelay, sendToRelay, startHeartbeat,
+         stopHeartbeat, cleanup as connCleanup, updateConnDot, attemptReconnect,
+         collectMyCharData, applyCharDataToSheet } from './connection.js';
+import { handleHostMessage, advanceTurn, getCurrentTurnPlayerId, isMyTurn,
+         broadcastToAll, sendToPlayer, syncCharToPlayer,
+         processHostAIAction, processHostAISecret } from './host.js';
+import { handleClientMessage } from './client.js';
 import { showLobbyView, showRoomView, renderAllRoom, addChatMessage, renderMultiplayerChat,
          renderPlayerList, renderTurnBanner, renderLobbyControls, renderQuickActions,
          refreshUI, onPageOpen, mpRoomCharChanged } from './ui.js';
 import { generateGameStartScenario } from './game-start.js';
 import { state, THEME_NAMES, cocState } from '../state.js';
-import { showToast, esc } from '../utils.js';
-import { selectRPG } from '../theme.js';
+import { showToast } from '../utils.js';
 import { renderCocStatus, renderCocChronicle } from '../coc-status.js';
-import { renderTraits, renderEquipment, renderAttributes, renderSkills } from '../character.js';
-import { renderKPQuickActions } from '../kp.js';
-import { getGameSaveData } from '../saves.js';
 
 let _reconnectToastEl = null;
 
@@ -31,10 +30,26 @@ function dismissReconnectToast() {
   if (_reconnectToastEl) _reconnectToastEl.style.display = 'none';
 }
 
-// ── Public API ─────────────────────────────────────
+// ── Set up WebSocket message dispatch ────────────────
+function setupRelayHandler() {
+  if (!M.ws) return;
+  M.ws.addEventListener('message', (e) => {
+    let data;
+    try { data = JSON.parse(e.data); } catch { return; }
+    // Ignore ping/pong
+    if (data.type === '_pong') return;
+    // Dispatch
+    if (M.isHost) {
+      handleHostMessage(data);
+    } else {
+      handleClientMessage(data);
+    }
+  });
+}
+
+// ── Public API ───────────────────────────────────────
 export const Multiplayer = {
-  // State
-  get peer() { return M.peer; },
+  // State accessors
   get isHost() { return M.isHost; },
   get connected() { return M.connected; },
   get roomId() { return M.roomId; },
@@ -48,18 +63,14 @@ export const Multiplayer = {
   get inputMode() { return M.inputMode; },
 
   // Connection
-  initPeer,
   startHeartbeat,
   stopHeartbeat,
   cleanup: connCleanup,
   updateConnDot,
   collectMyCharData,
   applyCharDataToSheet,
-  getGameStateSnapshot,
-  applyGameState,
 
   // Host
-  setupHostListeners,
   handleHostMessage,
   advanceTurn,
   getCurrentTurnPlayerId,
@@ -71,8 +82,7 @@ export const Multiplayer = {
   processHostAISecret,
 
   // Client
-  setupClientListeners,
-  connectToHost,
+  handleClientMessage,
 
   // UI
   showLobbyView,
@@ -87,11 +97,7 @@ export const Multiplayer = {
   refreshUI,
   onPageOpen,
   mpRoomCharChanged,
-
-  // Game Start
   generateGameStartScenario,
-
-  // Toast
   showReconnectToast,
   dismissReconnectToast,
 
@@ -114,7 +120,6 @@ export const Multiplayer = {
     M.readyPlayers = new Set();
     M.turnOrder = [M.playerId];
     M.currentTurnIndex = 0;
-    M.connections = {};
     M.players = {};
     M.chatLog = [];
 
@@ -130,16 +135,17 @@ export const Multiplayer = {
     localStorage.setItem('ttrpg-mp-nickname', M.playerName);
 
     try {
-      await initPeer(null);
-      M.roomId = M.peer.id;
-      setupHostListeners();
-      M.connected = true;
+      const roomCode = generateRoomCode();
+      await connectRelay(roomCode, true);
+      setupRelayHandler();
+
+      M.roomId = roomCode;
       showRoomView();
-      addChatMessage('system', null, '房间已创建 — 现在是准备阶段，等待玩家加入并选择角色');
-      addChatMessage('system', null, '房间号: ' + M.roomId + ' — 点击右上角复制分享给好友');
+      addChatMessage('system', null, '房间已创建 — 将房间号分享给好友即可加入');
+      addChatMessage('system', null, '房间号: ' + roomCode);
       renderAllRoom();
       startHeartbeat();
-      showToast('房间已创建! 将房间号分享给好友即可联机。');
+      showToast('房间已创建! 房间号: ' + roomCode + ' — 分享给好友即可联机。');
       document.getElementById('mpInput')?.removeAttribute('disabled');
       document.getElementById('mpSendBtn')?.removeAttribute('disabled');
     } catch (err) {
@@ -172,16 +178,26 @@ export const Multiplayer = {
     M.readyPlayers = new Set();
     M.turnOrder = [];
     M.currentTurnIndex = 0;
-    M.hostConn = null;
     M.chatLog = [];
-    M.reconnectHostId = roomId;
+    M.reconnectRoomId = roomId;
 
     localStorage.setItem('ttrpg-mp-nickname', M.playerName);
 
     try {
-      await initPeer(null);
-      setupClientListeners();
-      await connectToHost(roomId);
+      await connectRelay(roomId, false);
+      setupRelayHandler();
+      // After welcome, send hello with char data
+      sendToRelay({
+        type: '_hello',
+        playerId: M.playerId,
+        playerName: M.playerName,
+        charData: charData,
+      });
+      showRoomView();
+      document.getElementById('mpInput')?.removeAttribute('disabled');
+      document.getElementById('mpSendBtn')?.removeAttribute('disabled');
+      startHeartbeat();
+      showToast('已加入房间! 在准备阶段选择角色并点击准备。');
     } catch (err) {
       showToast('加入房间失败: ' + err.message);
       connCleanup();
@@ -191,7 +207,7 @@ export const Multiplayer = {
   // ── Leave ────────────────────────────────────────
   leaveRoom() {
     if (!confirm('确定要离开当前房间吗？')) return;
-    if (M.isHost) broadcastToAll({ type: 'system', content: '🏚️ 房主已关闭房间' });
+    if (M.isHost) broadcastToAll({ type: 'system', content: '房主已关闭房间', _all: true });
     connCleanup();
     showLobbyView();
     showToast('已离开房间');
@@ -215,13 +231,10 @@ export const Multiplayer = {
           addChatMessage('action', pn, text);
           broadcastToAll({ type: 'action', playerId: pid, playerName: pn, content: text });
           processHostAIAction(pid, pn, text);
-        } else if (M.hostConn && M.hostConn.open) {
-          M.hostConn.send({ type: 'action', playerId: pid, playerName: pn, content: text });
+        } else {
+          sendToRelay({ type: 'action', playerId: pid, playerName: pn, content: text });
           addChatMessage('action', pn, text);
           renderMultiplayerChat();
-        } else {
-          queueMessage({ type: 'action', playerId: pid, playerName: pn, content: text });
-          addChatMessage('action', pn, text);
         }
         break;
       }
@@ -229,18 +242,19 @@ export const Multiplayer = {
         if (M.isHost) {
           addChatMessage('secret', pn, text);
           processHostAISecret(pid, pn, text);
-        } else if (M.hostConn && M.hostConn.open) {
-          M.hostConn.send({ type: 'secret', playerId: pid, playerName: pn, content: text });
+        } else {
+          sendToRelay({ type: 'secret', playerId: pid, playerName: pn, content: text });
           addChatMessage('secret', pn, text);
           renderMultiplayerChat();
         }
         break;
       }
       case 'chat': {
-        const m = { type: 'chat', playerId: pid, playerName: pn, content: text };
-        if (M.isHost) { addChatMessage('chat', pn, text); broadcastToAll(m); }
-        else if (M.hostConn && M.hostConn.open) {
-          M.hostConn.send(m); addChatMessage('chat', pn, text); renderMultiplayerChat();
+        addChatMessage('chat', pn, text);
+        if (M.isHost) {
+          broadcastToAll({ type: 'chat', playerId: pid, playerName: pn, content: text });
+        } else {
+          sendToRelay({ type: 'chat', playerId: pid, playerName: pn, content: text });
         }
         break;
       }
@@ -261,8 +275,8 @@ export const Multiplayer = {
     if (!M.connected || M.gamePhase !== 'playing') return;
     if (M.isHost) {
       advanceTurn();
-    } else if (M.hostConn && M.hostConn.open) {
-      M.hostConn.send({ type: 'end-turn', playerId: M.playerId, playerName: M.playerName });
+    } else {
+      sendToRelay({ type: 'end-turn', playerId: M.playerId, playerName: M.playerName });
     }
   },
 
@@ -284,7 +298,7 @@ export const Multiplayer = {
       M.players[M.playerId].ready = true;
       M.players[M.playerId].charData = charData;
       M.players[M.playerId].charName = charData.name || '';
-      M.players[M.playerId].hp = charData.hp || charData.cocHp || '?';
+      M.players[M.playerId].hp = charData.cocHp || '?';
       M.players[M.playerId].san = charData.cocSan || '?';
     } else {
       M.readyPlayers.delete(M.playerId);
@@ -295,8 +309,8 @@ export const Multiplayer = {
       if (isReady) M.players[M.playerId].charData = charData;
       broadcastToAll({ type: 'ready-update', playerId: M.playerId, ready: isReady });
       broadcastToAll({ type: 'player-list', players: M.players });
-    } else if (M.hostConn && M.hostConn.open) {
-      M.hostConn.send({ type: 'player-ready', playerId: M.playerId, playerName: M.playerName, ready: isReady, charData: charData });
+    } else {
+      sendToRelay({ type: 'player-ready', playerId: M.playerId, playerName: M.playerName, ready: isReady, charData: charData });
     }
     renderAllRoom();
     showToast(isReady ? '已准备就绪，等待房主开始游戏' : '已取消准备');
@@ -306,12 +320,12 @@ export const Multiplayer = {
   startGame() {
     if (!M.isHost || M.gamePhase !== 'lobby') return;
     const hostData = collectMyCharData();
-    if (hostData && hostData.name) {
+    if (hostData?.name) {
       M.players[M.playerId].charData = hostData;
       M.players[M.playerId].charName = hostData.name;
-      M.players[M.playerId].hp = hostData.hp || hostData.cocHp || '?';
+      M.players[M.playerId].hp = hostData.cocHp || '?';
     }
-    handleHostMessage(null, { type: 'request-game-start', playerId: M.playerId, playerName: M.playerName });
+    handleHostMessage({ type: 'request-game-start', playerId: M.playerId, playerName: M.playerName });
   },
 
   // ── Set Input Mode ───────────────────────────────
@@ -350,7 +364,7 @@ export const Multiplayer = {
     }
     const msg = { type: 'dice', playerId: M.playerId, playerName: M.playerName, result, detail };
     if (M.isHost) { addChatMessage('dice', M.playerName, detail); broadcastToAll(msg); }
-    else if (M.hostConn && M.hostConn.open) { M.hostConn.send(msg); addChatMessage('dice', M.playerName, detail); renderMultiplayerChat(); }
+    else { sendToRelay(msg); addChatMessage('dice', M.playerName, detail); renderMultiplayerChat(); }
     scrollChatBottom();
     return { result, detail };
   },
@@ -359,8 +373,10 @@ export const Multiplayer = {
   broadcastStatusUpdate() {
     if (!M.connected) return;
     const charData = collectMyCharData();
-    const update = { type: 'update-status', playerId: M.playerId, playerName: M.playerName,
-      hp: cocState.currentHp, san: cocState.san, charName: charData.name || '', charData: charData };
+    const update = {
+      type: 'update-status', playerId: M.playerId, playerName: M.playerName,
+      hp: cocState.currentHp, san: cocState.san, charName: charData.name || '', charData,
+    };
     if (M.isHost) {
       if (M.players[M.playerId]) {
         M.players[M.playerId].hp = cocState.currentHp;
@@ -369,8 +385,8 @@ export const Multiplayer = {
         M.players[M.playerId].charData = charData;
       }
       broadcastToAll({ type: 'player-list', players: M.players });
-    } else if (M.hostConn && M.hostConn.open) {
-      M.hostConn.send(update);
+    } else {
+      sendToRelay(update);
     }
   },
 };
@@ -380,7 +396,7 @@ function scrollChatBottom() {
   if (c) setTimeout(() => { c.scrollTop = c.scrollHeight; }, 60);
 }
 
-// ── Event listeners for internal communication ────
+// ── Internal event listeners ────────────────────────
 document.addEventListener('mp-generate-intro', () => {
   generateGameStartScenario();
 });
@@ -403,15 +419,13 @@ document.addEventListener('mp-reconnect-toast', (e) => showReconnectToast(e.deta
 document.addEventListener('mp-reconnect-dismiss', () => dismissReconnectToast());
 document.addEventListener('mp-apply-char', (e) => applyCharDataToSheet(e.detail));
 document.addEventListener('mp-refresh-ui', () => refreshUI());
+
 document.addEventListener('mp-host-disconnect', () => {
-  if (M.reconnectAttempts < M.maxReconnectAttempts && M.reconnectHostId) {
+  if (M.reconnectAttempts < M.maxReconnectAttempts && M.reconnectRoomId) {
     attemptReconnect();
   } else {
-    showReconnectToast('连接已断开，请重新加入房间', true);
+    showReconnectToast('与服务器的连接已断开，请重新加入房间', true);
   }
-});
-document.addEventListener('mp-connect-host', (e) => {
-  connectToHost(e.detail).catch(() => {});
 });
 
 // Multiplayer input mode tabs

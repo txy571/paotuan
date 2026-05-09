@@ -5,7 +5,17 @@
       "Bash(iconv -f UTF-16 -t UTF-8 \"C:\\\\Users\\\\TXY999\\\\OneDrive\\\\文档\\\\GitHub\\\\paotuan\\\\TTRPG\\\\README.md\")",
       "Bash(git *)",
       "Bash(python -c \"import urllib.request; req = urllib.request.Request\\('https://api.deepseek.com/v1/chat/completions', data=b'{}', method='POST'\\); print\\(type\\(req\\), req.get_method\\(\\)\\)\")",
-      "WebSearch"
+      "WebSearch",
+      "Bash(node server.js)",
+      "Bash(where node *)",
+      "Bash(cmd.exe *)",
+      "Read(//c/Program Files/nodejs/**)",
+      "Read(//c/Program Files \\(x86\\)/nodejs/**)",
+      "Read(//c/Users/TXY999/AppData/Roaming/**)",
+      "Read(//c/Users/TXY999/AppData/Local/**)",
+      "Bash(powershell.exe *)",
+      "Bash(python3 server.py)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/)"
     ]
   }
 }

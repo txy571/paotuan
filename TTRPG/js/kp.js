@@ -115,7 +115,7 @@ export function getKPConfig() {
   } else {
     model = document.getElementById('kpModelOpenAI')?.value || 'gpt-4o';
   }
-  const endpoint = document.getElementById('kpEndpoint')?.value?.trim() || '';
+  const endpoint = 'https://api.openai.com/v1/chat/completions';
   return { provider, key, model, endpoint };
 }
 
@@ -138,8 +138,7 @@ export function loadKPConfig() {
     if (provEl) provEl.value = kpState.provider;
     const keyEl = document.getElementById('kpApiKey');
     if (keyEl && kpState.apiKey) keyEl.value = kpState.apiKey;
-    const endEl = document.getElementById('kpEndpoint');
-    if (endEl && saved.endpoint) endEl.value = saved.endpoint;
+
     if (kpState.provider === 'anthropic') {
       const mEl = document.getElementById('kpModelAnthropic');
       if (mEl) mEl.value = kpState.model;
@@ -155,10 +154,8 @@ export function toggleKPProviderUI() {
   const prov = document.getElementById('kpProvider')?.value || 'anthropic';
   const aSel = document.getElementById('kpModelAnthropicWrap');
   const oSel = document.getElementById('kpModelOpenAIWrap');
-  const endWrap = document.getElementById('kpEndpointWrap');
   if (aSel) aSel.style.display = prov === 'anthropic' ? '' : 'none';
   if (oSel) oSel.style.display = prov === 'openai' ? '' : 'none';
-  if (endWrap) endWrap.style.display = prov === 'openai' ? '' : 'none';
 }
 
 export function saveKPConfigFromUI() {

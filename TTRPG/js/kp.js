@@ -259,7 +259,57 @@ export function stopKPStreaming() {
   if (stopBtn) stopBtn.style.display = 'none';
 }
 
-// ── API Calls ──────────────────────────────────────
+// ── API Helpers ────────────────────────────────────
+function resolveEndpoint(cfg) {
+  if (cfg.provider === 'anthropic') return 'https://api.anthropic.com/v1/messages';
+  if (cfg.model?.startsWith('deepseek-')) return 'https://api.deepseek.com/chat/completions';
+  return cfg.endpoint || 'https://api.openai.com/v1/chat/completions';
+}
+
+async function checkResponse(resp) {
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${resp.status}`);
+  }
+}
+
+async function readSSEStream(response, extractDelta) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = '';
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+    for (const line of lines) {
+      if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
+      try {
+        const data = JSON.parse(line.slice(6));
+        const delta = extractDelta(data);
+        if (delta) {
+          fullText += delta;
+          if (kpState.chatHistory.length) kpState.chatHistory[kpState.chatHistory.length - 1].content = fullText;
+          renderKP();
+        }
+      } catch(e) { /* skip */ }
+    }
+  }
+  return fullText;
+}
+
+// ── Unified API Dispatch ──────────────────────────
+export async function callAPI(cfg, systemPrompt, recentHistory, userMsg, controller) {
+  if (cfg.provider === 'anthropic') {
+    return callAnthropicAPI(cfg, systemPrompt, recentHistory, userMsg, controller);
+  }
+  return _callOpenAICompat(cfg, systemPrompt, recentHistory, userMsg, controller);
+}
+
+// ── Provider Implementations ──────────────────────
 export async function callAnthropicAPI(cfg, systemPrompt, recentHistory, userMsg, controller) {
   const messages = [];
   for (const m of recentHistory) {
@@ -275,108 +325,30 @@ export async function callAnthropicAPI(cfg, systemPrompt, recentHistory, userMsg
       'x-api-key': cfg.key,
       'anthropic-version': '2023-06-01',
     },
-    body: JSON.stringify({
-      model: cfg.model,
-      max_tokens: 2048,
-      system: systemPrompt,
-      messages,
-      stream: true,
-    }),
+    body: JSON.stringify({ model: cfg.model, max_tokens: 2048, system: systemPrompt, messages, stream: true }),
     signal: controller.signal,
   });
 
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error(err.error?.message || `HTTP ${resp.status}`);
-  }
-
-  const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
-  let fullText = '';
-  let buffer = '';
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
-    for (const line of lines) {
-      if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
-      try {
-        const data = JSON.parse(line.slice(6));
-        const delta = data.delta?.text || data.content_block?.text || '';
-        if (delta) {
-          fullText += delta;
-          if (kpState.chatHistory.length) kpState.chatHistory[kpState.chatHistory.length - 1].content = fullText;
-          renderKP();
-        }
-      } catch(e) { /* skip */ }
-    }
-  }
-  return fullText;
+  await checkResponse(resp);
+  return readSSEStream(resp, data => data.delta?.text || data.content_block?.text || '');
 }
 
 export async function callOpenAIAPI(cfg, systemPrompt, recentHistory, userMsg, controller) {
-  const messages = [{ role: 'system', content: systemPrompt }];
-  for (const m of recentHistory) {
-    messages.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content });
-  }
-  messages.push({ role: 'user', content: userMsg });
-
-  const endpoint = cfg.endpoint || 'https://api.openai.com/v1/chat/completions';
-
-  const resp = await fetch('/api/proxy', {
-    method: 'POST',
-    headers: {
-      'X-Proxy-Target': endpoint,
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${cfg.key}`,
-    },
-    body: JSON.stringify({ model: cfg.model, max_tokens: 2048, messages, stream: true }),
-    signal: controller.signal,
-  });
-
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error(err.error?.message || `HTTP ${resp.status}`);
-  }
-
-  const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
-  let fullText = '';
-  let buffer = '';
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
-    for (const line of lines) {
-      if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
-      try {
-        const data = JSON.parse(line.slice(6));
-        const delta = data.choices?.[0]?.delta?.content || '';
-        if (delta) {
-          fullText += delta;
-          if (kpState.chatHistory.length) kpState.chatHistory[kpState.chatHistory.length - 1].content = fullText;
-          renderKP();
-        }
-      } catch(e) { /* skip */ }
-    }
-  }
-  return fullText;
+  return _callOpenAICompat(cfg, systemPrompt, recentHistory, userMsg, controller);
 }
 
 export async function callDeepSeekAPI(cfg, systemPrompt, recentHistory, userMsg, controller) {
+  return _callOpenAICompat(cfg, systemPrompt, recentHistory, userMsg, controller);
+}
+
+async function _callOpenAICompat(cfg, systemPrompt, recentHistory, userMsg, controller) {
+  const endpoint = resolveEndpoint(cfg);
+
   const messages = [{ role: 'system', content: systemPrompt }];
   for (const m of recentHistory) {
     messages.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content });
   }
   messages.push({ role: 'user', content: userMsg });
-
-  const endpoint = 'https://api.deepseek.com/chat/completions';
 
   const resp = await fetch('/api/proxy', {
     method: 'POST',
@@ -389,36 +361,8 @@ export async function callDeepSeekAPI(cfg, systemPrompt, recentHistory, userMsg,
     signal: controller.signal,
   });
 
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error(err.error?.message || `HTTP ${resp.status}`);
-  }
-
-  const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
-  let fullText = '';
-  let buffer = '';
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
-    for (const line of lines) {
-      if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
-      try {
-        const data = JSON.parse(line.slice(6));
-        const delta = data.choices?.[0]?.delta?.content || '';
-        if (delta) {
-          fullText += delta;
-          if (kpState.chatHistory.length) kpState.chatHistory[kpState.chatHistory.length - 1].content = fullText;
-          renderKP();
-        }
-      } catch(e) { /* skip */ }
-    }
-  }
-  return fullText;
+  await checkResponse(resp);
+  return readSSEStream(resp, data => data.choices?.[0]?.delta?.content || '');
 }
 
 // ── Context Compression ────────────────────────────
@@ -440,14 +384,7 @@ async function compressContextAsync() {
     const summaryPrompt = '请将以下跑团对话记录压缩为一段简明摘要(中文, 300字以内), 保留关键情节、重要NPC行动、战斗结果和状态变化:\n\n' + compressed.substring(compressed.length - 4000);
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
-    let summary = '';
-    if (cfg.provider === 'anthropic') {
-      summary = await callAnthropicAPI(cfg, '你是游戏会话压缩助手。将对话记录压缩为简洁摘要。', [], summaryPrompt, controller);
-    } else if (cfg.model && cfg.model.startsWith('deepseek-')) {
-      summary = await callDeepSeekAPI(cfg, '你是游戏会话压缩助手。将对话记录压缩为简洁摘要。', [], summaryPrompt, controller);
-    } else {
-      summary = await callOpenAIAPI(cfg, '你是游戏会话压缩助手。将对话记录压缩为简洁摘要。', [], summaryPrompt, controller);
-    }
+    const summary = await callAPI(cfg, '你是游戏会话压缩助手。将对话记录压缩为简洁摘要。', [], summaryPrompt, controller);
     clearTimeout(timeout);
     if (summary && summary.trim()) {
       const summaryEntry = { role: 'user', content: '[上下文压缩摘要] ' + summary.trim().substring(0, 2000) };
@@ -521,14 +458,7 @@ export async function sendKPMessage() {
   try {
     const controller = new AbortController();
     kpState.streamingAbort = controller;
-    let fullResponse = '';
-    if (cfg.provider === 'anthropic') {
-      fullResponse = await callAnthropicAPI(cfg, systemPrompt, recentApi, text, controller);
-    } else if (cfg.model && cfg.model.startsWith('deepseek-')) {
-      fullResponse = await callDeepSeekAPI(cfg, systemPrompt, recentApi, text, controller);
-    } else {
-      fullResponse = await callOpenAIAPI(cfg, systemPrompt, recentApi, text, controller);
-    }
+    const fullResponse = await callAPI(cfg, systemPrompt, recentApi, text, controller);
 
     const displayText = stripAICommands(fullResponse);
     kpState.chatHistory[kpState.chatHistory.length - 1].content = displayText;

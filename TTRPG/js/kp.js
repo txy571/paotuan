@@ -77,6 +77,8 @@ export function renderKP() {
     msgs.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:40px;font-size:.9rem;">发送消息，AI主持人将为你主持冒险...</div>';
     return;
   }
+  // Render all messages — during streaming, only do full rebuilds when a new message is added.
+  // During content-stream updates, use updateStreamingMsg() instead to avoid flickering.
   msgs.innerHTML = kpState.chatHistory.map((m, i) => {
     const isStreaming = kpState.streaming && i === kpState.chatHistory.length - 1 && m.role === 'gm';
     if (m.role === 'system') {
@@ -90,10 +92,22 @@ export function renderKP() {
       diceHTML = m.dice.split(',').map(d => `<span class="msg-dice">${d.trim()}</span>`).join('');
     }
     return `<div class="kp-msg ${m.role === 'gm' ? 'gm' : 'player'} ${isStreaming ? 'streaming' : ''}">
-      ${header}${m.content}${diceHTML}
+      ${header}<div class="msg-body">${m.content}</div>${diceHTML}
     </div>`;
   }).join('');
-  setTimeout(() => { if (msgs) msgs.scrollTop = msgs.scrollHeight; }, 50);
+  if (!kpState.streaming) {
+    setTimeout(() => { if (msgs) msgs.scrollTop = msgs.scrollHeight; }, 50);
+  }
+}
+
+/** Incremental update during streaming — only touches the text node, no DOM rebuild. */
+export function updateStreamingMsg(text) {
+  const bodyEl = document.querySelector('#kpMessages .kp-msg.streaming .msg-body');
+  if (bodyEl) {
+    bodyEl.textContent = text;
+    const msgs = document.getElementById('kpMessages');
+    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+  }
 }
 
 export function renderKPQuickActions() {
@@ -337,7 +351,7 @@ async function _stream(endpoint, reqHeaders, reqBody, controller, parseDelta) {
         if (delta) {
           text += delta;
           if (kpState.chatHistory.length) kpState.chatHistory[kpState.chatHistory.length - 1].content = text;
-          renderKP();
+          updateStreamingMsg(text);
         }
       } catch(e) { /* skip malformed SSE chunk */ }
     }

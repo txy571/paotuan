@@ -18,7 +18,9 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/)",
       "Bash(node -e \"try { new Function\\(require\\('fs'\\).readFileSync\\('TTRPG/js/kp.js','utf8'\\)\\); console.log\\('Syntax OK'\\); } catch\\(e\\) { console.log\\('Syntax error:', e.message\\); }\")",
       "Bash(node --input-type=module -e \"import\\('fs'\\).then\\(fs => { const code = fs.readFileSync\\('TTRPG/js/kp.js','utf8'\\); try { new \\(require\\('vm'\\).SourceTextModule\\)\\(code\\); console.log\\('Module syntax OK'\\); } catch\\(e\\) { console.log\\('Parse issue:', e.message.slice\\(0,200\\)\\); } }\\)\")",
-      "Bash(node -e \"const fs = require\\('fs'\\); const code = fs.readFileSync\\('TTRPG/js/kp.js','utf8'\\); const lines = code.split\\('\\\\n'\\); const editLines = [268,270,300,319,538,543,566]; for \\(const l of editLines\\) console.log\\(l, lines[l-1]\\);\")"
+      "Bash(node -e \"const fs = require\\('fs'\\); const code = fs.readFileSync\\('TTRPG/js/kp.js','utf8'\\); const lines = code.split\\('\\\\n'\\); const editLines = [268,270,300,319,538,543,566]; for \\(const l of editLines\\) console.log\\(l, lines[l-1]\\);\")",
+      "Bash(node --input-type=module -e ' *)",
+      "Bash(node -e \"const fs=require\\('fs'\\);for\\(const f of ['TTRPG/js/multiplayer/index.js','TTRPG/js/multiplayer/ui.js']\\){const c=fs.readFileSync\\(f,'utf8'\\);const b=[/async createRoom/,/async joinRoom/,/updateBtnState/,/hasSheetChar/,/applyLobbyChar/];for\\(const r of b\\){const m=c.match\\(r\\);if\\(m\\)console.log\\(f+': '+r+' FOUND at idx '+m.index\\);else console.log\\(f+': '+r+' MISSING'\\);}}\")"
     ]
   }
 }

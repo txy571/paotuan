@@ -276,7 +276,9 @@ function populateLobbyCharSelects() {
   const chars = Object.values(saved);
   ['mpCreateChar', 'mpJoinChar'].forEach(sid => {
     const sel = document.getElementById(sid);
-    if (!sel || sel.options.length > 1) return;
+    if (!sel) return;
+    const prevVal = sel.value;
+    while (sel.options.length > 1) sel.remove(1);
     chars.forEach(ch => {
       if (ch.name) {
         const opt = document.createElement('option');
@@ -285,9 +287,28 @@ function populateLobbyCharSelects() {
         sel.appendChild(opt);
       }
     });
+    if (prevVal && [...sel.options].some(o => o.value === prevVal)) sel.value = prevVal;
   });
-  const applyLobbyChar = (selId, infoId) => {
+
+  const hasSheetChar = () => {
+    const cd = collectMyCharData();
+    return !!(cd && cd.name);
+  };
+
+  const updateBtnState = (btn, sel, btnLabel) => {
+    if (!btn) return;
+    if (sel.value || hasSheetChar()) {
+      btn.disabled = false;
+      btn.textContent = btnLabel;
+    } else {
+      btn.disabled = true;
+      btn.textContent = '请先选择角色卡';
+    }
+  };
+
+  const applyLobbyChar = (selId, infoId, btnId, btnLabel) => {
     const sel = document.getElementById(selId);
+    const btn = document.getElementById(btnId);
     if (!sel || sel._bound) return;
     sel._bound = true;
     sel.addEventListener('change', () => {
@@ -304,10 +325,12 @@ function populateLobbyCharSelects() {
       } else {
         if (info) info.style.display = 'none';
       }
+      updateBtnState(btn, sel, btnLabel);
     });
+    updateBtnState(btn, sel, btnLabel);
   };
-  applyLobbyChar('mpCreateChar', 'mpCreateCharInfo');
-  applyLobbyChar('mpJoinChar', 'mpJoinCharInfo');
+  applyLobbyChar('mpCreateChar', 'mpCreateCharInfo', 'mpCreateBtn', '创建房间');
+  applyLobbyChar('mpJoinChar', 'mpJoinCharInfo', 'mpJoinBtn', '加入房间');
 }
 
 // ── Room Char Changed ──────────────────────────────

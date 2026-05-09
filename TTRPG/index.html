@@ -431,13 +431,13 @@
             <input type="text" id="mpCreateName" placeholder="输入你的调查员/冒险者名字..." maxlength="20">
             <label>选择角色卡</label>
             <select id="mpCreateChar" style="width:100%;padding:10px 12px;background:rgba(0,0,0,.2);color:var(--text);border:1px solid var(--border);border-radius:var(--r-md);font-size:.85rem;">
-              <option value="">-- 不选择（进房间后选择）--</option>
+              <option value="">-- 请先在人物卡页面创建角色 --</option>
             </select>
             <div class="mp-char-info" id="mpCreateCharInfo" style="display:none;margin-top:6px;padding:8px 12px;font-size:.78rem;color:var(--text-dim);border:1px solid var(--border);border-radius:var(--r-md);background:rgba(0,0,0,.15);"></div>
             <label>房间名称 (可选)</label>
             <input type="text" id="mpRoomLabel" placeholder="给房间起个名字..." maxlength="30">
-            <button class="btn btn-primary" data-action="mp:create" style="width:100%;padding:14px;font-size:1rem;margin-top:12px;">
-              创建房间
+            <button class="btn btn-primary" id="mpCreateBtn" data-action="mp:create" style="width:100%;padding:14px;font-size:1rem;margin-top:12px;" disabled>
+              请先选择角色卡
             </button>
             <p class="mp-hint">房间创建后将自动生成房间号，分享给好友即可加入。</p>
             <p class="mp-hint mp-tech-note">使用 WebRTC (PeerJS) 点对点连接 · 信令服务器: 0.peerjs.com</p>
@@ -451,13 +451,13 @@
             <input type="text" id="mpJoinName" placeholder="输入你的调查员/冒险者名字..." maxlength="20">
             <label>选择角色卡</label>
             <select id="mpJoinChar" style="width:100%;padding:10px 12px;background:rgba(0,0,0,.2);color:var(--text);border:1px solid var(--border);border-radius:var(--r-md);font-size:.85rem;">
-              <option value="">-- 不选择（进房间后选择）--</option>
+              <option value="">-- 请先在人物卡页面创建角色 --</option>
             </select>
             <div class="mp-char-info" id="mpJoinCharInfo" style="display:none;margin-top:6px;padding:8px 12px;font-size:.78rem;color:var(--text-dim);border:1px solid var(--border);border-radius:var(--r-md);background:rgba(0,0,0,.15);"></div>
             <label>房间号</label>
             <input type="text" id="mpJoinRoomId" placeholder="输入房主分享的房间号..." style="font-family:monospace;letter-spacing:.05em;">
-            <button class="btn btn-primary" data-action="mp:join" style="width:100%;padding:14px;font-size:1rem;margin-top:12px;">
-              加入房间
+            <button class="btn btn-primary" id="mpJoinBtn" data-action="mp:join" style="width:100%;padding:14px;font-size:1rem;margin-top:12px;" disabled>
+              请先选择角色卡
             </button>
             <p class="mp-hint">输入房主分享的房间号即可加入游戏。</p>
           </div>

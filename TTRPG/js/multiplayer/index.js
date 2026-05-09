@@ -101,6 +101,12 @@ export const Multiplayer = {
     const name = (nameInput?.value?.trim()) || ('冒险者' + Math.floor(Math.random() * 9000 + 1000));
     if (!name) { showToast('请输入你的昵称'); return; }
 
+    const charData = collectMyCharData();
+    if (!charData.name) {
+      showToast('请先在人物卡页面创建角色（至少填写角色姓名），再创建房间');
+      return;
+    }
+
     M.playerName = name;
     M.playerId = generateUUID();
     M.isHost = true;
@@ -115,9 +121,9 @@ export const Multiplayer = {
     M.players[M.playerId] = {
       id: M.playerId, name: M.playerName, isHost: true,
       joinedAt: Date.now(), ready: true,
-      charName: document.getElementById('charName')?.value?.trim() || '',
+      charName: charData.name,
       hp: cocState.currentHp || '?', san: cocState.san || '?',
-      charData: collectMyCharData()
+      charData: charData
     };
     M.readyPlayers.add(M.playerId);
 
@@ -151,6 +157,12 @@ export const Multiplayer = {
 
     if (!name) { showToast('请输入你的昵称'); return; }
     if (!roomId) { showToast('请输入房间号'); return; }
+
+    const charData = collectMyCharData();
+    if (!charData.name) {
+      showToast('请先在人物卡页面创建角色（至少填写角色姓名），再加入房间');
+      return;
+    }
 
     M.playerName = name;
     M.playerId = generateUUID();

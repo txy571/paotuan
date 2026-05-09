@@ -3,7 +3,9 @@
     "allow": [
       "Bash(xxd \"C:\\\\Users\\\\TXY999\\\\OneDrive\\\\文档\\\\GitHub\\\\paotuan\\\\TTRPG\\\\README.md\")",
       "Bash(iconv -f UTF-16 -t UTF-8 \"C:\\\\Users\\\\TXY999\\\\OneDrive\\\\文档\\\\GitHub\\\\paotuan\\\\TTRPG\\\\README.md\")",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(python -c \"import urllib.request; req = urllib.request.Request\\('https://api.deepseek.com/v1/chat/completions', data=b'{}', method='POST'\\); print\\(type\\(req\\), req.get_method\\(\\)\\)\")",
+      "WebSearch"
     ]
   }
 }

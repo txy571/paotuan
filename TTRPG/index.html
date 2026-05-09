@@ -66,6 +66,7 @@
               <label>API 提供商</label>
               <select id="kpProvider" data-action="kp:toggleProviderUI" data-action-event="change">
                 <option value="anthropic">Anthropic (Claude)</option>
+                <option value="deepseek">DeepSeek</option>
                 <option value="openai">OpenAI 兼容</option>
               </select>
             </div>
@@ -78,14 +79,19 @@
                 <option value="claude-sonnet-4-5-20250929">Claude Sonnet 4.5</option>
               </select>
             </div>
+            <div id="kpModelDeepSeekWrap" style="display:none;">
+              <label>模型</label>
+              <select id="kpModelDeepSeek">
+                <option value="deepseek-v4-flash">DeepSeek V4 Flash</option>
+                <option value="deepseek-v4-pro">DeepSeek V4 Pro</option>
+              </select>
+            </div>
             <div id="kpModelOpenAIWrap" style="display:none;">
               <label>模型</label>
               <select id="kpModelOpenAI">
                 <option value="gpt-4o">GPT-4o</option>
                 <option value="gpt-4o-mini">GPT-4o Mini</option>
                 <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                <option value="deepseek-v4-flash">DeepSeek V4 Flash</option>
-                <option value="deepseek-v4-pro">DeepSeek V4 Pro</option>
               </select>
             </div>
             <div>

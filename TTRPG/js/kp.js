@@ -112,16 +112,12 @@ export function getKPConfig() {
   let model;
   if (provider === 'anthropic') {
     model = document.getElementById('kpModelAnthropic')?.value || 'claude-sonnet-4-6';
+  } else if (provider === 'deepseek') {
+    model = document.getElementById('kpModelDeepSeek')?.value || 'deepseek-v4-flash';
   } else {
     model = document.getElementById('kpModelOpenAI')?.value || 'gpt-4o';
   }
-  let endpoint;
-  if (model.startsWith('deepseek-')) {
-    endpoint = 'https://api.deepseek.com/chat/completions';
-  } else {
-    endpoint = 'https://api.openai.com/v1/chat/completions';
-  }
-  return { provider, key, model, endpoint };
+  return { provider, key, model };
 }
 
 export function saveKPConfig(cfg) {
@@ -147,6 +143,9 @@ export function loadKPConfig() {
     if (kpState.provider === 'anthropic') {
       const mEl = document.getElementById('kpModelAnthropic');
       if (mEl) mEl.value = kpState.model;
+    } else if (kpState.provider === 'deepseek') {
+      const mEl = document.getElementById('kpModelDeepSeek');
+      if (mEl) mEl.value = kpState.model;
     } else {
       const mEl = document.getElementById('kpModelOpenAI');
       if (mEl) mEl.value = kpState.model;
@@ -158,8 +157,10 @@ export function loadKPConfig() {
 export function toggleKPProviderUI() {
   const prov = document.getElementById('kpProvider')?.value || 'anthropic';
   const aSel = document.getElementById('kpModelAnthropicWrap');
+  const dSel = document.getElementById('kpModelDeepSeekWrap');
   const oSel = document.getElementById('kpModelOpenAIWrap');
   if (aSel) aSel.style.display = prov === 'anthropic' ? '' : 'none';
+  if (dSel) dSel.style.display = prov === 'deepseek' ? '' : 'none';
   if (oSel) oSel.style.display = prov === 'openai' ? '' : 'none';
 }
 
@@ -262,8 +263,8 @@ export function stopKPStreaming() {
 // ── API Helpers ────────────────────────────────────
 function resolveEndpoint(cfg) {
   if (cfg.provider === 'anthropic') return 'https://api.anthropic.com/v1/messages';
-  if (cfg.model?.startsWith('deepseek-')) return 'https://api.deepseek.com/chat/completions';
-  return cfg.endpoint || 'https://api.openai.com/v1/chat/completions';
+  if (cfg.provider === 'deepseek') return 'https://api.deepseek.com/chat/completions';
+  return 'https://api.openai.com/v1/chat/completions';
 }
 
 async function checkResponse(resp) {

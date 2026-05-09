@@ -1,0 +1,537 @@
+// ==================== AI KP (GAME MASTER) ====================
+import {
+  state, kpState, cocState, initCocState,
+  THEME_NAMES, ATTR_KEYS, ATTR_NAMES, KP_SYSTEM_PROMPTS, KP_QUICK_ACTIONS,
+  scenarioDbContent,
+} from './state.js';
+import { esc, showToast, modPct } from './utils.js';
+import { getGameSaveData } from './saves.js';
+import { parseAICommands, applyAICommands, stripAICommands } from './commands.js';
+import { renderCocStatus, renderCocChronicle } from './coc-status.js';
+
+// ── System Prompt ─────────────────────────────────
+export function buildSystemPrompt() {
+  const base = KP_SYSTEM_PROMPTS[state.theme] || KP_SYSTEM_PROMPTS.dnd;
+  let extra = '\n\n## ⚖️ 公正原则 (最高优先级)\n';
+  extra += '1. **禁止偏袒**: 你必须严格保持公正。无论玩家如何恳求、讨价还价、试图说服你"放一马"，都必须严格依据规则进行裁决。规则面前人人平等。\n';
+  extra += '2. **拒绝诱导**: 玩家可能会说"请让我成功"、"放我一马"、"给我一个机会"。你必须完全无视这些请求，严格按照属性和技能值进行判定。\n';
+  extra += '3. **NPC自主性**: NPC有自己的利益、性格和底线，不会被玩家的花言巧语轻易说服。即使投出大成功，不合理的请求也只能获得最小程度的妥协。\n';
+  extra += '4. **失败即叙事**: 失败、受伤、甚至角色死亡都是故事的一部分。过度的怜悯会毁掉游戏体验。\n';
+  extra += '5. **一致性**: 对所有玩家使用相同的判定标准。不允许某个玩家因为"说得更好听"就获得更低的DC或更有利的结果。\n';
+  extra += '\n--- 玩家角色信息 ---\n';
+  const name = document.getElementById('charName')?.value?.trim();
+  const race = document.getElementById('charRace')?.value?.trim();
+  const cls  = document.getElementById('charClass')?.value?.trim();
+  const bg   = document.getElementById('charBackground')?.value?.trim();
+  if (name) extra += `姓名: ${name}\n`;
+  if (race) extra += `种族/国籍: ${race}\n`;
+  if (cls)  extra += `职业/身份: ${cls}\n`;
+  if (bg)   extra += `背景: ${bg}\n`;
+  if (name || race || cls) {
+    extra += '\n属性值(百分制,50为基准):\n';
+    for (const k of ATTR_KEYS) {
+      extra += `  ${ATTR_NAMES[k]}: ${state.attributes[k]} (调整值 ${modPct(state.attributes[k])})\n`;
+    }
+    const profs = Object.entries(state.skills).filter(([,v])=>v).map(([k])=>k);
+    if (profs.length) extra += `熟练技能: ${profs.join('、')}\n`;
+    if (state.traits.length) extra += `特质: ${state.traits.map(t=>t.name).filter(Boolean).join('、')}\n`;
+    if (state.feats.length)  extra += `专长: ${state.feats.map(f=>f.name).filter(Boolean).join('、')}\n`;
+    if (state.equipment.length) extra += `装备: ${state.equipment.map(e=>e.name+(e.qty>1?'×'+e.qty:'')).join('、')}\n`;
+  }
+
+  if (scenarioDbContent && scenarioDbContent.trim()) {
+    extra += '\n\n## 📚 剧本知识库 (请严格参考)\n';
+    extra += '以下是你作为主持人必须了解的游戏背景信息。在描述场景、扮演NPC、推进剧情时，必须严格遵循这些设定。\n\n';
+    extra += scenarioDbContent.trim() + '\n';
+    extra += '\n请确保你的所有叙述与上述设定保持一致。\n';
+  }
+
+  if (state.theme === 'coc') {
+    extra += `\n--- CoC 7e 当前状态 ---\n`;
+    extra += `SAN: ${cocState.san}/${cocState.maxSan} | HP: ${cocState.currentHp}/${cocState.maxHp} | LUCK: ${cocState.luck} | MP: ${cocState.mp}/${cocState.maxMp}\n`;
+    extra += `克苏鲁神话(CMI): ${cocState.cthulhuMythos}%\n`;
+    if (cocState.skillChecks.length) extra += `已标记技能提升检定: ${cocState.skillChecks.join('、')}\n`;
+    if (cocState.chronicle.length) {
+      extra += `\n--- 冒险编年史(最近5条) ---\n`;
+      cocState.chronicle.slice(-5).forEach(c => {
+        extra += `· ${c.time}: ${c.text}\n`;
+      });
+    }
+  }
+  return base + extra;
+}
+
+// ── Chat Management ────────────────────────────────
+export function addKPMsg(role, content, dice) {
+  kpState.chatHistory.push({ role, content, dice, time: Date.now() });
+}
+
+export function addKPSystemMsg(content) {
+  kpState.chatHistory.push({ role: 'system', content, time: Date.now() });
+}
+
+export function renderKP() {
+  const msgs = document.getElementById('kpMessages');
+  if (!msgs) return;
+  if (!kpState.chatHistory.length) {
+    msgs.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:40px;font-size:.9rem;">发送消息，AI主持人将为你主持冒险...</div>';
+    return;
+  }
+  msgs.innerHTML = kpState.chatHistory.map((m, i) => {
+    const isStreaming = kpState.streaming && i === kpState.chatHistory.length - 1 && m.role === 'gm';
+    if (m.role === 'system') {
+      return `<div class="kp-msg system">${esc(m.content)}</div>`;
+    }
+    const header = m.role === 'gm'
+      ? `<div class="msg-header">🎭 ${THEME_NAMES[state.theme]} 主持人</div>`
+      : `<div class="msg-header">🧑 玩家</div>`;
+    let diceHTML = '';
+    if (m.dice) {
+      diceHTML = m.dice.split(',').map(d => `<span class="msg-dice">${d.trim()}</span>`).join('');
+    }
+    return `<div class="kp-msg ${m.role === 'gm' ? 'gm' : 'player'} ${isStreaming ? 'streaming' : ''}">
+      ${header}${m.content}${diceHTML}
+    </div>`;
+  }).join('');
+  setTimeout(() => { if (msgs) msgs.scrollTop = msgs.scrollHeight; }, 50);
+}
+
+export function renderKPQuickActions() {
+  const container = document.getElementById('kpQuickActions');
+  if (!container) return;
+  const actions = KP_QUICK_ACTIONS[state.theme] || KP_QUICK_ACTIONS.dnd;
+  container.innerHTML = actions.map(a =>
+    `<button class="kp-quick-btn" data-action="kp:quick" data-action-name="${a}">${a}</button>`
+  ).join('');
+}
+
+// ── KP Config ──────────────────────────────────────
+export function getKPConfig() {
+  const provider = document.getElementById('kpProvider')?.value || 'anthropic';
+  const key = document.getElementById('kpApiKey')?.value?.trim() || kpState.apiKey;
+  let model;
+  if (provider === 'anthropic') {
+    model = document.getElementById('kpModelAnthropic')?.value || 'claude-sonnet-4-6';
+  } else {
+    model = document.getElementById('kpModelOpenAI')?.value || 'gpt-4o';
+  }
+  const endpoint = document.getElementById('kpEndpoint')?.value?.trim() || '';
+  return { provider, key, model, endpoint };
+}
+
+export function saveKPConfig(cfg) {
+  kpState.provider = cfg.provider;
+  kpState.apiKey  = cfg.key;
+  kpState.model   = cfg.model;
+  localStorage.setItem('ttrpg-kp-config', JSON.stringify({
+    provider: cfg.provider, apiKey: cfg.key, model: cfg.model, endpoint: cfg.endpoint || '',
+  }));
+}
+
+export function loadKPConfig() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('ttrpg-kp-config') || '{}');
+    if (saved.provider) kpState.provider = saved.provider;
+    if (saved.apiKey)  kpState.apiKey  = saved.apiKey;
+    if (saved.model)   kpState.model   = saved.model;
+    const provEl = document.getElementById('kpProvider');
+    if (provEl) provEl.value = kpState.provider;
+    const keyEl = document.getElementById('kpApiKey');
+    if (keyEl && kpState.apiKey) keyEl.value = kpState.apiKey;
+    const endEl = document.getElementById('kpEndpoint');
+    if (endEl && saved.endpoint) endEl.value = saved.endpoint;
+    if (kpState.provider === 'anthropic') {
+      const mEl = document.getElementById('kpModelAnthropic');
+      if (mEl) mEl.value = kpState.model;
+    } else {
+      const mEl = document.getElementById('kpModelOpenAI');
+      if (mEl) mEl.value = kpState.model;
+    }
+    toggleKPProviderUI();
+  } catch(e) { /* ignore */ }
+}
+
+export function toggleKPProviderUI() {
+  const prov = document.getElementById('kpProvider')?.value || 'anthropic';
+  const aSel = document.getElementById('kpModelAnthropicWrap');
+  const oSel = document.getElementById('kpModelOpenAIWrap');
+  const endWrap = document.getElementById('kpEndpointWrap');
+  if (aSel) aSel.style.display = prov === 'anthropic' ? '' : 'none';
+  if (oSel) oSel.style.display = prov === 'openai' ? '' : 'none';
+  if (endWrap) endWrap.style.display = prov === 'openai' ? '' : 'none';
+}
+
+export function saveKPConfigFromUI() {
+  const cfg = getKPConfig();
+  saveKPConfig(cfg);
+  showToast('API 配置已保存');
+}
+
+export function toggleKPConfig() {
+  const cfg = document.getElementById('kpConfigPanel');
+  if (cfg) cfg.style.display = cfg.style.display === 'none' ? '' : 'none';
+}
+
+// ── Chat History Persistence ───────────────────────
+export function loadKPChatHistory() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('ttrpg-kp-chat') || '[]');
+    if (Array.isArray(saved) && saved.length) {
+      kpState.chatHistory = saved;
+    }
+  } catch(e) { /* ignore */ }
+}
+
+export function saveKPChatHistory() {
+  try {
+    const toSave = kpState.chatHistory.slice(-200);
+    localStorage.setItem('ttrpg-kp-chat', JSON.stringify(toSave));
+  } catch(e) { /* ignore */ }
+}
+
+// ── KP Panel Open/Close ────────────────────────────
+export function openKPPanel() {
+  kpState.active = true;
+  const hero = document.getElementById('kpHero');
+  const panel = document.getElementById('kpChatWrapper');
+  if (hero) hero.style.display = 'none';
+  if (panel) panel.style.display = '';
+  loadKPConfig();
+  if (state.theme === 'coc' && !cocState.chronicle.length && cocState.san === 50) {
+    initCocState();
+  }
+  renderKP();
+  renderCocStatus();
+  renderCocChronicle();
+  document.dispatchEvent(new CustomEvent('render-game-saves'));
+  if (!kpState.chatHistory.length) {
+    addKPSystemMsg(`🎭 AI主持人已就绪。当前规则: ${THEME_NAMES[state.theme]}。发送消息开始你的冒险吧!`);
+  }
+  const input = document.getElementById('kpInput');
+  if (input) setTimeout(() => input.focus(), 200);
+}
+
+export function closeKPPanel() {
+  kpState.active = false;
+  if (kpState.streamingAbort) { kpState.streamingAbort.abort(); kpState.streamingAbort = null; }
+  kpState.streaming = false;
+  const hero = document.getElementById('kpHero');
+  const panel = document.getElementById('kpChatWrapper');
+  if (hero) hero.style.display = '';
+  if (panel) panel.style.display = 'none';
+}
+
+export function clearKPChat() {
+  if (!confirm('确定要清空当前对话吗？这将同时重置角色状态(SAN/HP/LUCK等)。此操作不可撤销。')) return;
+  kpState.chatHistory = [];
+  kpState.apiHistory  = [];
+  if (kpState.streamingAbort) { kpState.streamingAbort.abort(); kpState.streamingAbort = null; }
+  kpState.streaming = false;
+  if (state.theme === 'coc') initCocState();
+  renderKP();
+  renderCocStatus();
+  renderCocChronicle();
+  addKPSystemMsg(`对话已清空，角色状态已重置。当前规则: ${THEME_NAMES[state.theme]}。开始新的冒险吧!`);
+}
+
+// ── Quick Action ───────────────────────────────────
+export function sendQuickAction(action) {
+  const input = document.getElementById('kpInput');
+  if (!input || kpState.streaming) return;
+  input.value = action;
+  sendKPMessage();
+}
+
+// ── Stop Streaming ─────────────────────────────────
+export function stopKPStreaming() {
+  if (kpState.streamingAbort) {
+    kpState.streamingAbort.abort();
+    kpState.streamingAbort = null;
+  }
+  kpState.streaming = false;
+  const input = document.getElementById('kpInput');
+  if (input) input.disabled = false;
+  const sendBtn = document.getElementById('kpSendBtn');
+  const stopBtn = document.getElementById('kpStopBtn');
+  if (sendBtn) sendBtn.style.display = '';
+  if (stopBtn) stopBtn.style.display = 'none';
+}
+
+// ── API Calls ──────────────────────────────────────
+export async function callAnthropicAPI(cfg, systemPrompt, recentHistory, userMsg, controller) {
+  const messages = [];
+  for (const m of recentHistory) {
+    messages.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content });
+  }
+  messages.push({ role: 'user', content: userMsg });
+
+  const resp = await fetch('/api/proxy', {
+    method: 'POST',
+    headers: {
+      'X-Proxy-Target': 'https://api.anthropic.com/v1/messages',
+      'Content-Type': 'application/json',
+      'x-api-key': cfg.key,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: cfg.model,
+      max_tokens: 2048,
+      system: systemPrompt,
+      messages,
+      stream: true,
+    }),
+    signal: controller.signal,
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${resp.status}`);
+  }
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = '';
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+    for (const line of lines) {
+      if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
+      try {
+        const data = JSON.parse(line.slice(6));
+        const delta = data.delta?.text || data.content_block?.text || '';
+        if (delta) {
+          fullText += delta;
+          if (kpState.chatHistory.length) kpState.chatHistory[kpState.chatHistory.length - 1].content = fullText;
+          renderKP();
+        }
+      } catch(e) { /* skip */ }
+    }
+  }
+  return fullText;
+}
+
+export async function callOpenAIAPI(cfg, systemPrompt, recentHistory, userMsg, controller) {
+  const messages = [{ role: 'system', content: systemPrompt }];
+  for (const m of recentHistory) {
+    messages.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content });
+  }
+  messages.push({ role: 'user', content: userMsg });
+
+  const endpoint = cfg.endpoint || 'https://api.openai.com/v1/chat/completions';
+
+  const resp = await fetch('/api/proxy', {
+    method: 'POST',
+    headers: {
+      'X-Proxy-Target': endpoint,
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${cfg.key}`,
+    },
+    body: JSON.stringify({ model: cfg.model, max_tokens: 2048, messages, stream: true }),
+    signal: controller.signal,
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${resp.status}`);
+  }
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = '';
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+    for (const line of lines) {
+      if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
+      try {
+        const data = JSON.parse(line.slice(6));
+        const delta = data.choices?.[0]?.delta?.content || '';
+        if (delta) {
+          fullText += delta;
+          if (kpState.chatHistory.length) kpState.chatHistory[kpState.chatHistory.length - 1].content = fullText;
+          renderKP();
+        }
+      } catch(e) { /* skip */ }
+    }
+  }
+  return fullText;
+}
+
+// ── Context Compression ────────────────────────────
+async function compressContextAsync() {
+  if (kpState._compressing) return;
+  kpState._compressing = true;
+  try {
+    const total = kpState.apiHistory.length;
+    if (total <= 60) return;
+    const splitIdx = Math.floor(total * 0.6);
+    const toCompress = kpState.apiHistory.slice(0, splitIdx);
+    const toKeep = kpState.apiHistory.slice(splitIdx);
+    const compressed = toCompress.map(m => (m.role === 'user' ? '玩家: ' : 'KP: ') + m.content).join('\n');
+    const cfg = getKPConfig();
+    if (!cfg.key) {
+      kpState.apiHistory = kpState.apiHistory.slice(-60);
+      return;
+    }
+    const summaryPrompt = '请将以下跑团对话记录压缩为一段简明摘要(中文, 300字以内), 保留关键情节、重要NPC行动、战斗结果和状态变化:\n\n' + compressed.substring(compressed.length - 4000);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    let summary = '';
+    if (cfg.provider === 'anthropic') {
+      summary = await callAnthropicAPI(cfg, '你是游戏会话压缩助手。将对话记录压缩为简洁摘要。', [], summaryPrompt, controller);
+    } else {
+      summary = await callOpenAIAPI(cfg, '你是游戏会话压缩助手。将对话记录压缩为简洁摘要。', [], summaryPrompt, controller);
+    }
+    clearTimeout(timeout);
+    if (summary && summary.trim()) {
+      const summaryEntry = { role: 'user', content: '[上下文压缩摘要] ' + summary.trim().substring(0, 2000) };
+      kpState.apiHistory = [summaryEntry, ...toKeep];
+    } else {
+      kpState.apiHistory = kpState.apiHistory.slice(-60);
+    }
+  } catch (e) {
+    kpState.apiHistory = kpState.apiHistory.slice(-60);
+  } finally {
+    kpState._compressing = false;
+  }
+}
+
+// ── Send Message ───────────────────────────────────
+export async function sendKPMessage() {
+  const input = document.getElementById('kpInput');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text || kpState.streaming) return;
+  input.value = '';
+  input.disabled = true;
+
+  const sendBtn = document.getElementById('kpSendBtn');
+  const stopBtn = document.getElementById('kpStopBtn');
+  if (sendBtn) sendBtn.style.display = 'none';
+  if (stopBtn) stopBtn.style.display = '';
+
+  const cfg = getKPConfig();
+  if (!cfg.key) {
+    showToast('请先配置 API Key (点击上方的齿轮按钮)');
+    if (sendBtn) sendBtn.style.display = '';
+    if (stopBtn) stopBtn.style.display = 'none';
+    input.disabled = false;
+    return;
+  }
+  saveKPConfig(cfg);
+
+  addKPMsg('player', text);
+  renderKP();
+
+  // Auto-roll dice
+  const diceMatch = text.match(/(\d*d\d+[\+\-]?\d*)/gi);
+  if (diceMatch) {
+    const results = [];
+    for (const d of diceMatch) {
+      const m = d.match(/^(\d+)?d(\d+)([+-]\d+)?$/i);
+      if (m) {
+        const count = parseInt(m[1]) || 1;
+        const sides = parseInt(m[2]);
+        const mod = parseInt(m[3]) || 0;
+        let total = 0;
+        for (let i = 0; i < count; i++) total += Math.floor(Math.random() * sides) + 1;
+        total += mod;
+        results.push(`${d}=${total}`);
+      }
+    }
+    if (results.length) {
+      kpState.chatHistory[kpState.chatHistory.length - 1].dice = results.join(', ');
+      renderKP();
+    }
+  }
+
+  const systemPrompt = buildSystemPrompt();
+  const recentApi = kpState.apiHistory.slice(-80);
+
+  addKPMsg('gm', '');
+  kpState.streaming = true;
+  renderKP();
+
+  try {
+    const controller = new AbortController();
+    kpState.streamingAbort = controller;
+    let fullResponse = '';
+    if (cfg.provider === 'anthropic') {
+      fullResponse = await callAnthropicAPI(cfg, systemPrompt, recentApi, text, controller);
+    } else {
+      fullResponse = await callOpenAIAPI(cfg, systemPrompt, recentApi, text, controller);
+    }
+
+    const displayText = stripAICommands(fullResponse);
+    kpState.chatHistory[kpState.chatHistory.length - 1].content = displayText;
+
+    const commands = parseAICommands(fullResponse);
+    if (commands.length > 0) {
+      const changes = applyAICommands(commands);
+      if (changes.length > 0) {
+        addKPSystemMsg(`角色状态已更新: ${changes.join('; ')}`);
+        renderCocStatus();
+        const data = getGameSaveData();
+        localStorage.setItem('ttrpg-game-autosave', JSON.stringify(data));
+      }
+    }
+
+    kpState.apiHistory.push({ role: 'user', content: text });
+    kpState.apiHistory.push({ role: 'assistant', content: fullResponse });
+
+    if (kpState.apiHistory.length > 80) {
+      compressContextAsync();
+    }
+    if (kpState.apiHistory.length > 120) {
+      kpState.apiHistory = kpState.apiHistory.slice(-100);
+    }
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      kpState.chatHistory[kpState.chatHistory.length - 1].content += ' [已停止]';
+    } else {
+      let errMsg = err.message;
+      if (errMsg === 'Failed to fetch' || err.name === 'TypeError') {
+        errMsg = '无法连接本地服务器 — 请确保 TTRPG 的启动窗口没有关闭，然后刷新页面重试';
+      } else if (errMsg.includes('HTTP 404')) {
+        errMsg = 'API 端点返回 404 — 请检查 KP 设置中的「API 端点」地址是否正确';
+      } else if (errMsg.includes('upstream api returned 404')) {
+        errMsg = '上游 API 返回 404 — 请检查 API 端点 URL 和模型名称是否匹配';
+      } else if (errMsg.includes('HTTP 401') || errMsg.includes('HTTP 403')) {
+        errMsg = 'API Key 无效或无权访问 — 请检查 KP 设置中的 API Key';
+      } else if (errMsg.includes('HTTP 502') || errMsg.includes('proxy error')) {
+        errMsg = '代理转发失败 — 请检查网络连接或 API 端点是否可访问';
+      }
+      kpState.chatHistory[kpState.chatHistory.length - 1].content = `请求失败: ${errMsg}`;
+      console.error('KP API error:', err);
+    }
+  } finally {
+    kpState.streaming = false;
+    kpState.streamingAbort = null;
+    renderKP();
+    if (input) input.disabled = false;
+    const sb = document.getElementById('kpSendBtn');
+    const st = document.getElementById('kpStopBtn');
+    if (sb) sb.style.display = '';
+    if (st) st.style.display = 'none';
+  }
+}
+
+// ── Proxy Detection ────────────────────────────────
+export async function checkProxyAvailable() {
+  try {
+    const resp = await fetch('/__ttrpg_ping__', { method: 'GET', signal: AbortSignal.timeout(2000) });
+    return resp.ok && resp.headers.get('X-TTRPG-Server') === '1';
+  } catch {
+    return false;
+  }
+}

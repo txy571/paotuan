@@ -18,11 +18,11 @@
       <span class="theme-badge" id="themeBadge">D&D 5e</span>
     </div>
     <div class="nav-tabs">
-      <button class="nav-tab active" data-page="home">首页</button>
-      <button class="nav-tab" data-page="character">人物卡</button>
-      <button class="nav-tab" data-page="dice">骰子</button>
-      <button class="nav-tab" data-page="notes">笔记</button>
-      <button class="nav-tab" data-page="multiplayer">联机</button>
+      <button class="nav-tab active" data-action="nav:go" data-page="home">首页</button>
+      <button class="nav-tab" data-action="nav:go" data-page="character">人物卡</button>
+      <button class="nav-tab" data-action="nav:go" data-page="dice">骰子</button>
+      <button class="nav-tab" data-action="nav:go" data-page="notes">笔记</button>
+      <button class="nav-tab" data-action="nav:go" data-page="multiplayer">联机</button>
     </div>
   </nav>
 
@@ -33,8 +33,8 @@
       <p>选择一套规则系统开始跑团之旅——不同规则将带来完全不同的视觉体验与专属工具。</p>
     </div>
 
-    <!-- ===== AI KP HERO BANNER (most prominent position) ===== -->
-    <div class="kp-hero" id="kpHero" onclick="App.openKPPanel()">
+    <!-- ===== AI KP HERO BANNER ===== -->
+    <div class="kp-hero" id="kpHero" data-action="kp:open">
       <div class="kp-hero-inner">
         <div class="kp-hero-icon">AI</div>
         <div class="kp-hero-text">
@@ -46,16 +46,16 @@
       </div>
     </div>
 
-    <!-- ===== AI KP CHAT INTERFACE (expands when activated) ===== -->
+    <!-- ===== AI KP CHAT INTERFACE ===== -->
     <div class="kp-chat-wrapper" id="kpChatWrapper" style="display:none;">
       <div class="panel">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
           <h3 style="margin:0;padding:0;border:none;">AI 主持人 <span style="font-size:.75rem;color:var(--text-dim);">(<span id="kpCurrentTheme">D&D 5e</span>)</span></h3>
           <div style="display:flex;gap:6px;">
-            <button class="btn btn-ghost btn-xs" onclick="App.toggleKPConfig()" title="API 设置">设置</button>
-            <button class="btn btn-ghost btn-xs" onclick="App.toggleScenarioDB()" title="剧本知识库">剧本库</button>
-            <button class="btn btn-ghost btn-xs" onclick="App.clearKPChat()" title="清空对话">清空</button>
-            <button class="btn btn-ghost btn-xs" onclick="App.closeKPPanel()" title="收起">✕</button>
+            <button class="btn btn-ghost btn-xs" data-action="kp:config" title="API 设置">设置</button>
+            <button class="btn btn-ghost btn-xs" data-action="scenario:toggle" title="剧本知识库">剧本库</button>
+            <button class="btn btn-ghost btn-xs" data-action="kp:clear" title="清空对话">清空</button>
+            <button class="btn btn-ghost btn-xs" data-action="kp:close" title="收起">✕</button>
           </div>
         </div>
 
@@ -64,7 +64,7 @@
           <div class="kp-config">
             <div>
               <label>API 提供商</label>
-              <select id="kpProvider" onchange="App.toggleKPProviderUI()">
+              <select id="kpProvider" data-action="kp:toggleProviderUI" data-action-event="change">
                 <option value="anthropic">Anthropic (Claude)</option>
                 <option value="openai">OpenAI 兼容</option>
               </select>
@@ -92,7 +92,7 @@
               <label>API Key</label>
               <input type="password" id="kpApiKey" placeholder="输入你的 API Key...">
             </div>
-            <div><button class="btn btn-save btn-sm" onclick="App.saveKPConfigFromUI()" style="height:42px;">保存配置</button></div>
+            <div><button class="btn btn-save btn-sm" data-action="kp:saveConfig" style="height:42px;">保存配置</button></div>
           </div>
           <div id="kpEndpointWrap" style="display:none;margin-top:8px;">
             <label>API 端点 (可选，用于兼容接口)</label>
@@ -112,28 +112,26 @@
           <!-- Input row -->
           <div class="kp-input-row">
             <input type="text" id="kpInput" placeholder="输入你的行动、对话或问题... (Enter 发送)">
-            <button class="btn btn-primary btn-sm" id="kpSendBtn" onclick="App.sendKPMessage()">发送</button>
-            <button class="btn btn-danger btn-sm" id="kpStopBtn" onclick="App.stopKPStreaming()" style="display:none;">停止</button>
+            <button class="btn btn-primary btn-sm" id="kpSendBtn" data-action="kp:send">发送</button>
+            <button class="btn btn-danger btn-sm" id="kpStopBtn" data-action="kp:stop" style="display:none;">停止</button>
           </div>
         </div>
       </div>
 
       <!-- Game Save & Chronicle Panel -->
       <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;">
-        <!-- Save/Load Panel -->
         <div class="panel" style="flex:1;min-width:240px;">
           <h3 style="margin-bottom:10px;">游戏存档</h3>
           <div style="display:flex;gap:6px;margin-bottom:8px;">
             <input type="text" id="gameSaveSlot" placeholder="存档名称..." style="flex:1;font-size:.82rem;">
-            <button class="btn btn-save btn-xs" onclick="App.saveGame(document.getElementById('gameSaveSlot').value||'冒险存档')">存档</button>
+            <button class="btn btn-save btn-xs" data-action="saves:save">存档</button>
           </div>
           <div class="btn-row" style="margin-bottom:8px;">
-            <button class="btn btn-ghost btn-xs" onclick="App.loadAutosave()">读自动档</button>
+            <button class="btn btn-ghost btn-xs" data-action="saves:autosave">读自动档</button>
           </div>
           <div id="gameSavesList" style="max-height:180px;overflow-y:auto;"></div>
         </div>
 
-        <!-- Chronicle Panel -->
         <div class="panel" style="flex:2;min-width:300px;">
           <h3 style="margin-bottom:10px;">冒险编年史</h3>
           <div id="cocChronicle" style="max-height:200px;overflow-y:auto;"></div>
@@ -150,10 +148,10 @@
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
           <h3 style="margin:0;padding:0;border:none;">剧本知识库</h3>
           <div style="display:flex;gap:6px;">
-            <button class="btn btn-ghost btn-xs" onclick="App.saveScenarioDB()" title="保存">保存</button>
-            <button class="btn btn-ghost btn-xs" onclick="App.exportScenarioDB()" title="导出">导出</button>
-            <button class="btn btn-ghost btn-xs" onclick="App.importScenarioDBPrompt()" title="导入">导入</button>
-            <button class="btn btn-ghost btn-xs" onclick="App.closeScenarioDB()" title="收起">✕</button>
+            <button class="btn btn-ghost btn-xs" data-action="scenario:save" title="保存">保存</button>
+            <button class="btn btn-ghost btn-xs" data-action="scenario:export" title="导出">导出</button>
+            <button class="btn btn-ghost btn-xs" data-action="scenario:import" title="导入">导入</button>
+            <button class="btn btn-ghost btn-xs" data-action="scenario:close" title="收起">✕</button>
           </div>
         </div>
         <p style="font-size:.75rem;color:var(--text-dim);margin-bottom:10px;">
@@ -164,7 +162,7 @@
     </div>
 
     <div class="rpg-grid">
-      <div class="rpg-card dnd-card selected" data-theme="dnd" onclick="App.selectRPG('dnd')">
+      <div class="rpg-card dnd-card selected" data-action="theme:select" data-theme="dnd">
         <div class="rpg-card-icon">D</div>
         <h3>龙与地下城 5e</h3>
         <div class="subtitle">Dungeons &amp; Dragons 5th Edition</div>
@@ -174,7 +172,7 @@
         </div>
       </div>
 
-      <div class="rpg-card coc-card" data-theme="coc" onclick="App.selectRPG('coc')">
+      <div class="rpg-card coc-card" data-action="theme:select" data-theme="coc">
         <div class="rpg-card-icon">C</div>
         <h3>克苏鲁的呼唤</h3>
         <div class="subtitle">Call of Cthulhu 7th Edition</div>
@@ -184,7 +182,7 @@
         </div>
       </div>
 
-      <div class="rpg-card cyberpunk-card" data-theme="cyberpunk" onclick="App.selectRPG('cyberpunk')">
+      <div class="rpg-card cyberpunk-card" data-action="theme:select" data-theme="cyberpunk">
         <div class="rpg-card-icon">R</div>
         <h3>赛博朋克 红</h3>
         <div class="subtitle">Cyberpunk RED</div>
@@ -194,7 +192,7 @@
         </div>
       </div>
 
-      <div class="rpg-card pathfinder-card" data-theme="pathfinder" onclick="App.selectRPG('pathfinder')">
+      <div class="rpg-card pathfinder-card" data-action="theme:select" data-theme="pathfinder">
         <div class="rpg-card-icon">P</div>
         <h3>开拓者</h3>
         <div class="subtitle">Pathfinder 2nd Edition</div>
@@ -209,12 +207,12 @@
     <div class="panel api-section">
       <h3>D&amp;D 5e 在线资源库</h3>
       <div class="btn-row">
-        <button class="btn btn-secondary btn-sm" onclick="App.fetchAPI('races')">种族</button>
-        <button class="btn btn-secondary btn-sm" onclick="App.fetchAPI('classes')">职业</button>
-        <button class="btn btn-secondary btn-sm" onclick="App.fetchAPI('spells')">法术</button>
-        <button class="btn btn-secondary btn-sm" onclick="App.fetchAPI('monsters')">怪物</button>
-        <button class="btn btn-secondary btn-sm" onclick="App.fetchAPI('equipment')">装备</button>
-        <button class="btn btn-secondary btn-sm" onclick="App.fetchAPI('feats')">专长</button>
+        <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="races">种族</button>
+        <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="classes">职业</button>
+        <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="spells">法术</button>
+        <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="monsters">怪物</button>
+        <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="equipment">装备</button>
+        <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="feats">专长</button>
       </div>
       <div id="apiResults" style="max-height:500px;overflow-y:auto;margin-top:12px;"></div>
     </div>
@@ -254,9 +252,9 @@
           <textarea id="charBackground" rows="3" placeholder="角色的过往、性格、动机与目标..."></textarea>
 
           <div class="btn-row">
-            <button class="btn btn-save btn-sm" onclick="App.saveCharacter()">保存</button>
-            <button class="btn btn-secondary btn-sm" onclick="App.exportCharacter()">导出</button>
-            <button class="btn btn-ghost btn-sm" onclick="App.importCharacterPrompt()">导入</button>
+            <button class="btn btn-save btn-sm" data-action="character:save">保存</button>
+            <button class="btn btn-secondary btn-sm" data-action="character:export">导出</button>
+            <button class="btn btn-ghost btn-sm" data-action="character:import">导入</button>
           </div>
         </div>
 
@@ -286,7 +284,7 @@
           <div style="display:flex;gap:8px;margin-bottom:10px;">
             <input type="text" id="equipName" placeholder="物品名称..." style="flex:1;">
             <input type="number" id="equipQty" value="1" min="1" style="width:65px;">
-            <button class="btn btn-secondary btn-sm" onclick="App.addEquipment()">+ 添加</button>
+            <button class="btn btn-secondary btn-sm" data-action="character:addEquip">+ 添加</button>
           </div>
           <table class="equip-table">
             <thead><tr><th>物品</th><th>数量</th><th style="width:40px;"></th></tr></thead>
@@ -300,13 +298,13 @@
         <div class="panel">
           <h3>特质</h3>
           <div id="traitList"></div>
-          <button class="btn btn-ghost btn-xs" style="margin-top:8px;width:100%;" onclick="App.addTrait()">+ 添加特质</button>
+          <button class="btn btn-ghost btn-xs" style="margin-top:8px;width:100%;" data-action="character:addTrait">+ 添加特质</button>
         </div>
 
         <div class="panel" style="margin-top:16px;">
           <h3>专长与能力</h3>
           <div id="featList"></div>
-          <button class="btn btn-ghost btn-xs" style="margin-top:8px;width:100%;" onclick="App.addFeat()">+ 添加专长</button>
+          <button class="btn btn-ghost btn-xs" style="margin-top:8px;width:100%;" data-action="character:addFeat">+ 添加专长</button>
         </div>
 
         <div class="panel" style="margin-top:16px;">
@@ -338,12 +336,12 @@
           <div style="display:flex;gap:6px;margin-bottom:10px;">
             <input type="text" id="initName" placeholder="角色名" style="flex:1;">
             <input type="number" id="initRoll" placeholder="先攻值" style="width:70px;">
-            <button class="btn btn-secondary btn-xs" onclick="App.addInitiative()">+</button>
+            <button class="btn btn-secondary btn-xs" data-action="character:addInit">+</button>
           </div>
           <div id="initiativeList"></div>
           <div class="btn-row" style="margin-top:8px;">
-            <button class="btn btn-ghost btn-xs" onclick="App.nextInitiative()">▶ 下一回合</button>
-            <button class="btn btn-ghost btn-xs" onclick="App.clearInitiative()">清空</button>
+            <button class="btn btn-ghost btn-xs" data-action="character:nextInit">▶ 下一回合</button>
+            <button class="btn btn-ghost btn-xs" data-action="character:clearInit">清空</button>
           </div>
         </div>
       </div>
@@ -356,18 +354,18 @@
       <div class="panel">
         <h3>骰子投掷</h3>
         <div class="dice-strip">
-          <button class="dice-die" data-dice="4" >d4 <span>四面</span></button>
-          <button class="dice-die" data-dice="6" >d6 <span>六面</span></button>
-          <button class="dice-die" data-dice="8" >d8 <span>八面</span></button>
-          <button class="dice-die" data-dice="10">d10<span>十面</span></button>
-          <button class="dice-die" data-dice="12">d12<span>十二面</span></button>
-          <button class="dice-die active" data-dice="20">d20<span>二十面</span></button>
-          <button class="dice-die" data-dice="100">d%<span>百面</span></button>
+          <button class="dice-die" data-dice="4" data-action="dice:select">d4 <span>四面</span></button>
+          <button class="dice-die" data-dice="6" data-action="dice:select">d6 <span>六面</span></button>
+          <button class="dice-die" data-dice="8" data-action="dice:select">d8 <span>八面</span></button>
+          <button class="dice-die" data-dice="10" data-action="dice:select">d10<span>十面</span></button>
+          <button class="dice-die" data-dice="12" data-action="dice:select">d12<span>十二面</span></button>
+          <button class="dice-die active" data-dice="20" data-action="dice:select">d20<span>二十面</span></button>
+          <button class="dice-die" data-dice="100" data-action="dice:select">d%<span>百面</span></button>
         </div>
 
         <div class="roll-input-row">
           <input type="text" id="customDice" placeholder="自定义投掷，例如: 2d6+3 或 4d8-1">
-          <button class="btn btn-secondary" onclick="App.rollCustom()">投掷</button>
+          <button class="btn btn-secondary" data-action="dice:custom">投掷</button>
         </div>
 
         <div class="dice-result-zone">
@@ -375,7 +373,7 @@
           <div class="dice-sub-label" id="diceResultLabel">选择骰子然后点击下方按钮投掷</div>
         </div>
 
-        <button class="btn btn-primary" style="width:100%;padding:14px;font-size:1rem;margin-top:8px;" onclick="App.rollDice()">
+        <button class="btn btn-primary" style="width:100%;padding:14px;font-size:1rem;margin-top:8px;" data-action="dice:roll">
           投掷 <span id="rollBtnLabel">d20</span>
         </button>
       </div>
@@ -383,7 +381,7 @@
       <div class="panel">
         <h3>投掷记录</h3>
         <div class="roll-history-list" id="rollHistory"></div>
-        <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:14px;" onclick="App.clearRollHistory()">
+        <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:14px;" data-action="dice:clear">
           清空记录
         </button>
       </div>
@@ -397,7 +395,7 @@
         <h3>跑团笔记</h3>
         <div style="display:flex;gap:8px;margin-bottom:12px;">
           <input type="text" id="sessionTitle" placeholder="章节 / 标题..." style="flex:1;">
-          <button class="btn btn-save btn-sm" onclick="App.saveSessionNote()">保存</button>
+          <button class="btn btn-save btn-sm" data-action="notes:save">保存</button>
         </div>
         <textarea id="sessionContent" placeholder="记录你的冒险故事...&#10;&#10;遭遇、对话、战斗经过、重要发现、线索与谜题..."></textarea>
       </div>
@@ -435,7 +433,7 @@
             <div class="mp-char-info" id="mpCreateCharInfo" style="display:none;margin-top:6px;padding:8px 12px;font-size:.78rem;color:var(--text-dim);border:1px solid var(--border);border-radius:var(--r-md);background:rgba(0,0,0,.15);"></div>
             <label>房间名称 (可选)</label>
             <input type="text" id="mpRoomLabel" placeholder="给房间起个名字..." maxlength="30">
-            <button class="btn btn-primary" onclick="App.mpCreateRoom()" style="width:100%;padding:14px;font-size:1rem;margin-top:12px;">
+            <button class="btn btn-primary" data-action="mp:create" style="width:100%;padding:14px;font-size:1rem;margin-top:12px;">
               创建房间
             </button>
             <p class="mp-hint">房间创建后将自动生成房间号，分享给好友即可加入。</p>
@@ -455,7 +453,7 @@
             <div class="mp-char-info" id="mpJoinCharInfo" style="display:none;margin-top:6px;padding:8px 12px;font-size:.78rem;color:var(--text-dim);border:1px solid var(--border);border-radius:var(--r-md);background:rgba(0,0,0,.15);"></div>
             <label>房间号</label>
             <input type="text" id="mpJoinRoomId" placeholder="输入房主分享的房间号..." style="font-family:monospace;letter-spacing:.05em;">
-            <button class="btn btn-primary" onclick="App.mpJoinRoom()" style="width:100%;padding:14px;font-size:1rem;margin-top:12px;">
+            <button class="btn btn-primary" data-action="mp:join" style="width:100%;padding:14px;font-size:1rem;margin-top:12px;">
               加入房间
             </button>
             <p class="mp-hint">输入房主分享的房间号即可加入游戏。</p>
@@ -476,15 +474,15 @@
         </div>
         <div class="mp-room-actions">
           <span class="mp-peer-count" id="mpPeerCount"></span>
-          <button class="btn btn-ghost btn-xs" onclick="App.mpCopyRoomId()">复制房间号</button>
-          <button class="btn btn-danger btn-xs" onclick="App.mpLeaveRoom()">离开</button>
+          <button class="btn btn-ghost btn-xs" data-action="mp:copyId">复制房间号</button>
+          <button class="btn btn-danger btn-xs" data-action="mp:leave">离开</button>
         </div>
       </div>
 
       <!-- Turn Banner -->
       <div class="mp-turn-banner" id="mpTurnBanner" style="display:none;">
         <div class="mp-turn-info" id="mpTurnInfo"></div>
-        <button class="btn btn-accent btn-sm" id="mpEndTurnBtn" onclick="App.mpEndTurn()" style="display:none;">结束回合</button>
+        <button class="btn btn-accent btn-sm" id="mpEndTurnBtn" data-action="mp:endTurn" style="display:none;">结束回合</button>
       </div>
 
       <!-- Lobby Phase Controls -->
@@ -495,7 +493,7 @@
         <!-- Character Selector -->
         <div class="mp-char-pick" id="mpCharPick">
           <label style="display:block;margin-bottom:6px;font-size:.8rem;color:var(--text-dim);">选择角色卡</label>
-          <select class="mp-char-sel" id="mpRoomCharSelect" onchange="App.mpRoomCharChanged()">
+          <select class="mp-char-sel" id="mpRoomCharSelect" data-action="mp:roomCharChanged" data-action-event="change">
             <option value="">-- 选择已有角色卡或去人物卡页创建 --</option>
           </select>
           <div class="mp-char-info" id="mpRoomCharInfo" style="display:none;"></div>
@@ -504,8 +502,8 @@
         <!-- Player Slots Grid -->
         <div class="mp-slots-grid" id="mpSlotsGrid"></div>
         <div class="mp-lobby-btns">
-          <button class="btn btn-save btn-sm" id="mpReadyBtn" onclick="App.mpPlayerReady()" disabled>准备就绪</button>
-          <button class="btn btn-primary btn-sm" id="mpStartGameBtn" onclick="App.mpStartGame()" style="display:none;" disabled>开始游戏</button>
+          <button class="btn btn-save btn-sm" id="mpReadyBtn" data-action="mp:ready" disabled>准备就绪</button>
+          <button class="btn btn-primary btn-sm" id="mpStartGameBtn" data-action="mp:start" style="display:none;" disabled>开始游戏</button>
         </div>
       </div>
 
@@ -544,7 +542,7 @@
               </div>
               <div class="mp-input-wrap">
                 <input type="text" id="mpInput" placeholder="输入行动指令，例如「调查书架」..." disabled>
-                <button class="btn btn-primary btn-sm" id="mpSendBtn" onclick="App.mpSendMessage()" disabled>发送</button>
+                <button class="btn btn-primary btn-sm" id="mpSendBtn" data-action="mp:send" disabled>发送</button>
               </div>
             </div>
           </div>
@@ -555,6 +553,6 @@
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-<script src="app.js"></script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>

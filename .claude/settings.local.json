@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xxd \"C:\\\\Users\\\\TXY999\\\\OneDrive\\\\文档\\\\GitHub\\\\paotuan\\\\TTRPG\\\\README.md\")",
+      "Bash(iconv -f UTF-16 -t UTF-8 \"C:\\\\Users\\\\TXY999\\\\OneDrive\\\\文档\\\\GitHub\\\\paotuan\\\\TTRPG\\\\README.md\")",
+      "Bash(git *)"
+    ]
+  }
+}

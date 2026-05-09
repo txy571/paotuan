@@ -13,15 +13,31 @@
   --r-lg: 8px;
   --r-xl: 12px;
   --font-body: 'Segoe UI', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+  /* Spacing scale */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  /* Border hierarchy */
+  --border-subtle: rgba(255,255,255,0.03);
+  --border: rgba(255,255,255,0.06);
+  --border-strong: rgba(255,255,255,0.10);
+  /* Shadow hierarchy */
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.6);
+  font-size: 16px;
 }
 
 /* ---------- D&D 5e — 龙与地下城 ---------- */
 [data-theme="dnd"] {
-  --bg-base: #0a0a0f;
-  --bg-layer: #12121a;
-  --bg-card: linear-gradient(150deg, #1a1a24 0%, #12121a 55%, #0a0a0f 100%);
-  --bg-panel: #14141e;
-  --text: #e8e8f0;
+  --bg-base: #08080c;
+  --bg-layer: #101018;
+  --bg-card: linear-gradient(150deg, #1c1c28 0%, #14141e 55%, #0c0c14 100%);
+  --bg-panel: #161622;
+  --text: #f0f0f8;
   --text-dim: #8888a8;
   --text-gold: #ff4444;
   --accent: #d42020;
@@ -40,11 +56,11 @@
 
 /* ---------- CoC — 克苏鲁的呼唤 ---------- */
 [data-theme="coc"] {
-  --bg-base: #0a0a0f;
-  --bg-layer: #12121a;
-  --bg-card: linear-gradient(150deg, #1a1a24 0%, #12121a 55%, #0a0a0f 100%);
-  --bg-panel: #14141e;
-  --text: #e8e8f0;
+  --bg-base: #08080c;
+  --bg-layer: #101018;
+  --bg-card: linear-gradient(150deg, #1c1c28 0%, #14141e 55%, #0c0c14 100%);
+  --bg-panel: #161622;
+  --text: #f0f0f8;
   --text-dim: #8888a8;
   --text-gold: #2dd4bf;
   --accent: #0d9488;
@@ -63,11 +79,11 @@
 
 /* ---------- Cyberpunk RED — 赛博朋克 ---------- */
 [data-theme="cyberpunk"] {
-  --bg-base: #0a0a0f;
-  --bg-layer: #12121a;
-  --bg-card: linear-gradient(150deg, #1a1a24 0%, #12121a 55%, #0a0a0f 100%);
-  --bg-panel: #14141e;
-  --text: #e8e8f0;
+  --bg-base: #08080c;
+  --bg-layer: #101018;
+  --bg-card: linear-gradient(150deg, #1c1c28 0%, #14141e 55%, #0c0c14 100%);
+  --bg-panel: #161622;
+  --text: #f0f0f8;
   --text-dim: #8888a8;
   --text-gold: #44ccff;
   --accent: #0088cc;
@@ -86,11 +102,11 @@
 
 /* ---------- Pathfinder — 开拓者 ---------- */
 [data-theme="pathfinder"] {
-  --bg-base: #0a0a0f;
-  --bg-layer: #12121a;
-  --bg-card: linear-gradient(150deg, #1a1a24 0%, #12121a 55%, #0a0a0f 100%);
-  --bg-panel: #14141e;
-  --text: #e8e8f0;
+  --bg-base: #08080c;
+  --bg-layer: #101018;
+  --bg-card: linear-gradient(150deg, #1c1c28 0%, #14141e 55%, #0c0c14 100%);
+  --bg-panel: #161622;
+  --text: #f0f0f8;
   --text-dim: #8888a8;
   --text-gold: #e8b830;
   --accent: #c89820;
@@ -110,6 +126,7 @@
 /* ---------- Body & Background ---------- */
 body {
   font-family: var(--font-body);
+  font-size: 0.92rem;
   background: var(--bg-base);
   color: var(--text);
   min-height: 100vh;
@@ -142,7 +159,7 @@ nav {
   padding: 10px 20px; margin: 14px 0;
   background: var(--bg-panel);
   border: 1px solid var(--border); border-radius: var(--r-md);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3); flex-wrap: wrap; gap: 10px;
+  box-shadow: var(--shadow-sm); flex-wrap: wrap; gap: 10px;
 }
 
 .nav-brand {
@@ -257,11 +274,11 @@ nav {
 .panel {
   background: var(--bg-panel);
   border: 1px solid var(--border); border-radius: var(--r-md);
-  padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  padding: 16px; box-shadow: var(--shadow-sm);
 }
 .panel h3 {
   font-family: var(--font-display); color: var(--text-gold);
-  font-size: 0.95rem; margin-bottom: 10px;
+  font-size: 1.05rem; margin-bottom: 10px;
   padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.04);
   display: flex; align-items: center; gap: 6px;
   text-transform: uppercase; letter-spacing: 0.04em;

@@ -125,7 +125,7 @@ export function saveKPConfig(cfg) {
   kpState.apiKey  = cfg.key;
   kpState.model   = cfg.model;
   localStorage.setItem('ttrpg-kp-config', JSON.stringify({
-    provider: cfg.provider, apiKey: cfg.key, model: cfg.model, endpoint: cfg.endpoint || '',
+    provider: cfg.provider, apiKey: cfg.key, model: cfg.model,
   }));
 }
 
@@ -260,110 +260,110 @@ export function stopKPStreaming() {
   if (stopBtn) stopBtn.style.display = 'none';
 }
 
-// ── API Helpers ────────────────────────────────────
-function resolveEndpoint(cfg) {
-  if (cfg.provider === 'anthropic') return 'https://api.anthropic.com/v1/messages';
-  if (cfg.provider === 'deepseek') return 'https://api.deepseek.com/chat/completions';
-  return 'https://api.openai.com/v1/chat/completions';
-}
+// ── API Core ──────────────────────────────────────
+// Two API formats: Anthropic Messages API and Chat Completions API.
+// Both go through the same fetch → SSE stream → accumulate text pipeline.
 
-async function checkResponse(resp) {
+async function _stream(endpoint, reqHeaders, reqBody, controller, parseDelta) {
+  const resp = await fetch('/api/proxy', {
+    method: 'POST',
+    headers: { 'X-Proxy-Target': endpoint, 'Content-Type': 'application/json', ...reqHeaders },
+    body: JSON.stringify(reqBody),
+    signal: controller.signal,
+  });
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
     throw new Error(err.error?.message || `HTTP ${resp.status}`);
   }
-}
 
-async function readSSEStream(response, extractDelta) {
-  const reader = response.body.getReader();
+  const reader = resp.body.getReader();
   const decoder = new TextDecoder();
-  let fullText = '';
-  let buffer = '';
-
+  let text = '', buf = '';
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
+    buf += decoder.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop() || '';
     for (const line of lines) {
       if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
       try {
-        const data = JSON.parse(line.slice(6));
-        const delta = extractDelta(data);
+        const delta = parseDelta(JSON.parse(line.slice(6)));
         if (delta) {
-          fullText += delta;
-          if (kpState.chatHistory.length) kpState.chatHistory[kpState.chatHistory.length - 1].content = fullText;
+          text += delta;
+          if (kpState.chatHistory.length) kpState.chatHistory[kpState.chatHistory.length - 1].content = text;
           renderKP();
         }
-      } catch(e) { /* skip */ }
+      } catch(e) { /* skip malformed SSE chunk */ }
     }
   }
-  return fullText;
+  return text;
 }
 
-// ── Unified API Dispatch ──────────────────────────
-export async function callAPI(cfg, systemPrompt, recentHistory, userMsg, controller) {
-  if (cfg.provider === 'anthropic') {
-    return callAnthropicAPI(cfg, systemPrompt, recentHistory, userMsg, controller);
-  }
-  return _callOpenAICompat(cfg, systemPrompt, recentHistory, userMsg, controller);
-}
-
-// ── Provider Implementations ──────────────────────
-export async function callAnthropicAPI(cfg, systemPrompt, recentHistory, userMsg, controller) {
+/** Anthropic Messages API — system as top-level field, x-api-key auth, SSE: delta.text */
+async function _anthropic(cfg, systemPrompt, recentHistory, userMsg, controller) {
   const messages = [];
   for (const m of recentHistory) {
     messages.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content });
   }
   messages.push({ role: 'user', content: userMsg });
 
-  const resp = await fetch('/api/proxy', {
-    method: 'POST',
-    headers: {
-      'X-Proxy-Target': 'https://api.anthropic.com/v1/messages',
-      'Content-Type': 'application/json',
-      'x-api-key': cfg.key,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({ model: cfg.model, max_tokens: 2048, system: systemPrompt, messages, stream: true }),
-    signal: controller.signal,
-  });
-
-  await checkResponse(resp);
-  return readSSEStream(resp, data => data.delta?.text || data.content_block?.text || '');
+  return _stream(
+    'https://api.anthropic.com/v1/messages',
+    { 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01' },
+    { model: cfg.model, max_tokens: 2048, system: systemPrompt, messages, stream: true },
+    controller,
+    data => data.delta?.text || data.content_block?.text || ''
+  );
 }
 
-export async function callOpenAIAPI(cfg, systemPrompt, recentHistory, userMsg, controller) {
-  return _callOpenAICompat(cfg, systemPrompt, recentHistory, userMsg, controller);
-}
-
-export async function callDeepSeekAPI(cfg, systemPrompt, recentHistory, userMsg, controller) {
-  return _callOpenAICompat(cfg, systemPrompt, recentHistory, userMsg, controller);
-}
-
-async function _callOpenAICompat(cfg, systemPrompt, recentHistory, userMsg, controller) {
-  const endpoint = resolveEndpoint(cfg);
-
+/** Chat Completions API — system as first message, Bearer auth, SSE: choices[0].delta.content */
+async function _chatCompletions(endpoint, cfg, systemPrompt, recentHistory, userMsg, controller) {
   const messages = [{ role: 'system', content: systemPrompt }];
   for (const m of recentHistory) {
     messages.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content });
   }
   messages.push({ role: 'user', content: userMsg });
 
-  const resp = await fetch('/api/proxy', {
-    method: 'POST',
-    headers: {
-      'X-Proxy-Target': endpoint,
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${cfg.key}`,
-    },
-    body: JSON.stringify({ model: cfg.model, max_tokens: 2048, messages, stream: true }),
-    signal: controller.signal,
-  });
+  return _stream(
+    endpoint,
+    { 'Authorization': `Bearer ${cfg.key}` },
+    { model: cfg.model, max_tokens: 2048, messages, stream: true },
+    controller,
+    data => data.choices?.[0]?.delta?.content || ''
+  );
+}
 
-  await checkResponse(resp);
-  return readSSEStream(resp, data => data.choices?.[0]?.delta?.content || '');
+// ── Provider Registry ─────────────────────────────
+const _ENDPOINT = {
+  anthropic: 'https://api.anthropic.com/v1/messages',
+  deepseek:  'https://api.deepseek.com/chat/completions',
+  openai:    'https://api.openai.com/v1/chat/completions',
+};
+
+// ── Public API ────────────────────────────────────
+
+/** Unified dispatch — preferred for all internal callers */
+export async function callAPI(cfg, systemPrompt, recentHistory, userMsg, controller) {
+  if (cfg.provider === 'anthropic') {
+    return _anthropic(cfg, systemPrompt, recentHistory, userMsg, controller);
+  }
+  return _chatCompletions(
+    _ENDPOINT[cfg.provider] || _ENDPOINT.openai,
+    cfg, systemPrompt, recentHistory, userMsg, controller
+  );
+}
+
+/** Backward compat — used by multiplayer/ modules */
+export async function callAnthropicAPI(cfg, systemPrompt, recentHistory, userMsg, controller) {
+  return _anthropic(cfg, systemPrompt, recentHistory, userMsg, controller);
+}
+
+export async function callOpenAIAPI(cfg, systemPrompt, recentHistory, userMsg, controller) {
+  return _chatCompletions(
+    _ENDPOINT[cfg.provider] || _ENDPOINT.openai,
+    cfg, systemPrompt, recentHistory, userMsg, controller
+  );
 }
 
 // ── Context Compression ────────────────────────────

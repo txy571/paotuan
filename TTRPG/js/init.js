@@ -242,11 +242,10 @@ async function init() {
 
   // Check proxy availability (for GitHub Pages + Cloudflare Worker)
   checkProxyAvailable().then(available => {
-    if (!available) {
-      const workerUrl = localStorage.getItem('ttrpg-proxy-url');
-      if (!workerUrl) {
-        console.log('API proxy not available. AI KP requires a proxy. Other features work normally.');
-      }
+    if (available) {
+      console.log('API proxy detected — AI KP will use proxy');
+    } else {
+      console.log('No API proxy detected — AI KP will call APIs directly');
     }
   });
 

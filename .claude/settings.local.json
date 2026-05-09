@@ -15,7 +15,10 @@
       "Read(//c/Users/TXY999/AppData/Local/**)",
       "Bash(powershell.exe *)",
       "Bash(python3 server.py)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/)",
+      "Bash(node -e \"try { new Function\\(require\\('fs'\\).readFileSync\\('TTRPG/js/kp.js','utf8'\\)\\); console.log\\('Syntax OK'\\); } catch\\(e\\) { console.log\\('Syntax error:', e.message\\); }\")",
+      "Bash(node --input-type=module -e \"import\\('fs'\\).then\\(fs => { const code = fs.readFileSync\\('TTRPG/js/kp.js','utf8'\\); try { new \\(require\\('vm'\\).SourceTextModule\\)\\(code\\); console.log\\('Module syntax OK'\\); } catch\\(e\\) { console.log\\('Parse issue:', e.message.slice\\(0,200\\)\\); } }\\)\")",
+      "Bash(node -e \"const fs = require\\('fs'\\); const code = fs.readFileSync\\('TTRPG/js/kp.js','utf8'\\); const lines = code.split\\('\\\\n'\\); const editLines = [268,270,300,319,538,543,566]; for \\(const l of editLines\\) console.log\\(l, lines[l-1]\\);\")"
     ]
   }
 }

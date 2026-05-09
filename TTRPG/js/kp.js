@@ -264,13 +264,58 @@ export function stopKPStreaming() {
 // Two API formats: Anthropic Messages API and Chat Completions API.
 // Both go through the same fetch → SSE stream → accumulate text pipeline.
 
+// Cached proxy detection: undefined=not checked, string=proxy URL, null=no proxy (direct call)
+let _proxyBase = undefined;
+
+async function detectProxy() {
+  if (_proxyBase !== undefined) return _proxyBase;
+
+  // 1) User-configured Cloudflare Worker proxy
+  const workerUrl = localStorage.getItem('ttrpg-proxy-url');
+  if (workerUrl) {
+    try {
+      const pingUrl = workerUrl.replace(/\/api\/proxy\/?$/, '/ping').replace(/\/$/, '') + '/ping';
+      const resp = await fetch(pingUrl, { method: 'GET', signal: AbortSignal.timeout(3000) });
+      if (resp.ok) {
+        _proxyBase = workerUrl.replace(/\/$/, '') + '/api/proxy';
+        return _proxyBase;
+      }
+    } catch {}
+  }
+
+  // 2) Local development server
+  try {
+    const resp = await fetch('/__ttrpg_ping__', { method: 'GET', signal: AbortSignal.timeout(2000) });
+    if (resp.ok && resp.headers.get('X-TTRPG-Server') === '1') {
+      _proxyBase = '/api/proxy';
+      return _proxyBase;
+    }
+  } catch {}
+
+  // 3) No proxy — call APIs directly (all major providers support CORS)
+  _proxyBase = null;
+  return null;
+}
+
 async function _stream(endpoint, reqHeaders, reqBody, controller, parseDelta) {
-  const resp = await fetch('/api/proxy', {
-    method: 'POST',
-    headers: { 'X-Proxy-Target': endpoint, 'Content-Type': 'application/json', ...reqHeaders },
-    body: JSON.stringify(reqBody),
-    signal: controller.signal,
-  });
+  const proxyBase = await detectProxy();
+
+  let resp;
+  if (proxyBase) {
+    resp = await fetch(proxyBase, {
+      method: 'POST',
+      headers: { 'X-Proxy-Target': endpoint, 'Content-Type': 'application/json', ...reqHeaders },
+      body: JSON.stringify(reqBody),
+      signal: controller.signal,
+    });
+  } else {
+    resp = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...reqHeaders },
+      body: JSON.stringify(reqBody),
+      signal: controller.signal,
+    });
+  }
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
     throw new Error(err.error?.message || `HTTP ${resp.status}`);
@@ -490,13 +535,13 @@ export async function sendKPMessage() {
     } else {
       let errMsg = err.message;
       if (errMsg === 'Failed to fetch' || err.name === 'TypeError') {
-        errMsg = '无法连接本地服务器 — 请确保 TTRPG 的启动窗口没有关闭，然后刷新页面重试';
+        errMsg = '网络连接失败 — 请检查网络，或刷新页面重试';
       } else if (errMsg.includes('HTTP 404')) {
         errMsg = 'API 端点返回 404 — 请检查模型是否与 API 提供商匹配';
       } else if (errMsg.includes('upstream api returned 404')) {
         errMsg = 'API 端点返回 404 — 请检查模型名称是否匹配当前 API 提供商';
       } else if (errMsg.includes('HTTP 405')) {
-        errMsg = 'API 端点返回 405 (Method Not Allowed) — 请检查模型与 API 提供商是否匹配';
+        errMsg = 'GitHub Pages 不支持 API 代理 — 已自动切换为直接调用，请刷新重试。如仍失败，请检查模型名称与 API 提供商是否匹配';
       } else if (errMsg.includes('HTTP 401') || errMsg.includes('HTTP 403')) {
         errMsg = 'API Key 无效或无权访问 — 请检查 KP 设置中的 API Key';
       } else if (errMsg.includes('HTTP 502') || errMsg.includes('proxy error')) {
@@ -519,10 +564,6 @@ export async function sendKPMessage() {
 
 // ── Proxy Detection ────────────────────────────────
 export async function checkProxyAvailable() {
-  try {
-    const resp = await fetch('/__ttrpg_ping__', { method: 'GET', signal: AbortSignal.timeout(2000) });
-    return resp.ok && resp.headers.get('X-TTRPG-Server') === '1';
-  } catch {
-    return false;
-  }
+  const base = await detectProxy();
+  return base !== null;
 }

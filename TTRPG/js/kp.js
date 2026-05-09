@@ -117,7 +117,7 @@ export function getKPConfig() {
   }
   let endpoint;
   if (model.startsWith('deepseek-')) {
-    endpoint = 'https://api.deepseek.com/v1/chat/completions';
+    endpoint = 'https://api.deepseek.com/chat/completions';
   } else {
     endpoint = 'https://api.openai.com/v1/chat/completions';
   }
@@ -376,7 +376,7 @@ export async function callDeepSeekAPI(cfg, systemPrompt, recentHistory, userMsg,
   }
   messages.push({ role: 'user', content: userMsg });
 
-  const endpoint = 'https://api.deepseek.com/v1/chat/completions';
+  const endpoint = 'https://api.deepseek.com/chat/completions';
 
   const resp = await fetch('/api/proxy', {
     method: 'POST',

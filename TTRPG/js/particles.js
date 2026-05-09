@@ -42,14 +42,14 @@ function starColor() {
 function layerCounts(cw, ch) {
   const s = Math.max(0.35, (cw * ch) / (1920 * 1080));
   return {
-    8: Math.round(600 * s),  // ultra-deep dust
-    7: Math.round(450 * s),  // very dim
-    6: Math.round(320 * s),  // dim
-    5: Math.round(200 * s),  // medium-faint
-    4: Math.round(120 * s),  // medium
-    3: Math.round(60 * s),   // bright mid
-    2: Math.round(28 * s),   // bright
-    1: Math.round(14 * s),   // nearest bright
+    8: Math.round(1000 * s), // ultra-deep dust
+    7: Math.round(700 * s),  // very dim
+    6: Math.round(500 * s),  // dim
+    5: Math.round(320 * s),  // medium-faint
+    4: Math.round(180 * s),  // medium
+    3: Math.round(90 * s),   // bright mid
+    2: Math.round(40 * s),   // bright
+    1: Math.round(22 * s),   // nearest bright
   };
 }
 

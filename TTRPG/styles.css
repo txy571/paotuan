@@ -33,10 +33,10 @@
 
 /* ---------- D&D 5e — 龙与地下城 ---------- */
 [data-theme="dnd"] {
-  --bg-base: #08080c;
-  --bg-layer: #101018;
-  --bg-card: linear-gradient(150deg, #1c1c28 0%, #14141e 55%, #0c0c14 100%);
-  --bg-panel: #161622;
+  --bg-base: #020206;
+  --bg-layer: #08080e;
+  --bg-card: linear-gradient(150deg, #0e0e18 0%, #0a0a12 55%, #06060e 100%);
+  --bg-panel: #0c0c16;
   --text: #f0f0f8;
   --text-dim: #8888a8;
   --text-gold: #ff4444;
@@ -48,7 +48,7 @@
   --border-bright: #d42020;
   --shadow: 0 4px 20px rgba(0,0,0,0.5);
   --font-display: 'Georgia', 'KaiTi', serif;
-  --overlay: rgba(10,10,15,0.85);
+  --overlay: rgba(4,4,8,0.92);
   --dice-face: #d42020;
   --glow-spread: 0 0 24px rgba(212,32,32,0.2);
   --ornament: "⚔️";
@@ -56,10 +56,10 @@
 
 /* ---------- CoC — 克苏鲁的呼唤 ---------- */
 [data-theme="coc"] {
-  --bg-base: #08080c;
-  --bg-layer: #101018;
-  --bg-card: linear-gradient(150deg, #1c1c28 0%, #14141e 55%, #0c0c14 100%);
-  --bg-panel: #161622;
+  --bg-base: #020206;
+  --bg-layer: #08080e;
+  --bg-card: linear-gradient(150deg, #0e0e18 0%, #0a0a12 55%, #06060e 100%);
+  --bg-panel: #0c0c16;
   --text: #f0f0f8;
   --text-dim: #8888a8;
   --text-gold: #2dd4bf;
@@ -71,7 +71,7 @@
   --border-bright: #0d9488;
   --shadow: 0 4px 20px rgba(0,0,0,0.5);
   --font-display: 'Times New Roman', 'KaiTi', serif;
-  --overlay: rgba(10,10,15,0.85);
+  --overlay: rgba(4,4,8,0.92);
   --dice-face: #0d9488;
   --glow-spread: 0 0 24px rgba(13,148,136,0.2);
   --ornament: "🐙";
@@ -79,10 +79,10 @@
 
 /* ---------- Cyberpunk RED — 赛博朋克 ---------- */
 [data-theme="cyberpunk"] {
-  --bg-base: #08080c;
-  --bg-layer: #101018;
-  --bg-card: linear-gradient(150deg, #1c1c28 0%, #14141e 55%, #0c0c14 100%);
-  --bg-panel: #161622;
+  --bg-base: #020206;
+  --bg-layer: #08080e;
+  --bg-card: linear-gradient(150deg, #0e0e18 0%, #0a0a12 55%, #06060e 100%);
+  --bg-panel: #0c0c16;
   --text: #f0f0f8;
   --text-dim: #8888a8;
   --text-gold: #44ccff;
@@ -94,7 +94,7 @@
   --border-bright: #0088cc;
   --shadow: 0 4px 20px rgba(0,0,0,0.5);
   --font-display: 'Consolas', 'Courier New', monospace;
-  --overlay: rgba(10,10,15,0.85);
+  --overlay: rgba(4,4,8,0.92);
   --dice-face: #0088cc;
   --glow-spread: 0 0 24px rgba(0,136,204,0.2);
   --ornament: ">";
@@ -102,10 +102,10 @@
 
 /* ---------- Pathfinder — 开拓者 ---------- */
 [data-theme="pathfinder"] {
-  --bg-base: #08080c;
-  --bg-layer: #101018;
-  --bg-card: linear-gradient(150deg, #1c1c28 0%, #14141e 55%, #0c0c14 100%);
-  --bg-panel: #161622;
+  --bg-base: #020206;
+  --bg-layer: #08080e;
+  --bg-card: linear-gradient(150deg, #0e0e18 0%, #0a0a12 55%, #06060e 100%);
+  --bg-panel: #0c0c16;
   --text: #f0f0f8;
   --text-dim: #8888a8;
   --text-gold: #e8b830;
@@ -117,7 +117,7 @@
   --border-bright: #c89820;
   --shadow: 0 4px 20px rgba(0,0,0,0.5);
   --font-display: 'Georgia', 'KaiTi', serif;
-  --overlay: rgba(10,10,15,0.85);
+  --overlay: rgba(4,4,8,0.92);
   --dice-face: #c89820;
   --glow-spread: 0 0 24px rgba(200,152,32,0.2);
   --ornament: "🗡️";

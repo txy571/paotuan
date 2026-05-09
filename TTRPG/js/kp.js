@@ -369,6 +369,58 @@ export async function callOpenAIAPI(cfg, systemPrompt, recentHistory, userMsg, c
   return fullText;
 }
 
+export async function callDeepSeekAPI(cfg, systemPrompt, recentHistory, userMsg, controller) {
+  const messages = [{ role: 'system', content: systemPrompt }];
+  for (const m of recentHistory) {
+    messages.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content });
+  }
+  messages.push({ role: 'user', content: userMsg });
+
+  const endpoint = 'https://api.deepseek.com/v1/chat/completions';
+
+  const resp = await fetch('/api/proxy', {
+    method: 'POST',
+    headers: {
+      'X-Proxy-Target': endpoint,
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${cfg.key}`,
+    },
+    body: JSON.stringify({ model: cfg.model, max_tokens: 2048, messages, stream: true }),
+    signal: controller.signal,
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${resp.status}`);
+  }
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = '';
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+    for (const line of lines) {
+      if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
+      try {
+        const data = JSON.parse(line.slice(6));
+        const delta = data.choices?.[0]?.delta?.content || '';
+        if (delta) {
+          fullText += delta;
+          if (kpState.chatHistory.length) kpState.chatHistory[kpState.chatHistory.length - 1].content = fullText;
+          renderKP();
+        }
+      } catch(e) { /* skip */ }
+    }
+  }
+  return fullText;
+}
+
 // ── Context Compression ────────────────────────────
 async function compressContextAsync() {
   if (kpState._compressing) return;
@@ -391,6 +443,8 @@ async function compressContextAsync() {
     let summary = '';
     if (cfg.provider === 'anthropic') {
       summary = await callAnthropicAPI(cfg, '你是游戏会话压缩助手。将对话记录压缩为简洁摘要。', [], summaryPrompt, controller);
+    } else if (cfg.model && cfg.model.startsWith('deepseek-')) {
+      summary = await callDeepSeekAPI(cfg, '你是游戏会话压缩助手。将对话记录压缩为简洁摘要。', [], summaryPrompt, controller);
     } else {
       summary = await callOpenAIAPI(cfg, '你是游戏会话压缩助手。将对话记录压缩为简洁摘要。', [], summaryPrompt, controller);
     }
@@ -470,6 +524,8 @@ export async function sendKPMessage() {
     let fullResponse = '';
     if (cfg.provider === 'anthropic') {
       fullResponse = await callAnthropicAPI(cfg, systemPrompt, recentApi, text, controller);
+    } else if (cfg.model && cfg.model.startsWith('deepseek-')) {
+      fullResponse = await callDeepSeekAPI(cfg, systemPrompt, recentApi, text, controller);
     } else {
       fullResponse = await callOpenAIAPI(cfg, systemPrompt, recentApi, text, controller);
     }

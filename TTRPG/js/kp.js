@@ -228,6 +228,11 @@ export function saveKPChatHistory() {
 
 // ── KP Panel Open/Close ────────────────────────────
 export function openKPPanel() {
+  // Block opening if no character card is loaded
+  if (!hasCharacterCard()) {
+    showToast('请先在下方选择或创建一个角色卡，再开始游戏');
+    return;
+  }
   kpState.active = true;
   const hero = document.getElementById('kpHero');
   const panel = document.getElementById('kpChatWrapper');
@@ -242,7 +247,8 @@ export function openKPPanel() {
   renderCocChronicle();
   document.dispatchEvent(new CustomEvent('render-game-saves'));
   if (!kpState.chatHistory.length) {
-    addKPSystemMsg(`🎭 AI主持人已就绪。当前规则: ${THEME_NAMES[state.theme]}。发送消息开始你的冒险吧!`);
+    const charName = document.getElementById('charName')?.value?.trim() || '调查员';
+    addKPSystemMsg(`🎭 AI主持人已就绪。当前规则: ${THEME_NAMES[state.theme]}。角色 ${charName} 的冒险即将开始...`);
   }
   const input = document.getElementById('kpInput');
   if (input) setTimeout(() => input.focus(), 200);
@@ -488,6 +494,44 @@ export function hasCharacterCard() {
   return !!name;
 }
 
+/** Render saved characters as selectable cards on the home page */
+export function renderHomeCharSelect() {
+  const list = document.getElementById('homeCharList');
+  if (!list) return;
+  const chars = JSON.parse(localStorage.getItem('ttrpg-chars') || '{}');
+  const entries = Object.values(chars);
+  if (!entries.length) {
+    list.innerHTML = '<div class="char-select-empty">请先在"人物卡"页面创建角色，或点击上方按钮快速创建</div>';
+    return;
+  }
+  const activeId = state.currentCharId;
+  list.innerHTML = entries.map(c => `
+    <div class="char-select-card${c.id === activeId ? ' selected' : ''}" data-action="kp:selectChar" data-id="${c.id}">
+      <div class="char-select-dot"></div>
+      <div class="char-select-info">
+        <div class="char-select-name">${esc(c.name)}</div>
+        <div class="char-select-meta">${esc(c.race||'?')} · ${esc(c.cls||'?')} · Lv.${c.level||1}</div>
+      </div>
+    </div>`).join('');
+}
+
+/** Handle character selection from home page */
+export function selectHomeChar(id) {
+  const chars = JSON.parse(localStorage.getItem('ttrpg-chars') || '{}');
+  const c = chars[id];
+  if (!c) return;
+  // Load character into form fields (reuse loadCharData)
+  import('./character.js').then(mod => {
+    mod.loadCharData(c);
+    state.currentCharId = id;
+    renderHomeCharSelect();
+    // Update the hero badge
+    const badge = document.getElementById('kpHeroBadge');
+    if (badge) badge.textContent = '✓ 角色已就绪 — 点击这里，开始冒险';
+    showToast(`已选择角色: ${c.name}`);
+  });
+}
+
 // ── Send Message ───────────────────────────────────
 export async function sendKPMessage() {
   const input = document.getElementById('kpInput');
@@ -617,3 +661,13 @@ export async function checkProxyAvailable() {
   const base = await detectProxy();
   return base !== null;
 }
+
+// ── Listen for character list changes ──────────────────
+document.addEventListener('char-list-changed', () => {
+  renderHomeCharSelect();
+  // Update hero badge if no character is currently loaded
+  const badge = document.getElementById('kpHeroBadge');
+  if (badge && !hasCharacterCard()) {
+    badge.textContent = '选择角色后，点击这里开始冒险';
+  }
+});

@@ -240,6 +240,7 @@ export function saveCharacter() {
   localStorage.setItem('ttrpg-chars', JSON.stringify(chars));
   state.currentCharId = data.id;
   renderSavedChars();
+  document.dispatchEvent(new CustomEvent('char-list-changed'));
   showToast(`角色 "${data.name}" 已保存!`);
 }
 
@@ -264,7 +265,7 @@ export function renderSavedChars() {
 
 export function loadCharacter(id) {
   const chars = JSON.parse(localStorage.getItem('ttrpg-chars') || '{}');
-  if (chars[id]) { loadCharData(chars[id]); showToast('角色已加载'); }
+  if (chars[id]) { loadCharData(chars[id]); state.currentCharId = id; document.dispatchEvent(new CustomEvent('char-list-changed')); showToast('角色已加载'); }
 }
 
 export function deleteCharacter(id) {
@@ -274,6 +275,7 @@ export function deleteCharacter(id) {
   localStorage.setItem('ttrpg-chars', JSON.stringify(chars));
   if (state.currentCharId === id) state.currentCharId = null;
   renderSavedChars();
+  document.dispatchEvent(new CustomEvent('char-list-changed'));
   showToast('角色已删除');
 }
 

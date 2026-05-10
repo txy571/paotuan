@@ -33,6 +33,17 @@
       <p>选择一套规则系统开始跑团之旅——不同规则将带来完全不同的视觉体验与专属工具。</p>
     </div>
 
+    <!-- ===== CHARACTER SELECTION ===== -->
+    <div class="char-select-section" id="homeCharSelect">
+      <div class="char-select-header">
+        <h3>🎭 选择你的角色</h3>
+        <button class="btn btn-sm btn-secondary" data-action="nav:go" data-page="character">+ 创建新角色</button>
+      </div>
+      <div class="char-select-list" id="homeCharList">
+        <div class="char-select-empty">请先在"人物卡"页面创建角色，或点击上方按钮快速创建</div>
+      </div>
+    </div>
+
     <!-- ===== AI KP HERO BANNER ===== -->
     <div class="kp-hero" id="kpHero" data-action="kp:open">
       <div class="kp-hero-inner">
@@ -40,7 +51,7 @@
         <div class="kp-hero-text">
           <h2>AI 主持人 (KP/DM) — 即刻开始跑团</h2>
           <p>接入 AI 大模型作为你的专属游戏主持人。自动适配当前规则系统，实时叙述、判定、扮演 NPC。支持 Anthropic Claude 和 OpenAI 兼容接口。</p>
-          <span class="kp-hero-badge">点击这里，开始冒险</span>
+          <span class="kp-hero-badge" id="kpHeroBadge">选择角色后，点击这里开始冒险</span>
         </div>
         <div class="kp-hero-arrow">▶</div>
       </div>

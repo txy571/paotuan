@@ -12,6 +12,7 @@ import {
   openKPPanel, closeKPPanel, clearKPChat, sendKPMessage, sendQuickAction,
   stopKPStreaming, toggleKPConfig, toggleKPProviderUI, saveKPConfigFromUI,
   loadKPConfig, loadKPChatHistory, renderKP, renderKPQuickActions, checkProxyAvailable,
+  selectHomeChar, renderHomeCharSelect,
 } from './kp.js';
 import { saveGame, loadGame, deleteGame, loadAutosave, renderGameSaves } from './saves.js';
 import * as Scenario from './scenario.js';
@@ -57,6 +58,9 @@ const actionMap = {
   'character:nextInit': () => Character.nextInitiative(),
   'character:clearInit': () => Character.clearInitiative(),
   'character:addInit': () => Character.addInitiative(),
+
+  // kp / home
+  'kp:selectChar': (el) => selectHomeChar(el.dataset.id),
 
   // dice
   'dice:select': (el) => Dice.selectDice(parseInt(el.dataset.dice), el),
@@ -159,7 +163,7 @@ document.addEventListener('page-changed', (e) => {
   if (page === 'notes') Notes.renderSessions();
   if (page === 'home') {
     renderKPQuickActions(); renderKP(); renderCocStatus();
-    renderCocChronicle(); renderGameSaves();
+    renderCocChronicle(); renderGameSaves(); renderHomeCharSelect();
   }
   if (page === 'multiplayer') Multiplayer.onPageOpen();
 });

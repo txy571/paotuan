@@ -570,6 +570,92 @@ label:first-child { margin-top: 0; }
 }
 
 /* ============================================================
+   CHARACTER SELECTION ON HOME PAGE
+   ============================================================ */
+.char-select-section {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  background: var(--bg-panel);
+}
+.char-select-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.char-select-header h3 {
+  margin: 0; padding: 0; border: none;
+  font-size: 1rem;
+  color: var(--text-gold);
+}
+.char-select-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 40px;
+}
+.char-select-empty {
+  color: var(--text-dim);
+  font-size: .85rem;
+  padding: 8px 0;
+  width: 100%;
+}
+.char-select-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: all var(--t);
+  background: rgba(0,0,0,.15);
+  min-width: 180px;
+}
+.char-select-card:hover {
+  border-color: var(--accent);
+  background: rgba(0,0,0,.25);
+  transform: translateY(-1px);
+}
+.char-select-card.selected {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  box-shadow: 0 0 12px rgba(212,148,58,.15);
+}
+.char-select-card.selected .char-select-dot {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+.char-select-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+  transition: all var(--t);
+}
+.char-select-info {
+  flex: 1;
+  min-width: 0;
+}
+.char-select-name {
+  font-weight: 600;
+  color: var(--text);
+  font-size: .9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.char-select-meta {
+  font-size: .75rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================================
    AI KP (GAME MASTER) INTERFACE
    ============================================================ */
 .kp-hero {

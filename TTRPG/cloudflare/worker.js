@@ -172,11 +172,27 @@ export default {
       });
     }
 
-    // API proxy
+    // API proxy — only allow known AI API endpoints
     if (url.pathname === '/api/proxy' && request.method === 'POST') {
       const target = request.headers.get('X-Proxy-Target');
       if (!target) {
         return new Response('Missing X-Proxy-Target header', { status: 400,
+          headers: { 'Access-Control-Allow-Origin': '*' } });
+      }
+
+      // Whitelist: only allow requests to AI API providers
+      const ALLOWED_HOSTS = [
+        'api.anthropic.com',
+        'api.openai.com',
+        'api.deepseek.com',
+      ];
+      let allowed = false;
+      try {
+        const targetHost = new URL(target).hostname;
+        allowed = ALLOWED_HOSTS.some(h => targetHost === h || targetHost.endsWith('.' + h));
+      } catch {}
+      if (!allowed) {
+        return new Response('Proxy target not allowed', { status: 403,
           headers: { 'Access-Control-Allow-Origin': '*' } });
       }
 

@@ -29,6 +29,9 @@ export const M = {
 };
 
 // ── Relay URL ────────────────────────────────────────
+// Default relay server — change this to your own Worker URL after deployment
+const DEFAULT_RELAY = 'https://paotuan.183107.xyz';
+
 function getRelayUrl() {
   // Derive WebSocket relay URL from proxy worker URL, or use configured relay URL
   let workerOrigin = localStorage.getItem('ttrpg-relay-url');
@@ -38,7 +41,8 @@ function getRelayUrl() {
       try { workerOrigin = new URL(proxyUrl).origin; } catch {}
     }
   }
-  if (!workerOrigin) return null;
+  // Fall back to default if nothing configured
+  if (!workerOrigin) workerOrigin = DEFAULT_RELAY;
   // Parse to a proper origin, then convert https→wss, http→ws
   let origin;
   try { origin = new URL(workerOrigin).origin; } catch { return null; }

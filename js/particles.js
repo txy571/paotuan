@@ -41,16 +41,16 @@ function starColor() {
 
 // ── Layer config ──
 function layerCounts(cw, ch) {
-  const s = Math.max(0.55, (cw * ch) / (1920 * 1080));
+  const s = Math.max(0.40, (cw * ch) / (1920 * 1080));
   return {
-    8: Math.round(10000 * s),
-    7: Math.round(7000 * s),
-    6: Math.round(4500 * s),
-    5: Math.round(2400 * s),
-    4: Math.round(1100 * s),
-    3: Math.round(500 * s),
-    2: Math.round(200 * s),
-    1: Math.round(90 * s),
+    8: Math.round(2500 * s),
+    7: Math.round(1800 * s),
+    6: Math.round(1100 * s),
+    5: Math.round(600 * s),
+    4: Math.round(300 * s),
+    3: Math.round(120 * s),
+    2: Math.round(60 * s),
+    1: Math.round(30 * s),
   };
 }
 
@@ -58,7 +58,7 @@ function layerCounts(cw, ch) {
 const clusters = [];
 function initClusters(w, h) {
   clusters.length = 0;
-  const count = 8 + Math.floor(Math.random() * 10);
+  const count = 3 + Math.floor(Math.random() * 4);
   for (let c = 0; c < count; c++) {
     const cx = Math.random() * w;
     const cy = Math.random() * h;
@@ -106,7 +106,7 @@ function milkyWay(x, y, w, h) {
 const nebulae = [];
 function initNebulae(w, h) {
   nebulae.length = 0;
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 2; i++) {
     nebulae.push({
       x: Math.random() * w, y: Math.random() * h,
       rx: 120 + Math.random() * 280,
@@ -122,7 +122,7 @@ function initNebulae(w, h) {
 const aurora = { bands: [] };
 function initAurora(w, h) {
   aurora.bands = [];
-  const count = 2 + Math.floor(Math.random() * 2);
+  const count = 1 + Math.floor(Math.random() * 1);
   for (let i = 0; i < count; i++) {
     aurora.bands.push({
       baseY: h * (0.12 + Math.random() * 0.25),
@@ -471,7 +471,12 @@ export function initParticles() {
     ctx.globalAlpha = 1;
 
     // Stars — bucketed by layer, deep to near (8→1), NO sort needed
+    // Deep layers 7-8 render every 2nd frame; layer 6 every 2nd frame
     for (let layer = 8; layer >= 1; layer--) {
+      // Frame-skip: deep layers update less often
+      if (layer >= 7 && frameCount % 2 !== 0) continue;
+      if (layer === 6 && frameCount % 2 !== 0) continue;
+
       const bucket = starsByLayer[layer];
       for (const s of bucket) {
         const n = Math.sin(frameCount * s.twFreq + s.twPhase);
@@ -492,11 +497,13 @@ export function initParticles() {
         if (s.y < -8) s.y = h + 8;
         if (s.y > h + 8) s.y = -8;
 
-        if (s.glow && s.opacity > 0.22) {
+        // More aggressive culling of dim stars
+        if (s.opacity < 0.04 && Math.random() < 0.6) continue;
+        if (s.opacity < 0.02) continue;
+
+        if (s.glow && s.opacity > 0.25) {
           drawGlowCached(ctx, s.x, s.y, s.size, s.color, s.glowR);
         }
-
-        if (layer >= 7 && s.opacity < 0.025 && Math.random() < 0.35) continue;
 
         const size = s.size * (layer <= 2 && s.opacity > 0.45 ? 1.35 : 1);
         ctx.beginPath();

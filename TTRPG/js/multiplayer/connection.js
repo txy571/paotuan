@@ -39,8 +39,10 @@ function getRelayUrl() {
     }
   }
   if (!workerOrigin) return null;
-  const origin = workerOrigin.replace(/\/$/, '');
-  return origin.replace(/^https?:\/\//, (origin.startsWith('https') ? 'wss' : 'ws')) + '://' + origin.split('://')[1];
+  // Parse to a proper origin, then convert https→wss, http→ws
+  let origin;
+  try { origin = new URL(workerOrigin).origin; } catch { return null; }
+  return origin.replace(/^https/, 'wss').replace(/^http/, 'ws');
 }
 
 // ── UUID ────────────────────────────────────────────

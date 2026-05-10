@@ -28,25 +28,10 @@ export const M = {
   reconnectRoomId: null,
 };
 
-// ── Relay URL ────────────────────────────────────────
-// Default relay server — change this to your own Worker URL after deployment
-const DEFAULT_RELAY = 'https://paotuan.183107.xyz';
+const RELAY_URL = 'https://paotuan.183107.xyz';
 
 function getRelayUrl() {
-  // Derive WebSocket relay URL from proxy worker URL, or use configured relay URL
-  let workerOrigin = localStorage.getItem('ttrpg-relay-url');
-  if (!workerOrigin) {
-    const proxyUrl = localStorage.getItem('ttrpg-proxy-url');
-    if (proxyUrl) {
-      try { workerOrigin = new URL(proxyUrl).origin; } catch {}
-    }
-  }
-  // Fall back to default if nothing configured
-  if (!workerOrigin) workerOrigin = DEFAULT_RELAY;
-  // Parse to a proper origin, then convert https→wss, http→ws
-  let origin;
-  try { origin = new URL(workerOrigin).origin; } catch { return null; }
-  return origin.replace(/^https/, 'wss').replace(/^http/, 'ws');
+  return RELAY_URL.replace(/^https/, 'wss').replace(/^http/, 'ws');
 }
 
 // ── UUID ────────────────────────────────────────────
@@ -66,10 +51,6 @@ export function generateRoomCode() {
 export function connectRelay(roomCode, isHost) {
   return new Promise((resolve, reject) => {
     const base = getRelayUrl();
-    if (!base) {
-      reject(new Error('未配置中继服务器。请在首页 KP 设置中填写 Cloudflare Worker URL（代理端点）。'));
-      return;
-    }
 
     const wsUrl = base + '/room/' + roomCode;
     const ws = new WebSocket(wsUrl);
@@ -120,7 +101,7 @@ export function connectRelay(roomCode, isHost) {
     };
 
     ws.onerror = () => {
-      if (!resolved) { resolved = true; reject(new Error('无法连接中继服务器。请检查 Worker URL 是否正确，或是否已部署 Cloudflare Worker。')); }
+      if (!resolved) { resolved = true; reject(new Error('无法连接中继服务器，请检查网络连接后重试。')); }
     };
 
     ws.onclose = (e) => {

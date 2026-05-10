@@ -149,13 +149,8 @@ export function saveKPConfig(cfg) {
   kpState.provider = cfg.provider;
   kpState.apiKey  = cfg.key;
   kpState.model   = cfg.model;
-  const workerUrl = (document.getElementById('kpWorkerUrl')?.value || '').trim();
-  if (workerUrl) {
-    localStorage.setItem('ttrpg-proxy-url', workerUrl);
-    localStorage.setItem('ttrpg-relay-url', workerUrl);
-  }
   localStorage.setItem('ttrpg-kp-config', JSON.stringify({
-    provider: cfg.provider, apiKey: cfg.key, model: cfg.model, workerUrl,
+    provider: cfg.provider, apiKey: cfg.key, model: cfg.model,
   }));
 }
 
@@ -169,10 +164,6 @@ export function loadKPConfig() {
     if (provEl) provEl.value = kpState.provider;
     const keyEl = document.getElementById('kpApiKey');
     if (keyEl && kpState.apiKey) keyEl.value = kpState.apiKey;
-    const wuEl = document.getElementById('kpWorkerUrl');
-    if (wuEl) {
-      wuEl.value = saved.workerUrl || localStorage.getItem('ttrpg-proxy-url') || '';
-    }
 
     if (kpState.provider === 'anthropic') {
       const mEl = document.getElementById('kpModelAnthropic');
@@ -310,34 +301,10 @@ let _proxyBase = undefined;
 async function detectProxy() {
   if (_proxyBase !== undefined) return _proxyBase;
 
-  // 1) User-configured Cloudflare Worker proxy
-  const workerUrl = localStorage.getItem('ttrpg-proxy-url');
-  if (workerUrl) {
-    try {
-      const pingUrl = workerUrl.replace(/\/api\/proxy\/?$/, '/ping').replace(/\/$/, '') + '/ping';
-      const resp = await fetch(pingUrl, { method: 'GET', signal: AbortSignal.timeout(3000) });
-      if (resp.ok) {
-        _proxyBase = workerUrl.replace(/\/$/, '') + '/api/proxy';
-        return _proxyBase;
-      }
-    } catch {}
-  }
-
-  // 2) Local development server — only check on localhost to avoid 404 console noise on static hosts
-  const host = location.hostname;
-  if (host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.') || host.startsWith('10.')) {
-    try {
-      const resp = await fetch('/__ttrpg_ping__', { method: 'GET', signal: AbortSignal.timeout(2000) });
-      if (resp.ok && resp.headers.get('X-TTRPG-Server') === '1') {
-        _proxyBase = '/api/proxy';
-        return _proxyBase;
-      }
-    } catch {}
-  }
-
-  // 3) No proxy — call APIs directly (all major providers support CORS)
-  _proxyBase = null;
-  return null;
+  // Always use the Cloudflare Worker proxy
+  const RELAY_URL = 'https://paotuan.183107.xyz';
+  _proxyBase = RELAY_URL + '/api/proxy';
+  return _proxyBase;
 }
 
 async function _stream(endpoint, reqHeaders, reqBody, controller, parseDelta) {

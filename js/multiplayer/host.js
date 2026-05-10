@@ -8,6 +8,8 @@ import { addChatMessage, renderAllRoom } from './ui.js';
 import { callAnthropicAPI, callOpenAIAPI, getKPConfig } from '../kp.js';
 import { getGameSaveData } from '../saves.js';
 import { parseAICommands, applyAICommands, stripAICommands } from '../commands.js';
+import { startCombat, endCombat, advanceCombatTurn, skipCombatTurn, isCurrentCombatant, parseInitiativeCommand, clearCombatTimeout } from './combat.js';
+import { startChase, endChase, parseChaseCommand } from './chase.js';
 
 // ── Handle host messages (from relay → all others) ──
 export function handleHostMessage(data) {
@@ -92,17 +94,17 @@ export function handleHostMessage(data) {
         return;
       }
 
-      M.gamePhase = 'playing';
+      M.gamePhase = 'exploration';
       M.turnOrder.sort((a, b) => (M.players[a]?.joinedAt || 0) - (M.players[b]?.joinedAt || 0));
       M.currentTurnIndex = 0;
       const cp = M.turnOrder[0];
       const cpName = M.players[cp]?.name || '未知';
-      addChatMessage('system', null, '游戏开始! 行动顺序: ' + M.turnOrder.map(id => M.players[id]?.name || '?').join(' → '));
+      addChatMessage('system', null, '游戏开始! 进入自由探索阶段——所有玩家可以随时行动');
       addChatMessage('system', null, '当前轮到: ' + cpName);
 
       broadcastToAll({
         type: 'game-start', _all: true,
-        turnOrder: M.turnOrder, currentTurnIndex: 0, players: M.players, gamePhase: 'playing'
+        turnOrder: M.turnOrder, currentTurnIndex: 0, players: M.players, gamePhase: 'exploration'
       });
       renderAllRoom();
       document.dispatchEvent(new CustomEvent('mp-generate-intro'));
@@ -117,11 +119,23 @@ export function handleHostMessage(data) {
     }
 
     case 'action': {
+      // Phase-aware validation
       if (M.gamePhase === 'playing') {
+        // Legacy: simple round-robin
         if (data.playerId !== M.turnOrder[M.currentTurnIndex] && data.playerId !== M.playerId) {
           sendToPlayer(data.playerId, { type: 'system-msg', content: '现在不是你的回合。当前行动者: ' + (M.players[M.turnOrder[M.currentTurnIndex]]?.name || '?') });
           return;
         }
+      } else if (M.gamePhase === 'combat') {
+        if (!isCurrentCombatant(data.playerId)) {
+          const currentName = M.combatState?.initiative?.[M.combatState.currentIndex]?.name || '?';
+          sendToPlayer(data.playerId, { type: 'system-msg', content: '战斗阶段——现在不是你的行动回合。当前行动者: ' + currentName });
+          return;
+        }
+        // Player acted — reset their timeout
+        clearCombatTimeout(data.playerId);
+      } else if (M.gamePhase === 'exploration') {
+        // Free exploration: anyone can act
       }
       addChatMessage('action', data.playerName, data.content);
       broadcastToAll({ type: 'action', playerId: data.playerId, playerName: data.playerName, content: data.content }, data.playerId);
@@ -270,6 +284,30 @@ export async function processHostAIAction(playerId, playerName, actionText) {
     const displayText = stripAICommands(fullResponse);
     const commands = parseAICommands(fullResponse);
     if (commands.length > 0) {
+      // Handle phase-change commands first
+      for (const cmd of commands) {
+        switch (cmd.type) {
+          case 'INITIATIVE': {
+            const initiative = parseInitiativeCommand(cmd.value);
+            if (initiative.length > 0) startCombat(initiative);
+            break;
+          }
+          case 'END_COMBAT': {
+            endCombat(cmd.value || '战斗已解决');
+            break;
+          }
+          case 'CHASE': {
+            const chaseData = parseChaseCommand(cmd.value);
+            if (chaseData) startChase(chaseData);
+            break;
+          }
+          case 'END_CHASE': {
+            endChase(cmd.value || '追逐已结束');
+            break;
+          }
+        }
+      }
+      // Apply remaining state-change commands
       const changes = applyAICommands(commands);
       if (changes.length > 0) {
         broadcastToAll({ type: 'system', content: changes.join('; '), _all: true });
@@ -283,8 +321,13 @@ export async function processHostAIAction(playerId, playerName, actionText) {
     }
     addChatMessage('kp', THEME_NAMES[state.theme] + ' 主持人', displayText);
     broadcastToAll({ type: 'kp-response', playerId, playerName, content: displayText, _all: true });
+    // Advance turn logic is phase-dependent
     if (M.gamePhase === 'playing') {
       setTimeout(() => advanceTurn(), 2000);
+    } else if (M.gamePhase === 'combat' && M.combatState) {
+      setTimeout(() => advanceCombatTurn(), 1500);
+    } else if (M.gamePhase === 'chase' && M.chaseState) {
+      // Chase advance is triggered by AI commands, not automatic
     }
   } catch (err) {
     clearTimeout(timeout);
@@ -373,6 +416,29 @@ export function buildMPSystemPrompt(actingPlayerId, actingPlayerName) {
     if (cd.equipment?.length) extra += '装备: ' + cd.equipment.map(e => e.name + (e.qty > 1 ? '×' + e.qty : '')).join('、') + '\n';
     if (cd.cocHp !== undefined) extra += '当前HP: ' + cd.cocHp + '/ 最大HP: ' + cd.maxHp + '\n';
     if (cd.cocSan !== undefined) extra += '当前SAN: ' + cd.cocSan + '\n';
+  }
+
+  // ── Phase-specific instructions ──────────────────
+  if (M.gamePhase === 'combat' && M.combatState) {
+    const cs = M.combatState;
+    extra += '\n\n## ⚔ 战斗阶段\n';
+    extra += '当前回合: 第' + cs.round + '回\n';
+    extra += '行动顺序(DEX降序):\n';
+    cs.initiative.forEach((e, i) => {
+      extra += `  ${i + 1}. ${e.name} (DEX ${e.dex})${i === cs.currentIndex ? ' ← 当前行动' : ''}\n`;
+    });
+    extra += '\n战斗规则:\n';
+    extra += '- 每回合每个角色可进行1次攻击 + 1次闪避/反击\n';
+    extra += '- 被多人围攻时，被围攻方获得1个惩罚骰（每多1个攻击者）\n';
+    extra += '- 射击武器出目96-100为枪支故障\n';
+    extra += '- 穿刺武器伤害 = 最大基础值 + 正常掷骰\n';
+    extra += '- 当前行动者超时60秒未行动，则自动跳过（描述为角色犹豫不决）\n';
+  } else if (M.gamePhase === 'chase' && M.chaseState) {
+    extra += '\n\n## 🏃 追逐阶段\n';
+    extra += '距离: ' + M.chaseState.distance + ' 单位\n';
+    extra += '速度更快的角色每回合拉近1单位距离\n';
+    extra += '可以描述障碍物并要求相应的技能检定\n';
+    extra += '长时间追逐需要CON检定维持体力\n';
   }
 
   if (scenarioDbContent?.trim()) {

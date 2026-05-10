@@ -1291,6 +1291,43 @@ label:first-child { margin-top: 0; }
   .mp-lobby-card { padding: 32px 20px; }
 }
 
+/* ── CoC 7e Combat UI ────────────────────────── */
+.combat-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+}
+.combat-round-badge {
+  background: rgba(220,60,40,.15); color: #e04848; padding: 2px 10px;
+  border-radius: 10px; font-size: .78rem; font-weight: 700;
+}
+.combat-current-name {
+  color: var(--text-gold); font-size: .82rem; font-weight: 600;
+}
+.combat-track {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 8px 0; font-size: .75rem;
+}
+.combatant-tag {
+  display: inline-block; padding: 3px 10px; border-radius: 8px;
+  background: var(--bg-card); text-align: center; font-size: .72rem;
+  border: 1px solid var(--border); transition: background .15s, border-color .15s;
+}
+.combatant-active {
+  border-color: var(--text-gold); background: rgba(212,148,58,.12);
+  font-weight: 700; box-shadow: 0 0 6px rgba(212,148,58,.25);
+}
+.combatant-waiting { opacity: .6; }
+.combatant-tag small { display: block; opacity: .7; font-size: .65rem; }
+
+/* ── Combat timeout bar ── */
+.timeout-bar {
+  height: 3px; background: var(--accent); border-radius: 2px;
+  transition: width 1s linear; margin-top: 4px;
+}
+
+/* ── Phase badge variants ── */
+.mp-phase-badge.combat { background: rgba(220,60,40,.15); color: #e04848; }
+.mp-phase-badge.chase { background: rgba(220,160,40,.15); color: #d4a028; }
+
 @media print {
   body { background: #fff; color: #000; }
   nav, .btn-row, .toast-container, #particles { display: none !important; }

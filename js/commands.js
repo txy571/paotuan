@@ -5,7 +5,7 @@ import { renderCocChronicle, renderCocStatus } from './coc-status.js';
 import { applyMemoryCommand } from './memory-bank.js';
 
 // All known command types (memory types added at end)
-const CMD_TYPES = 'SAN|HP|LUCK|TRAIT|REMOVE_TRAIT|CHRONICLE|SKILL_CHECK|ITEM|REMOVE_ITEM|NPC|CLUE|PLOT|MEMORY';
+const CMD_TYPES = 'SAN|HP|LUCK|TRAIT|REMOVE_TRAIT|CHRONICLE|SKILL_CHECK|ITEM|REMOVE_ITEM|NPC|CLUE|PLOT|MEMORY|检定请求|检定结果|INITIATIVE|END_COMBAT|CHASE|END_CHASE';
 const CMD_RE = new RegExp(`【(${CMD_TYPES})[：:](.+?)】`);
 
 export function parseAICommands(text) {
@@ -134,6 +134,15 @@ export function applyAICommands(commands) {
           if (result) memoryChanges.push(result);
           break;
         }
+        // ── CoC 7e game-phase commands (handled by multiplayer/check-resolver) ──
+        case '检定请求':
+        case '检定结果':
+        case 'INITIATIVE':
+        case 'END_COMBAT':
+        case 'CHASE':
+        case 'END_CHASE':
+          // These are informational — processed by the two-pass loop or multiplayer host.
+          break;
       }
     } catch(e) {
       console.warn('AI command parse error:', cmd, e);

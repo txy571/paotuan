@@ -39,8 +39,11 @@ export function showRoomView() {
   if (idDisp) idDisp.textContent = M.isHost ? '房间号: ' + M.roomId : '已加入: ' + M.roomId;
   const phaseBadge = document.getElementById('mpPhaseBadge');
   if (phaseBadge) {
-    phaseBadge.textContent = M.gamePhase === 'lobby' ? '准备阶段' : '游戏中';
-    phaseBadge.style.background = M.gamePhase === 'lobby' ? 'rgba(74,138,48,.15)' : 'var(--accent-dim)';
+    const phaseLabels = { lobby: '准备阶段', exploration: '自由探索', combat: '⚔ 战斗中', chase: '🏃 追逐中', playing: '游戏中' };
+    phaseBadge.textContent = phaseLabels[M.gamePhase] || '游戏中';
+    phaseBadge.style.background = M.gamePhase === 'lobby' ? 'rgba(74,138,48,.15)' :
+      M.gamePhase === 'combat' ? 'rgba(220,60,40,.15)' :
+      M.gamePhase === 'chase' ? 'rgba(220,160,40,.15)' : 'var(--accent-dim)';
   }
   document.dispatchEvent(new CustomEvent('mp-conn-dot', { detail: 'connected' }));
   renderAllRoom();
@@ -126,6 +129,13 @@ export function renderPlayerList() {
 export function renderTurnBanner() {
   const c = document.getElementById('mpTurnBanner');
   if (!c) return;
+
+  // Phase-aware banner
+  if (M.gamePhase === 'combat' && M.combatState) {
+    renderCombatBanner(c);
+    return;
+  }
+
   if (M.gamePhase !== 'playing') { c.style.display = 'none'; return; }
   c.style.display = '';
   const cp = M.turnOrder[M.currentTurnIndex];
@@ -138,6 +148,31 @@ export function renderTurnBanner() {
     return i === M.currentTurnIndex ? '<strong style="color:var(--text-gold);">' + esc(nm) + '</strong>' : esc(nm);
   }).join(' → ');
   c.innerHTML = html;
+  const btn = document.getElementById('mpEndTurnBtn');
+  if (btn) btn.style.display = (isMe || M.isHost) ? '' : 'none';
+}
+
+// ── Combat Banner ──────────────────────────────────
+function renderCombatBanner(container) {
+  const cs = M.combatState;
+  if (!cs) return;
+  container.style.display = '';
+  const current = cs.initiative[cs.currentIndex];
+  const isMe = current?.playerId === M.playerId;
+
+  const track = cs.initiative.map((entry, i) => {
+    const cls = i === cs.currentIndex ? 'combatant-active' : 'combatant-waiting';
+    return `<span class="combatant-tag ${cls}">${esc(entry.name)}<br><small>DEX ${entry.dex}</small></span>`;
+  }).join(' <span style="color:var(--text-dim);">→</span> ');
+
+  container.innerHTML = `
+    <div class="combat-header">
+      <span class="combat-round-badge">⚔ 第 ${cs.round} 回合</span>
+      ${current ? `<span class="combat-current-name">当前: ${esc(current.name)}${isMe ? ' [你!]' : ''}</span>` : ''}
+    </div>
+    <div class="combat-track">${track}</div>
+  `;
+
   const btn = document.getElementById('mpEndTurnBtn');
   if (btn) btn.style.display = (isMe || M.isHost) ? '' : 'none';
 }

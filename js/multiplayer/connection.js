@@ -15,7 +15,7 @@ export const M = {
   playerName: '',
   players: {},
   connected: false,
-  gamePhase: 'lobby',
+  gamePhase: 'lobby',    // 'lobby' | 'exploration' | 'combat' | 'chase' | 'playing' (legacy)
   readyPlayers: new Set(),
   turnOrder: [],
   currentTurnIndex: 0,
@@ -26,6 +26,10 @@ export const M = {
   maxReconnectAttempts: 5,
   reconnectTimer: null,
   reconnectRoomId: null,
+  // ── CoC 7e state machine ──
+  combatState: null,     // { round, initiative[{playerId, name, dex}], currentIndex, actionCounts{}, timeouts{} }
+  chaseState: null,      // { leaderId, pursuers[{playerId, name, mov}], distance, round }
+  turnTimeout: null,     // 60s timeout timer for combat turns
 };
 
 const RELAY_URL = 'https://paotuan.183107.xyz';
@@ -186,6 +190,8 @@ export function cleanup() {
   M.connected = false; M.isHost = false; M.gamePhase = 'lobby';
   M.players = {}; M.chatLog = []; M.roomId = null;
   M.turnOrder = []; M.currentTurnIndex = 0; M.readyPlayers = new Set();
+  M.combatState = null; M.chaseState = null;
+  if (M.turnTimeout) { clearTimeout(M.turnTimeout); M.turnTimeout = null; }
   document.getElementById('mpInput')?.setAttribute('disabled', '');
   document.getElementById('mpSendBtn')?.setAttribute('disabled', '');
   document.dispatchEvent(new CustomEvent('mp-reconnect-dismiss'));

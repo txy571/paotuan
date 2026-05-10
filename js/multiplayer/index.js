@@ -12,6 +12,7 @@ import { showLobbyView, showRoomView, renderAllRoom, addChatMessage, renderMulti
          renderPlayerList, renderTurnBanner, renderLobbyControls, renderQuickActions,
          refreshUI, onPageOpen, mpRoomCharChanged } from './ui.js';
 import { generateGameStartScenario } from './game-start.js';
+import { advanceCombatTurn, skipCombatTurn as combatSkipTurn, isCurrentCombatant } from './combat.js';
 import { state, THEME_NAMES, cocState, getCharSan, getCharHp } from '../state.js';
 import { showToast } from '../utils.js';
 import { renderCocStatus, renderCocChronicle } from '../coc-status.js';
@@ -219,6 +220,13 @@ export const Multiplayer = {
     if (!input || !M.connected) return;
     const text = input.value.trim();
     if (!text) return;
+
+    // Phase-aware validation
+    if (M.gamePhase === 'combat' && !isCurrentCombatant(M.playerId)) {
+      showToast('战斗阶段——现在不是你的行动回合');
+      return;
+    }
+
     input.value = '';
 
     const mode = M.inputMode;
@@ -272,7 +280,12 @@ export const Multiplayer = {
 
   // ── End Turn ─────────────────────────────────────
   endTurn() {
-    if (!M.connected || M.gamePhase !== 'playing') return;
+    if (!M.connected) return;
+    if (M.gamePhase === 'combat' && M.isHost) {
+      advanceCombatTurn();
+      return;
+    }
+    if (M.gamePhase !== 'playing') return;
     if (M.isHost) {
       advanceTurn();
     } else {

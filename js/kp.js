@@ -9,6 +9,7 @@ import { getGameSaveData } from './saves.js';
 import { parseAICommands, applyAICommands, stripAICommands } from './commands.js';
 import { renderCocStatus, renderCocChronicle } from './coc-status.js';
 import { getMemorySummary } from './memory-bank.js';
+import { detectCheckRequest, resolveD100Check } from './check-resolver.js';
 
 // ── System Prompt ─────────────────────────────────
 export function buildSystemPrompt() {
@@ -25,23 +26,33 @@ export function buildSystemPrompt() {
   const race = document.getElementById('charRace')?.value?.trim();
   const cls  = document.getElementById('charClass')?.value?.trim();
   const bg   = document.getElementById('charBackground')?.value?.trim();
-  if (name) extra += `姓名: ${name}\n`;
-  if (race) extra += `种族/国籍: ${race}\n`;
-  if (cls)  extra += `职业/身份: ${cls}\n`;
-  if (bg)   extra += `背景: ${bg}\n`;
-  if (name || race || cls) {
-    extra += '\n属性值(百分制,50为基准):\n';
-    for (const k of ATTR_KEYS) {
-      extra += `  ${ATTR_NAMES[k]}: ${state.attributes[k]} (调整值 ${modPct(state.attributes[k])})\n`;
+
+  if (state.theme === 'coc') {
+    // CoC 7e: AI must NOT read character card data. Only send minimal context.
+    extra += '注意：你是守秘人(KP)，角色卡的具体数据（属性值、技能值、HP、SAN等）由网站系统管理，你无需知道具体数值。你只需要根据角色的职业和背景来构思合适的场景，需要检定时发出【检定请求】，系统会使用角色的真实技能值执行掷骰。\n';
+    if (name) extra += `调查员姓名: ${name}\n`;
+    if (cls)  extra += `职业: ${cls}\n`;
+    if (race) extra += `国籍/种族: ${race}\n`;
+    if (bg)   extra += `背景概要: ${bg}\n`;
+  } else {
+    // Non-CoC themes: send full character data as before
+    if (name) extra += `姓名: ${name}\n`;
+    if (race) extra += `种族/国籍: ${race}\n`;
+    if (cls)  extra += `职业/身份: ${cls}\n`;
+    if (bg)   extra += `背景: ${bg}\n`;
+    if (name || race || cls) {
+      extra += '\n属性值(百分制,50为基准):\n';
+      for (const k of ATTR_KEYS) {
+        extra += `  ${ATTR_NAMES[k]}: ${state.attributes[k]} (调整值 ${modPct(state.attributes[k])})\n`;
+      }
+      const skillEntries = Object.entries(state.skills)
+        .filter(([,v]) => typeof v === 'object' && (v.proficient || v.value > 0))
+        .map(([k, v]) => `${k}${v.proficient ? '*' : ''}:${typeof v.value === 'number' ? (v.value >= 0 ? '+' + v.value : v.value) : v.value}`);
+      if (skillEntries.length) extra += `技能: ${skillEntries.join('、')}\n`;
+      if (state.traits.length) extra += `特质: ${state.traits.map(t=>t.name).filter(Boolean).join('、')}\n`;
+      if (state.feats.length)  extra += `专长: ${state.feats.map(f=>f.name).filter(Boolean).join('、')}\n`;
+      if (state.equipment.length) extra += `装备: ${state.equipment.map(e=>e.name+(e.qty>1?'×'+e.qty:'')).join('、')}\n`;
     }
-    // Show skills with their values (new numeric format)
-    const skillEntries = Object.entries(state.skills)
-      .filter(([,v]) => typeof v === 'object' && (v.proficient || v.value > 0))
-      .map(([k, v]) => `${k}${v.proficient ? '*' : ''}:${typeof v.value === 'number' ? (v.value >= 0 ? '+' + v.value : v.value) : v.value}`);
-    if (skillEntries.length) extra += `技能: ${skillEntries.join('、')}\n`;
-    if (state.traits.length) extra += `特质: ${state.traits.map(t=>t.name).filter(Boolean).join('、')}\n`;
-    if (state.feats.length)  extra += `专长: ${state.feats.map(f=>f.name).filter(Boolean).join('、')}\n`;
-    if (state.equipment.length) extra += `装备: ${state.equipment.map(e=>e.name+(e.qty>1?'×'+e.qty:'')).join('、')}\n`;
   }
 
   if (scenarioDbContent && scenarioDbContent.trim()) {
@@ -55,17 +66,20 @@ export function buildSystemPrompt() {
   if (kpState.apiHistory.length === 0) {
     extra += '\n\n## 🎬 新游戏开始——必须遵循\n';
     extra += '这是冒险的开始。你必须做到以下几点：\n';
-    extra += '1. 确认你已经理解了上述角色信息（姓名、职业、背景、技能等）。\n';
-    extra += '2. 基于角色的职业、背景和技能，构思一个适合该角色的开场场景和大致剧情方向。\n';
-    extra += '3. 在回复的第一段中，用简洁的语言确认角色设定（例如"你叫...，是一名...，此刻你正站在..."），然后直接进入叙事。\n';
-    extra += '4. 开头场景必须与角色背景有逻辑关联——不要凭空将角色扔进一个与背景无关的场景。\n';
+    if (state.theme === 'coc') {
+      extra += '1. 基于调查员的职业和背景概要，构思一个适合的开场场景和大致剧情方向。\n';
+      extra += '2. 你不需要确认角色的属性或技能值——那是网站系统的职责。你只需要基于职业和背景来设定场景。\n';
+    } else {
+      extra += '1. 确认你已经理解了上述角色信息（姓名、职业、背景、技能等）。\n';
+    }
+    extra += '3. 在回复的第一段中，直接进入叙事，将角色自然地引入场景。\n';
+    extra += '4. 开头场景必须与角色背景有逻辑关联。\n';
     extra += '5. 不要问"你想做什么"这类空洞的问题。给出具体、生动、有感官细节的开场场景，让角色自然进入故事。\n';
   }
 
   if (state.theme === 'coc') {
-    extra += `\n--- CoC 7e 当前状态 ---\n`;
-    extra += `SAN: ${getCharSan()}/${getCharMaxSan()} | HP: ${getCharHp()}/${getCharMaxHp()} | LUCK: ${cocState.luck} | MP: ${cocState.mp}/${cocState.maxMp}\n`;
-    extra += `克苏鲁神话(CMI): ${cocState.cthulhuMythos}%\n`;
+    extra += `\n--- CoC 7e 当前状态（仅供叙事参考，具体数值由系统管理） ---\n`;
+    extra += `克苏鲁神话(CMI): ${cocState.cthulhuMythos}%（影响最大SAN = 99 - CMI）\n`;
     if (cocState.skillChecks.length) extra += `已标记技能提升检定: ${cocState.skillChecks.join('、')}\n`;
     if (cocState.chronicle.length) {
       extra += `\n--- 冒险编年史(最近5条) ---\n`;
@@ -100,10 +114,19 @@ export function renderKP() {
     msgs.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:40px;font-size:.9rem;">发送消息，AI主持人将为你主持冒险...</div>';
     return;
   }
-  // Render all messages — during streaming, only do full rebuilds when a new message is added.
-  // During content-stream updates, use updateStreamingMsg() instead to avoid flickering.
-  msgs.innerHTML = kpState.chatHistory.map((m, i) => {
-    const isStreaming = kpState.streaming && i === kpState.chatHistory.length - 1 && m.role === 'gm';
+  const MAX_VISIBLE = 50;
+  const history = kpState.chatHistory;
+  const truncated = history.length > MAX_VISIBLE;
+  const visible = truncated ? history.slice(-MAX_VISIBLE) : history;
+  const skipCount = truncated ? history.length - MAX_VISIBLE : 0;
+
+  let html = '';
+  if (truncated) {
+    html += `<div class="kp-msg system" style="text-align:center;opacity:.6;">... 以上省略 ${skipCount} 条较早的消息 ...</div>`;
+  }
+  html += visible.map((m, i) => {
+    const realIdx = truncated ? i + skipCount : i;
+    const isStreaming = kpState.streaming && realIdx === history.length - 1 && m.role === 'gm';
     if (m.role === 'system') {
       return `<div class="kp-msg system">${esc(m.content)}</div>`;
     }
@@ -118,18 +141,31 @@ export function renderKP() {
       ${header}<div class="msg-body">${m.content}</div>${diceHTML}
     </div>`;
   }).join('');
+  msgs.innerHTML = html;
   if (!kpState.streaming) {
     msgs.scrollTop = msgs.scrollHeight;
   }
 }
 
-/** Incremental update during streaming — text-only, no layout thrash. */
+let _lastScrollTime = 0;
+let _scrollRaf = null;
+
+/** Incremental update during streaming — text-only, throttled scroll. */
 export function updateStreamingMsg(text) {
   const bodyEl = document.querySelector('#kpMessages .kp-msg.streaming .msg-body');
   if (bodyEl) {
     bodyEl.textContent = text;
-    const msgs = document.getElementById('kpMessages');
-    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+    const now = Date.now();
+    if (now - _lastScrollTime > 100) {
+      _lastScrollTime = now;
+      if (!_scrollRaf) {
+        _scrollRaf = requestAnimationFrame(() => {
+          _scrollRaf = null;
+          const msgs = document.getElementById('kpMessages');
+          if (msgs) msgs.scrollTop = msgs.scrollHeight;
+        });
+      }
+    }
   }
 }
 
@@ -368,6 +404,96 @@ async function _stream(endpoint, reqHeaders, reqBody, controller, parseDelta) {
 }
 
 /** Anthropic Messages API — system as top-level field, x-api-key auth, SSE: delta.text */
+// ── Two-Pass Streaming with Check Detection ──────────
+const MAX_CHECK_LOOP_DEPTH = 3;
+
+async function _streamWithCheckDetection(endpoint, reqHeaders, reqBody, controller, parseDelta) {
+  const proxyBase = await detectProxy();
+  let resp;
+  if (proxyBase) {
+    resp = await fetch(proxyBase, {
+      method: 'POST',
+      headers: { 'X-Proxy-Target': endpoint, 'Content-Type': 'application/json', ...reqHeaders },
+      body: JSON.stringify(reqBody), signal: controller.signal,
+    });
+  } else {
+    resp = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...reqHeaders },
+      body: JSON.stringify(reqBody), signal: controller.signal,
+    });
+  }
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${resp.status}`);
+  }
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let text = '', buf = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop() || '';
+    for (const line of lines) {
+      if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
+      try {
+        const delta = parseDelta(JSON.parse(line.slice(6)));
+        if (delta) {
+          text += delta;
+          if (kpState.chatHistory.length) kpState.chatHistory[kpState.chatHistory.length - 1].content = text;
+          updateStreamingMsg(text);
+          const { found, request, cleanText } = detectCheckRequest(text);
+          if (found) {
+            try { reader.cancel(); } catch {}
+            controller.abort();
+            return { needsCheck: true, checkRequest: request, partialText: cleanText };
+          }
+        }
+      } catch(e) { /* skip */ }
+    }
+  }
+  return { needsCheck: false, text };
+}
+
+async function callAPIWithCheckLoop(cfg, systemPrompt, recentApi, userMsg, controller, depth) {
+  depth = depth || 0;
+  if (depth >= MAX_CHECK_LOOP_DEPTH) {
+    return callAPI(cfg, systemPrompt, recentApi, userMsg, controller);
+  }
+  const provider = cfg.provider;
+  const isAnth = provider === 'anthropic';
+  let reqHeaders, reqBody, parseDelta;
+  const messages = isAnth ? [] : [{ role: 'system', content: systemPrompt }];
+  if (isAnth) {
+    for (const m of recentApi) {
+      messages.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content });
+    }
+    messages.push({ role: 'user', content: userMsg });
+    reqHeaders = { 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01' };
+    reqBody = { model: cfg.model, max_tokens: 4096, system: systemPrompt, messages, stream: true };
+    parseDelta = data => data.delta?.text || data.content_block?.text || '';
+  } else {
+    for (const m of recentApi) {
+      messages.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content });
+    }
+    messages.push({ role: 'user', content: userMsg });
+    reqHeaders = { 'Authorization': `Bearer ${cfg.key}` };
+    reqBody = { model: cfg.model, max_tokens: 4096, messages, stream: true };
+    parseDelta = data => data.choices?.[0]?.delta?.content || '';
+  }
+  const endpoint = isAnth ? 'https://api.anthropic.com/v1/messages' : (_ENDPOINT[provider] || _ENDPOINT.openai);
+  const result = await _streamWithCheckDetection(endpoint, reqHeaders, reqBody, controller, parseDelta);
+  if (result.needsCheck) {
+    const resolution = resolveD100Check(result.checkRequest);
+    const followUpMsg = userMsg + '\n\n' + result.partialText + '\n' + resolution.resultText +
+      '\n请根据以上检定结果继续叙述。（不要再次输出检定请求，直接叙述检定结果和后续发展）';
+    return callAPIWithCheckLoop(cfg, systemPrompt, recentApi, followUpMsg, controller, depth + 1);
+  }
+  return result.text;
+}
+
 async function _anthropic(cfg, systemPrompt, recentHistory, userMsg, controller) {
   const messages = [];
   for (const m of recentHistory) {
@@ -594,7 +720,7 @@ export async function sendKPMessage() {
   try {
     const controller = new AbortController();
     kpState.streamingAbort = controller;
-    const fullResponse = await callAPI(cfg, systemPrompt, recentApi, text, controller);
+    const fullResponse = await callAPIWithCheckLoop(cfg, systemPrompt, recentApi, text, controller);
 
     const displayText = stripAICommands(fullResponse);
     kpState.chatHistory[kpState.chatHistory.length - 1].content = displayText;

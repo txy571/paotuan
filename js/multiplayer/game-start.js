@@ -4,6 +4,7 @@ import { M } from './connection.js';
 import { addChatMessage, renderMultiplayerChat } from './ui.js';
 import { broadcastToAll } from './host.js';
 import { callAnthropicAPI, callOpenAIAPI, getKPConfig } from '../kp.js';
+import { resolveD100Check, detectCheckRequest } from '../check-resolver.js';
 
 export async function generateGameStartScenario() {
   const cfg = getKPConfig();

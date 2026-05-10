@@ -2,12 +2,13 @@
 import {
   state, kpState, cocState, initCocState,
   THEME_NAMES, ATTR_KEYS, ATTR_NAMES, KP_SYSTEM_PROMPTS, KP_QUICK_ACTIONS,
-  scenarioDbContent,
+  scenarioDbContent, getCharSan, getCharHp, getCharMaxSan, getCharMaxHp,
 } from './state.js';
 import { esc, showToast, modPct } from './utils.js';
 import { getGameSaveData } from './saves.js';
 import { parseAICommands, applyAICommands, stripAICommands } from './commands.js';
 import { renderCocStatus, renderCocChronicle } from './coc-status.js';
+import { getMemorySummary } from './memory-bank.js';
 
 // ── System Prompt ─────────────────────────────────
 export function buildSystemPrompt() {
@@ -33,8 +34,11 @@ export function buildSystemPrompt() {
     for (const k of ATTR_KEYS) {
       extra += `  ${ATTR_NAMES[k]}: ${state.attributes[k]} (调整值 ${modPct(state.attributes[k])})\n`;
     }
-    const profs = Object.entries(state.skills).filter(([,v])=>v).map(([k])=>k);
-    if (profs.length) extra += `熟练技能: ${profs.join('、')}\n`;
+    // Show skills with their values (new numeric format)
+    const skillEntries = Object.entries(state.skills)
+      .filter(([,v]) => typeof v === 'object' && (v.proficient || v.value > 0))
+      .map(([k, v]) => `${k}${v.proficient ? '*' : ''}:${typeof v.value === 'number' ? (v.value >= 0 ? '+' + v.value : v.value) : v.value}`);
+    if (skillEntries.length) extra += `技能: ${skillEntries.join('、')}\n`;
     if (state.traits.length) extra += `特质: ${state.traits.map(t=>t.name).filter(Boolean).join('、')}\n`;
     if (state.feats.length)  extra += `专长: ${state.feats.map(f=>f.name).filter(Boolean).join('、')}\n`;
     if (state.equipment.length) extra += `装备: ${state.equipment.map(e=>e.name+(e.qty>1?'×'+e.qty:'')).join('、')}\n`;
@@ -60,7 +64,7 @@ export function buildSystemPrompt() {
 
   if (state.theme === 'coc') {
     extra += `\n--- CoC 7e 当前状态 ---\n`;
-    extra += `SAN: ${cocState.san}/${cocState.maxSan} | HP: ${cocState.currentHp}/${cocState.maxHp} | LUCK: ${cocState.luck} | MP: ${cocState.mp}/${cocState.maxMp}\n`;
+    extra += `SAN: ${getCharSan()}/${getCharMaxSan()} | HP: ${getCharHp()}/${getCharMaxHp()} | LUCK: ${cocState.luck} | MP: ${cocState.mp}/${cocState.maxMp}\n`;
     extra += `克苏鲁神话(CMI): ${cocState.cthulhuMythos}%\n`;
     if (cocState.skillChecks.length) extra += `已标记技能提升检定: ${cocState.skillChecks.join('、')}\n`;
     if (cocState.chronicle.length) {
@@ -70,6 +74,13 @@ export function buildSystemPrompt() {
       });
     }
   }
+
+  // Integrate memory bank summary for long-running games
+  const memSummary = getMemorySummary();
+  if (memSummary) {
+    extra += '\n\n## 🧠 记忆库 (已记录的游戏信息，请严格保持前后一致)\n' + memSummary + '\n';
+  }
+
   return base + extra;
 }
 
@@ -231,7 +242,7 @@ export function openKPPanel() {
   if (hero) hero.style.display = 'none';
   if (panel) panel.style.display = '';
   loadKPConfig();
-  if (state.theme === 'coc' && !cocState.chronicle.length && cocState.san === 50) {
+  if (state.theme === 'coc' && !cocState.chronicle.length && getCharSan() >= 99) {
     initCocState();
   }
   renderKP();
@@ -438,14 +449,32 @@ async function compressContextAsync() {
       kpState.apiHistory = kpState.apiHistory.slice(-60);
       return;
     }
-    const summaryPrompt = '你是跑团会话压缩助手。请将以下跑团对话记录压缩为一段简明摘要（中文，500字以内），必须保留：关键剧情节点、重要NPC名称与行动、战斗结果、角色状态变化（SAN/HP/LUCK增减）、获得的线索与物品、当前未解决的悬念。格式自由，以叙述性文字呈现。\n\n' + compressed.substring(compressed.length - 6000);
+    const memSummary = getMemorySummary();
+    const summaryPrompt = `你是跑团会话压缩助手。请将以下跑团对话记录压缩为结构化摘要（中文，800字以内），严格按以下7个类别组织：
+
+1. 【关键NPC】: 所有出现过的具名NPC及其特征、态度、位置
+2. 【获得的线索】: 所有发现的线索和信息
+3. 【剧情进展】: 主要事件和剧情推进
+4. 【角色状态】: SAN/HP/LUCK变化、新增特质、获得/失去物品
+5. 【当前悬念】: 未解决的谜团和威胁
+6. 【重要决策】: 玩家做出的关键选择
+7. 【战斗摘要】: 战斗结果和重要判定
+
+${memSummary ? '当前记忆库内容供参考:\n' + memSummary + '\n\n' : ''}
+会话记录:\n${compressed.substring(compressed.length - 6000)}`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 20000);
-    const summary = await callAPI(cfg, '你是游戏会话压缩助手。将跑团对话记录压缩为详细摘要，保留关键剧情、NPC行动、战斗结果和状态变化。', [], summaryPrompt, controller);
+    const summary = await callAPI(cfg, '你是游戏会话压缩助手。将跑团对话记录压缩为结构化摘要（NPC、线索、剧情、状态、悬念、决策、战斗7类），保留所有关键信息。', [], summaryPrompt, controller);
     clearTimeout(timeout);
     if (summary && summary.trim()) {
-      const summaryEntry = { role: 'user', content: '[会话摘要] ' + summary.trim().substring(0, 2500) };
-      kpState.apiHistory = [summaryEntry, ...toKeep];
+      const summaryEntry = { role: 'user', content: '[会话结构化摘要] ' + summary.trim().substring(0, 2500) };
+      // Prepend memory summary to the compressed context
+      const freshMem = getMemorySummary();
+      if (freshMem) {
+        kpState.apiHistory = [{ role: 'user', content: '[记忆库] ' + freshMem.substring(0, 1500) }, summaryEntry, ...toKeep];
+      } else {
+        kpState.apiHistory = [summaryEntry, ...toKeep];
+      }
     } else {
       kpState.apiHistory = kpState.apiHistory.slice(-60);
     }

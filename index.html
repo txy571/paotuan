@@ -115,8 +115,8 @@
           <p style="font-size:.7rem;color:var(--text-dim);margin-top:8px;">⚠️ API Key 仅保存在浏览器本地存储中，不会上传到任何第三方服务器。</p>
         </div>
 
-        <!-- CoC Status Bars -->
-        <div class="coc-status-bar" id="cocStatusBar"></div>
+        <!-- CoC Status Mini -->
+        <div class="coc-status-mini" id="cocStatusMini"></div>
 
         <!-- Chat messages -->
         <div class="kp-chat-panel" id="kpChatPanel">
@@ -262,6 +262,11 @@
             <input type="text" id="charXP" placeholder="经验值" style="flex:1;">
           </div>
 
+          <label>时代背景</label>
+          <select id="charEra" data-action="character:changeEra" data-action-event="change">
+          </select>
+          <div id="eraInfo" style="display:none;font-size:.72rem;color:var(--text-dim);margin-top:4px;line-height:1.4;"></div>
+
           <label>背景故事</label>
           <textarea id="charBackground" rows="3" placeholder="角色的过往、性格、动机与目标..."></textarea>
 
@@ -295,15 +300,28 @@
         <!-- Equipment -->
         <div class="panel" style="margin-top:16px;">
           <h3>装备与物品</h3>
-          <div style="display:flex;gap:8px;margin-bottom:10px;">
-            <input type="text" id="equipName" placeholder="物品名称..." style="flex:1;">
-            <input type="number" id="equipQty" value="1" min="1" style="width:65px;">
+          <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;">
+            <input type="text" id="equipName" placeholder="物品名称..." style="flex:1;min-width:100px;">
+            <input type="number" id="equipQty" value="1" min="1" style="width:50px;" title="数量">
+            <input type="text" id="equipWeight" placeholder="重量" style="width:55px;" title="重量">
+            <input type="text" id="equipCategory" placeholder="分类" style="width:65px;" title="分类">
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:10px;">
+            <input type="text" id="equipDesc" placeholder="描述..." style="flex:1;">
             <button class="btn btn-secondary btn-sm" data-action="character:addEquip">+ 添加</button>
           </div>
           <table class="equip-table">
-            <thead><tr><th>物品</th><th>数量</th><th style="width:40px;"></th></tr></thead>
+            <thead><tr><th>物品</th><th>数量</th><th>重量</th><th>分类</th><th>装备</th><th style="width:50px;"></th></tr></thead>
             <tbody id="equipTable"></tbody>
           </table>
+        </div>
+
+        <!-- Spells -->
+        <div class="panel" style="margin-top:16px;">
+          <h3>法术书</h3>
+          <div id="spellsList"></div>
+          <button class="btn btn-ghost btn-xs" style="margin-top:8px;width:100%;" data-action="character:addSpell">+ 添加法术</button>
+          <div style="font-size:.72rem;color:var(--text-dim);margin-top:4px;">提示: 点击"编辑"修改法术详情，点击 ◆/◇ 切换准备状态</div>
         </div>
       </div>
 
@@ -337,8 +355,10 @@
             </optgroup>
           </select>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
-            <div><label>当前 HP</label><input type="number" id="charHP" placeholder="HP"></div>
-            <div><label>最大 HP</label><input type="number" id="charMaxHP" placeholder="Max"></div>
+            <div><label>当前 HP</label><input type="number" id="charHP" placeholder="HP" value="100"></div>
+            <div><label>最大 HP</label><input type="number" id="charMaxHP" placeholder="Max" value="100"></div>
+            <div><label>当前 SAN</label><input type="number" id="charSan" placeholder="SAN" value="100"></div>
+            <div><label>最大 SAN</label><input type="number" id="charMaxSan" placeholder="Max" value="100"></div>
             <div><label>护甲 AC</label><input type="number" id="charAC" placeholder="AC"></div>
             <div><label>先攻加值</label><input type="number" id="charInit" placeholder="±X"></div>
           </div>

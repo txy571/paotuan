@@ -10,18 +10,111 @@ export const ATTR_COLORS = {
   int: '#4488dd', wis: '#aa88cc', cha: '#e86090'
 };
 
-export const DND_SKILLS = [
-  { name:'运动', attr:'str' }, { name:'杂技', attr:'dex' },
-  { name:'巧手', attr:'dex' }, { name:'隐匿', attr:'dex' },
-  { name:'奥秘', attr:'int' }, { name:'历史', attr:'int' },
-  { name:'调查', attr:'int' }, { name:'自然', attr:'int' },
-  { name:'宗教', attr:'int' }, { name:'驯兽', attr:'wis' },
-  { name:'洞察', attr:'wis' }, { name:'医药', attr:'wis' },
-  { name:'察觉', attr:'wis' }, { name:'生存', attr:'wis' },
-  { name:'欺瞒', attr:'cha' }, { name:'威吓', attr:'cha' },
-  { name:'表演', attr:'cha' }, { name:'游说', attr:'cha' }
-];
+// ==================== SKILL DEFINITIONS ====================
+export const SKILL_DEFINITIONS = {
+  dnd: [
+    { id:'athletics', name:'运动', attr:'str' },
+    { id:'acrobatics', name:'杂技', attr:'dex' },
+    { id:'sleight_of_hand', name:'巧手', attr:'dex' },
+    { id:'stealth', name:'隐匿', attr:'dex' },
+    { id:'arcana', name:'奥秘', attr:'int' },
+    { id:'history', name:'历史', attr:'int' },
+    { id:'investigation', name:'调查', attr:'int' },
+    { id:'nature', name:'自然', attr:'int' },
+    { id:'religion', name:'宗教', attr:'int' },
+    { id:'animal_handling', name:'驯兽', attr:'wis' },
+    { id:'insight', name:'洞察', attr:'wis' },
+    { id:'medicine', name:'医药', attr:'wis' },
+    { id:'perception', name:'察觉', attr:'wis' },
+    { id:'survival', name:'生存', attr:'wis' },
+    { id:'deception', name:'欺瞒', attr:'cha' },
+    { id:'intimidation', name:'威吓', attr:'cha' },
+    { id:'performance', name:'表演', attr:'cha' },
+    { id:'persuasion', name:'游说', attr:'cha' },
+  ],
+  coc: [
+    { id:'accounting', name:'会计', base:5 },
+    { id:'anthropology', name:'人类学', base:1 },
+    { id:'appraise', name:'估价', base:5 },
+    { id:'archaeology', name:'考古学', base:1 },
+    { id:'art_craft', name:'艺术与手艺', base:5 },
+    { id:'charm', name:'魅惑', base:15 },
+    { id:'climb', name:'攀爬', base:20 },
+    { id:'credit_rating', name:'信用评级', base:0 },
+    { id:'cthulhu_mythos', name:'克苏鲁神话', base:0 },
+    { id:'disguise', name:'乔装', base:5 },
+    { id:'dodge', name:'闪避', base:'dex2' },
+    { id:'drive_auto', name:'汽车驾驶', base:20 },
+    { id:'elec_repair', name:'电器维修', base:10 },
+    { id:'fast_talk', name:'话术', base:5 },
+    { id:'fighting_brawl', name:'格斗(斗殴)', base:25 },
+    { id:'firearms_handgun', name:'射击(手枪)', base:20 },
+    { id:'firearms_rifle', name:'射击(步枪)', base:25 },
+    { id:'first_aid', name:'急救', base:30 },
+    { id:'history_coc', name:'历史', base:5 },
+    { id:'intimidate', name:'恐吓', base:15 },
+    { id:'jump', name:'跳跃', base:20 },
+    { id:'language_other', name:'外语', base:1 },
+    { id:'language_own', name:'母语', base:'edu' },
+    { id:'law', name:'法律', base:5 },
+    { id:'library_use', name:'图书馆使用', base:20 },
+    { id:'listen', name:'聆听', base:20 },
+    { id:'locksmith', name:'锁匠', base:1 },
+    { id:'mech_repair', name:'机械维修', base:10 },
+    { id:'medicine_coc', name:'医学', base:1 },
+    { id:'natural_world', name:'博物学', base:10 },
+    { id:'navigate', name:'导航', base:10 },
+    { id:'occult', name:'神秘学', base:5 },
+    { id:'op_heavy_mach', name:'操作重型机械', base:1 },
+    { id:'persuade', name:'说服', base:10 },
+    { id:'pilot', name:'驾驶', base:1 },
+    { id:'psychology', name:'心理学', base:10 },
+    { id:'psychoanalysis', name:'精神分析', base:1 },
+    { id:'ride', name:'骑术', base:5 },
+    { id:'science', name:'科学', base:1 },
+    { id:'sleight_of_hand_coc', name:'妙手', base:10 },
+    { id:'spot_hidden', name:'侦查', base:25 },
+    { id:'stealth_coc', name:'潜行', base:20 },
+    { id:'survival_coc', name:'生存', base:10 },
+    { id:'swim', name:'游泳', base:20 },
+    { id:'throw', name:'投掷', base:20 },
+    { id:'track', name:'追踪', base:10 },
+  ],
+};
 
+// ==================== SPELLS ====================
+export const SPELL_SCHOOLS = ['防护', '咒法', '预言', '附魔', '塑能', '幻术', '死灵', '变化'];
+export const SPELL_LEVELS = ['戏法','一环','二环','三环','四环','五环','六环','七环','八环','九环'];
+
+// ==================== CoC ERA PRESETS ====================
+export const COC_ERAS = {
+  classic: {
+    id: 'classic',
+    name: '1920s 经典时代',
+    desc: '爵士时代，一战硝烟刚散，禁酒令下的美国暗流涌动。私家侦探、记者、古物学者在迷雾笼罩的街道上追寻不可名状的真相。打字机的咔嗒声、左轮手枪的冷光、爵士乐的靡靡之音中，古老的恐怖悄然苏醒。',
+    techLevel: '一战后期至二战前技术',
+    backgroundOptions: ['私家侦探','记者','古物学者','医生','教授','作家','退役军人','图书管理员','古董商','警探'],
+    skillDefaults: { 'drive_auto':20, 'library_use':20, 'occult':5, 'fast_talk':5, 'firearms_handgun':20 },
+  },
+  victorian: {
+    id: 'victorian',
+    name: '1890s 维多利亚时代',
+    desc: '煤气灯下的伦敦，工业革命的烟尘中隐藏着远古的秘密。绅士俱乐部的成员、灵媒、探险家在大英帝国的阴影下调查超自然事件。马车碾过鹅卵石路面的回响中，煤气灯的光芒在雾中摇曳，照亮了不该被照亮的东西。',
+    techLevel: '维多利亚时代技术（蒸汽动力、煤气灯、马车、电报）',
+    backgroundOptions: ['绅士学者','灵媒','探险家','警探','医生','牧师','记者','古董收藏家','殖民官员','私家教师'],
+    skillDefaults: { 'library_use':25, 'occult':10, 'ride':25, 'language_other':10, 'history_coc':10 },
+  },
+  modern: {
+    id: 'modern',
+    name: '现代',
+    desc: '信息时代的光鲜表面下，宇宙的恐怖并未消散。黑客、调查记者、法医科学家在数据洪流中追踪异常信号。智能手机的蓝光、监控摄像头的红点、社交媒体的信息流——这些现代工具既是武器也是牢笼，而古老的黑暗正在学会使用它们。',
+    techLevel: '当代技术（互联网、智能手机、电脑、现代武器、法医学）',
+    backgroundOptions: ['黑客','调查记者','法医','大学教授','私家侦探','图书管理员','联邦探员','纪录片导演','程序员','心理医生'],
+    skillDefaults: { 'drive_auto':30, 'elec_repair':10, 'library_use':20, 'spot_hidden':30 },
+  },
+};
+
+// ==================== THEME NAMES ====================
 export const THEME_NAMES = {
   dnd: 'D&D 5e', coc: '克苏鲁的呼唤',
   cyberpunk: '赛博朋克 RED', pathfinder: '开拓者'
@@ -36,15 +129,17 @@ export const state = {
   theme: 'dnd',
   currentDice: 20,
   attributes: { str:20, dex:20, con:20, int:20, wis:20, cha:20 },
-  skills: {},
+  skills: {},      // { skillId: { value: number, proficient: boolean } }
+  spells: [],      // [{ id, name, level, school, castingTime, range, components, duration, description, prepared, source }]
   traits: [],
   feats: [],
-  equipment: [],
+  equipment: [],   // [{ name, qty, weight, desc, equipped, category }]
   portraitData: null,
   rollHistory: [],
   currentCharId: null,
   initiative: [],
   initNextId: 1,
+  era: 'classic',  // CoC era preset
 };
 
 export const kpState = {
@@ -60,15 +155,11 @@ export const kpState = {
 };
 
 export let scenarioDbContent = '';
-
 export function setScenarioDbContent(v) { scenarioDbContent = v; }
 
+// SAN/HP now live on character card, not here. cocState keeps session-level mechanics only.
 export const cocState = {
-  san: 50,
-  maxSan: 99,
   luck: 50,
-  maxHp: 10,
-  currentHp: 10,
   mp: 10,
   maxMp: 10,
   cthulhuMythos: 0,
@@ -78,19 +169,43 @@ export const cocState = {
 
 export function initCocState() {
   const pow = state.attributes.wis || 50;
-  const con = state.attributes.con || 50;
-  const str = state.attributes.str || 50;
-  cocState.san       = pow;
-  cocState.maxSan    = 99;
   cocState.luck      = Math.floor(Math.random() * 30) + 40;
-  cocState.maxHp     = Math.floor((con + str) / 20);
-  cocState.currentHp = cocState.maxHp;
   cocState.mp        = Math.floor(pow / 10);
   cocState.maxMp     = cocState.mp;
   cocState.cthulhuMythos = 0;
   cocState.chronicle     = [];
   cocState.skillChecks   = [];
 }
+
+// Helper: get character SAN/HP from DOM (moved to character card)
+export function getCharSan() {
+  return parseInt(document.getElementById('charSan')?.value) || 100;
+}
+export function getCharHp() {
+  return parseInt(document.getElementById('charHP')?.value) || 100;
+}
+export function getCharMaxSan() {
+  return parseInt(document.getElementById('charMaxSan')?.value) || 100;
+}
+export function getCharMaxHp() {
+  return parseInt(document.getElementById('charMaxHP')?.value) || 100;
+}
+export function setCharSan(v) {
+  const el = document.getElementById('charSan'); if (el) el.value = Math.max(0, Math.min(getCharMaxSan(), v));
+}
+export function setCharHp(v) {
+  const el = document.getElementById('charHP'); if (el) el.value = Math.max(-5, Math.min(getCharMaxHp(), v));
+}
+
+// ==================== PROBABILITY DISTRIBUTION RULES (shared across prompts) ====================
+const PROBABILITY_RULES = `
+【概率分布要求——新增，重要】
+- 你必须保证掷骰结果在多次检定中呈现自然随机的分布。不要让骰子出目总是集中在中等范围（如d20集中在8-12，d100集中在40-60）。
+- d20系统：在10次检定中，至少应有1-2次出现15以上的高出目，也应有1-2次出现6以下的低出目。极端值（1、2、19、20）应偶尔出现——这是真实骰子的正常表现。
+- d100系统（CoC）：在10次检定中，01-15和86-100范围应各出现约1-3次。大成功（01-05）和大失败（96-100）虽然概率低，但在整个游戏历程中必须出现——完美避开极端值的骰子序列是不自然的。
+- 严禁"补偿心理"：即上一次失败后刻意给下一次更高的出目，或上一次成功后刻意提高难度。每次掷骰应独立，不受先前结果影响。真实骰子没有记忆。
+- 你可以使用物理骰子的"手感"类比：想象你拿着真实的骰子在手中摇动后投出——结果不受你的意愿控制，只受概率支配。
+- 掷骰结果应该有真正的起伏：有时连续两次成功，有时连续两次失败。不要人为"平衡"结果。`;
 
 // ==================== AI KP PROMPTS ====================
 export const KP_SYSTEM_PROMPTS = {
@@ -115,9 +230,7 @@ export const KP_SYSTEM_PROMPTS = {
 - 战斗攻击检定：
   格式: 【攻击: d20+命中加值 = XX (d20出目=Y) AC目标 命中/未命中】
   伤害格式: 【伤害: 2d6+3 = XX】
-- 自然20为大成功（重击），自然1为大失败。必须明确标注。
-- 每当你进行检定掷骰后，根据掷骰结果描述发生的具体事情。成功描述角色的英勇表现，失败则描述有趣的后果。
-- DM掷骰是公正公开的——你绝不能为了"剧情需要"而伪造掷骰结果。无论好坏，骰子结果就是事实。
+- 自然20为大成功（重击），自然1为大失败。必须明确标注。${PROBABILITY_RULES}
 
 剧情一致性要求:
 - 在游戏开始时，你必须构思一个大致的剧情脉络（主线冲突、关键NPC、核心谜团或目标）。无论玩家后续如何行动，这个主线脉络不会改变。玩家的选择会影响抵达终点的路径，但不会改变故事的基本方向。
@@ -149,14 +262,14 @@ export const KP_SYSTEM_PROMPTS = {
 - 大失败（Fumble）：出目96-100且>技能值（若技能值<50，则96-100均为大失败）。标注为「大失败!」。
 - 奖励骰/惩罚骰：投两个十位骰（每个与个位骰组成D100），取较优/较劣结果。格式：【检定: 技能名 D100=XX(奖励骰: YY)】
 - 孤注一掷（Pushing the Roll）：玩家失败后，可声明孤注一掷——描述额外努力方式。你再次公开掷骰，但失败后果必须比第一次更严重。
-- 对抗检定：双方各投D100，在自身技能值下比较成功等级（大成功>极难>困难>普通），等级相同时比较出目（越小越好）。
+- 对抗检定：双方各投D100，在自身技能值下比较成功等级（大成功>极难>困难>普通），等级相同时比较出目（越小越好）。${PROBABILITY_RULES}
 - 你绝不能为了"剧情需要"而伪造掷骰结果。骰子出目是什么就是什么——这就是跑团的魅力。即使是关键剧情节点，如果骰子说失败了，你就必须叙述失败的结果。
 
 【公开掷骰范例】
 玩家："我想偷偷跟着那个可疑的男人。"
-KP："你压低帽檐，混入傍晚的人流中，与那个男人保持着二十米的距离。他的步伐不紧不慢，似乎没有察觉。请进行一次【潜行】检定。"
+KP："你压低帽檐，混入傍晚的人流中，与那个男人保持着二十米的距离。他的步伐不紧不慢，似乎没有察觉。"
 【检定: 潜行 D100=28 ≤50 成功 (普通难度)】
-KP："你成功地跟了他六个街区，没有被发现。他在一栋没有门牌的红砖建筑前停下，左右张望后闪身进了侧门。"
+KP："你成功地跟了他六个街区，没有被发现。他在一栋没有门牌的红砖建筑前停下，左右张望后闪身进了侧门。你注意到他的右手始终插在大衣口袋里——那里鼓着一个可疑的形状。"
 
 【游戏风格】
 - 语言风格：文学化，注重感官细节（视觉、听觉、气味、温度、触感）。善用比喻与拟人，制造压抑与不安。
@@ -201,17 +314,18 @@ KP："你翻开日记，纸张脆得像干枯的树叶。写于1893年的墨水�
 KP："你的手指拂过纸页，触感异常——最后一页夹着一片薄如蝉翼的东西。抽出来一看，是一小片发黄的报纸，上面只印着几个字：'勿开石门'。而'石门'两字被人用指甲狠狠抠破，纸面几乎被戳穿。这行字让你后颈发凉——是什么人，在什么样的恐惧中，留下了这个警告？"
 
 【故事推进——角色卡优先】
-- **游戏开始前**：你必须先仔细阅读系统提示中提供的玩家角色信息（姓名、职业、背景、属性、技能、特质、装备等）。基于角色卡的所有信息，构思一个大致的剧情脉络（主线冲突、关键NPC、核心谜团或目标），并使故事与角色的背景、职业和技能紧密关联。在第一条回复中，先简要确认你已理解角色设定，然后直接开始叙事，将角色自然地引入场景。
+- **游戏开始前**：你必须先仔细阅读系统提示中提供的玩家角色信息（姓名、职业、背景、属性、技能值、特质、装备等）。基于角色卡的所有信息，构思一个大致的剧情脉络（主线冲突、关键NPC、核心谜团或目标），并使故事与角色的背景、职业和技能紧密关联。在第一条回复中，先简要确认你已理解角色设定，然后直接开始叙事，将角色自然地引入场景。
 - 如果玩家没有创建角色卡就尝试开始游戏，你必须拒绝并告知需要先填写角色信息。
 - 故事开始后，无论玩家后续如何行动，主线脉络的根基不会改变。玩家的选择会影响抵达终点的路径，但不会改变故事的基本方向。如果玩家尝试完全偏离主线，用合理的叙事引导他们回到故事中，而非强制阻止。
 - 你拥有一个预设的场景或模组。如果玩家问"我们现在在哪里"或"发生了什么"，根据你预设的场景以及角色背景来回答。
 - 玩家可以尝试任何合理行动（交谈、搜索、逃跑、攻击、使用技能、潜行等）。玩家的行动可以改变剧情走向，但你必须保持内部逻辑的一致。
 - 关键线索至少应给予两条获取途径，但获取线索仍需合理的调查行为。
 
-【记忆与上下文】
+【记忆与上下文——极其重要】
 - 你需要记住游戏中发生过的关键事件、NPC对话、获得的线索和角色的状态变化。在后续对话中主动引用这些信息以保持连贯。
 - 如果一个线索在之前的对话中提到过但现在被遗忘了，你应该通过环境描写微妙地提醒玩家。
 - 角色状态的每一次变化（SAN损失、获得物品、新特质）都应反映在后续叙事中。
+- 特别注意前后一致性：如果你在第3轮说某个NPC是"金发碧眼"，那么在第15轮再次遇到他时，他仍然应该是金发碧眼。如果你说某个地点在城市的"东边"，那么后续所有关于该地点的描述都应保持这个位置。矛盾会严重破坏游戏体验。
 
 【AI指令权限】
 你拥有以下游戏状态修改权限。在回复中使用这些指令来记录剧情发展。每个指令独占一行，放在回复末尾:
@@ -225,8 +339,11 @@ KP："你的手指拂过纸页，触感异常——最后一页夹着一片薄�
 【SKILL_CHECK:技能名】 — 记录模组中成功使用的技能，供完成后提升
 【ITEM:物品名】 — 获得物品
 【REMOVE_ITEM:物品名】 — 失去物品
+【NPC:名称:描述:地点:态度】 — 记录重要NPC信息到记忆库
+【CLUE:文本】 — 记录重要线索到记忆库
+【PLOT:标题:状态:摘要】 — 创建或更新剧情线程（状态: open/resolved/abandoned）
 
-重要: 每个指令独占一行，格式为【指令:参数】。描述性文字不要放在指令行内。合理而克制地使用这些指令，只在剧情有实质推进时才调用——不要每轮都修改数值。`,
+重要: 每个指令独占一行，格式为【指令:参数】。描述性文字不要放在指令行内。合理而克制地使用这些指令，只在剧情有实质推进时才调用。NPC/CLUE/PLOT指令用于帮助KP记忆关键信息，应在NPC首次登场、重要线索被发现、剧情有重大推进时使用。`,
 
   cyberpunk: `你是一位赛博朋克·红(CP:R)游戏主持人(GM)。你正在为一位佣兵/边缘行者主持一场冒险。
 
@@ -246,17 +363,15 @@ KP："你的手指拂过纸页，触感异常——最后一页夹着一片薄�
   格式: 【检定: 1d10+技能值 = XX (d10出目=Y) DV难度 成功/失败】
   示例: 【检定: 1d10+8 = 14 (d10出目=6) DV13 成功】
 - d10出目为10时可能触发暴击（再投一次d10加上去）。
-- d10出目为1时可能触发大失败。
+- d10出目为1时可能触发大失败。${PROBABILITY_RULES}
 - 你绝不能为了"剧情需要"而伪造掷骰结果。
 
 剧情一致性要求:
 - 在游戏开始时，你必须构思一个大致的剧情脉络（主线冲突、关键NPC、核心谜团或目标）。无论玩家后续如何行动，这个主线脉络不会改变。玩家的选择会影响抵达终点的路径，但不会改变故事的基本方向。
-- 如果玩家尝试完全偏离主线，用合理的叙事引导他们回到故事中，而非强制阻止。
 
 输出格式要求:
-- 输出较长回复时请分段，每次输出200-400字后暂停，等待玩家回应再继续。不要一次性输出过长内容。
-- 每段对话都需要包含环境描写、NPC反应或气氛渲染。用生动的语言构建沉浸感。
-- 像真人主持人一样对话：回应玩家的行动，先公开掷骰，描述结果，然后自然地停顿等待玩家下一步行动。风格要冷峻、快节奏，减少markdown符号的使用。`,
+- 输出较长回复时请分段，每次输出200-400字后暂停，等待玩家回应再继续。
+- 每段对话都需要包含环境描写、NPC反应或气氛渲染。风格要冷峻、快节奏，减少markdown符号的使用。`,
 
   pathfinder: `你是一位开拓者(PF2e)游戏主持人(GM)。你正在为一位英雄主持一场史诗奇幻冒险。
 
@@ -277,17 +392,15 @@ KP："你的手指拂过纸页，触感异常——最后一页夹着一片薄�
   示例: 【检定: d20+7 = 25 (d20出目=18) DC15 成功（超过DC10点→重击成功!）】
 - PF2e重击机制：结果≥DC+10为重击成功，结果≤DC-10为重击失败。
 - 自然20：成功等级提升一级（失败→成功，成功→重击成功）。
-- 自然1：成功等级降低一级（成功→失败，失败→重击失败）。
+- 自然1：成功等级降低一级（成功→失败，失败→重击失败）。${PROBABILITY_RULES}
 - 你绝不能为了"剧情需要"而伪造掷骰结果。
 
 剧情一致性要求:
 - 在游戏开始时，你必须构思一个大致的剧情脉络（主线冲突、关键NPC、核心谜团或目标）。无论玩家后续如何行动，这个主线脉络不会改变。玩家的选择会影响抵达终点的路径，但不会改变故事的基本方向。
-- 如果玩家尝试完全偏离主线，用合理的叙事引导他们回到故事中，而非强制阻止。
 
 输出格式要求:
-- 输出较长回复时请分段，每次输出200-400字后暂停，等待玩家回应再继续。不要一次性输出过长内容。
-- 每段对话都需要包含环境描写、NPC反应或气氛渲染。不要仅仅给出功能性回答。用生动的语言构建沉浸感。
-- 像真人主持人一样对话：回应玩家的行动，先公开掷骰，描述结果，然后自然地停顿等待玩家下一步行动。减少markdown格式符号的使用，使用自然的段落换行来表达结构。`
+- 输出较长回复时请分段，每次输出200-400字后暂停，等待玩家回应再继续。
+- 每段对话都需要包含环境描写、NPC反应或气氛渲染。像真人主持人一样对话：回应、掷骰、描述结果、停顿，减少markdown符号的使用。`
 };
 
 export const KP_QUICK_ACTIONS = {

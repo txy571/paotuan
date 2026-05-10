@@ -54,6 +54,10 @@ const actionMap = {
   'character:addTrait': () => Character.addTrait(),
   'character:addFeat': () => Character.addFeat(),
   'character:addEquip': () => Character.addEquipment(),
+  'character:addSpell': () => Character.addSpell(),
+  'character:editSpell': (el) => Character.editSpell(parseInt(el.dataset.spell)),
+  'character:toggleSpellPrepared': (el) => Character.toggleSpellPrepared(parseInt(el.dataset.spell)),
+  'character:changeEra': (el) => Character.applyEra(el.value),
   'character:removeInitiative': (el) => Character.removeInitiative(parseInt(el.dataset.id)),
   'character:nextInit': () => Character.nextInitiative(),
   'character:clearInit': () => Character.clearInitiative(),
@@ -176,6 +180,7 @@ document.addEventListener('coc-render', () => {
 document.addEventListener('character-render', () => {
   Character.renderAttributes();
   Character.renderSkills();
+  Character.renderSpells();
 });
 
 document.addEventListener('render-game-saves', () => renderGameSaves());
@@ -189,6 +194,9 @@ document.addEventListener('trait-remove', (e) => Character.removeTrait(e.detail)
 document.addEventListener('feat-update', (e) => Character.updateFeat(e.detail.i, e.detail.k, e.detail.v));
 document.addEventListener('feat-remove', (e) => Character.removeFeat(e.detail));
 document.addEventListener('equip-remove', (e) => Character.removeEquip(e.detail));
+document.addEventListener('equip-toggle', (e) => Character.toggleEquip(e.detail));
+document.addEventListener('spell-remove', (e) => Character.removeSpell(e.detail));
+document.addEventListener('skill-update', (e) => { Character.setSkillValue(e.detail.id, e.detail.value); Character.renderSkills(); });
 document.addEventListener('dice-rolled', (e) => {
   if (Multiplayer.connected) {
     Multiplayer.rollAndBroadcast(e.detail);

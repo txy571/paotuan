@@ -12,7 +12,7 @@ import { showLobbyView, showRoomView, renderAllRoom, addChatMessage, renderMulti
          renderPlayerList, renderTurnBanner, renderLobbyControls, renderQuickActions,
          refreshUI, onPageOpen, mpRoomCharChanged } from './ui.js';
 import { generateGameStartScenario } from './game-start.js';
-import { state, THEME_NAMES, cocState } from '../state.js';
+import { state, THEME_NAMES, cocState, getCharSan, getCharHp } from '../state.js';
 import { showToast } from '../utils.js';
 import { renderCocStatus, renderCocChronicle } from '../coc-status.js';
 
@@ -127,7 +127,7 @@ export const Multiplayer = {
       id: M.playerId, name: M.playerName, isHost: true,
       joinedAt: Date.now(), ready: true,
       charName: charData.name,
-      hp: cocState.currentHp || '?', san: cocState.san || '?',
+      hp: getCharHp() || '?', san: getCharSan() || '?',
       charData: charData
     };
     M.readyPlayers.add(M.playerId);
@@ -375,12 +375,12 @@ export const Multiplayer = {
     const charData = collectMyCharData();
     const update = {
       type: 'update-status', playerId: M.playerId, playerName: M.playerName,
-      hp: cocState.currentHp, san: cocState.san, charName: charData.name || '', charData,
+      hp: getCharHp(), san: getCharSan(), charName: charData.name || '', charData,
     };
     if (M.isHost) {
       if (M.players[M.playerId]) {
-        M.players[M.playerId].hp = cocState.currentHp;
-        M.players[M.playerId].san = cocState.san;
+        M.players[M.playerId].hp = getCharHp();
+        M.players[M.playerId].san = getCharSan();
         M.players[M.playerId].charName = charData.name;
         M.players[M.playerId].charData = charData;
       }

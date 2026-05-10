@@ -24,11 +24,7 @@ export function loadGameSaveData(data) {
   if (data.theme && THEME_NAMES[data.theme]) selectRPG(data.theme);
   if (data.character) loadCharData(data.character);
   if (data.cocState) {
-    cocState.san = data.cocState.san ?? 50;
-    cocState.maxSan = data.cocState.maxSan ?? 99;
     cocState.luck = data.cocState.luck ?? 50;
-    cocState.maxHp = data.cocState.maxHp ?? 10;
-    cocState.currentHp = data.cocState.currentHp ?? 10;
     cocState.mp = data.cocState.mp ?? 10;
     cocState.maxMp = data.cocState.maxMp ?? 10;
     cocState.cthulhuMythos = data.cocState.cthulhuMythos ?? 0;

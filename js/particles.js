@@ -11,60 +11,54 @@
 //   2 — bright stars, prominent glow, noticeable twinkle
 //   1 — very bright, large halo, strong atmospheric scintillation
 //
-// Realism features:
-//   - Atmospheric scintillation (stronger near horizon)
-//   - Star clusters (small gravitationally-bound groupings)
-//   - Power-law magnitude distribution
-//   - Variable stars with slow pulsation cycles
-//   - Temperature-based stellar colors (O B A F G K M)
+// Perf: Stars bucketed by layer (no per-frame sort).
+//       Accent color cached (60-frame TTL). Glow gradients cached by key.
 
 let running = false;
 let frameCount = 0;
 
 // ── Stellar color temperatures (O B A F G K M) with realistic spectral hues ──
 const STELLAR = [
-  '#9db4ff', // O-type: blue-white (extremely rare, very hot ~30,000K+)
-  '#a8bfff','#b0c4ff','#b8c8ff','#c0ccff', // B-type: blue-white (~10,000-30,000K)
-  '#d0d8ff','#dae0ff','#e2e8ff','#e8ecff', // A-type: white (~7,500-10,000K)
-  '#f8f6f2','#fff8f0','#fff5eb','#fff2e5', // F-type: yellow-white (~6,000-7,500K)
-  '#ffeed8','#ffeacc','#ffe5c0','#ffe0b4', // G-type: yellow (~5,200-6,000K, like Sun)
-  '#ffd9a5','#ffd198','#ffc888','#ffc078', // K-type: orange (~3,700-5,200K)
-  '#ffb568','#ffaa58','#ff9f48','#ff9438','#ff8828','#ff7a18', // M-type: red-orange (~2,400-3,700K)
+  '#9db4ff', // O-type: blue-white
+  '#a8bfff','#b0c4ff','#b8c8ff','#c0ccff', // B-type
+  '#d0d8ff','#dae0ff','#e2e8ff','#e8ecff', // A-type
+  '#f8f6f2','#fff8f0','#fff5eb','#fff2e5', // F-type
+  '#ffeed8','#ffeacc','#ffe5c0','#ffe0b4', // G-type
+  '#ffd9a5','#ffd198','#ffc888','#ffc078', // K-type
+  '#ffb568','#ffaa58','#ff9f48','#ff9438','#ff8828','#ff7a18', // M-type
 ];
 
-// Realistic stellar population distribution (based on Milky Way observations)
 function starColor() {
   const r = Math.random();
-  if (r < 0.0003) return STELLAR[0];                              // O: ~0.00003% actual, bumped for visibility
-  if (r < 0.002)  return STELLAR[Math.floor(Math.random()*4)+1];  // B: ~0.13%
-  if (r < 0.015)  return STELLAR[Math.floor(Math.random()*4)+5];  // A: ~0.6%
-  if (r < 0.06)   return STELLAR[Math.floor(Math.random()*4)+9];  // F: ~3%
-  if (r < 0.18)   return STELLAR[Math.floor(Math.random()*4)+13]; // G: ~7.5% (Sun-like)
-  if (r < 0.38)   return STELLAR[Math.floor(Math.random()*4)+17]; // K: ~12%
-  return STELLAR[Math.floor(Math.random()*6)+21];                   // M: ~76% (most common, red dwarfs)
+  if (r < 0.0003) return STELLAR[0];
+  if (r < 0.002)  return STELLAR[Math.floor(Math.random()*4)+1];
+  if (r < 0.015)  return STELLAR[Math.floor(Math.random()*4)+5];
+  if (r < 0.06)   return STELLAR[Math.floor(Math.random()*4)+9];
+  if (r < 0.18)   return STELLAR[Math.floor(Math.random()*4)+13];
+  if (r < 0.38)   return STELLAR[Math.floor(Math.random()*4)+17];
+  return STELLAR[Math.floor(Math.random()*6)+21];
 }
 
-// ── Layer config (counts for 1920×1080, scaled by viewport area) ──
-// Uses approximate power-law: many more dim stars than bright ones
+// ── Layer config ──
 function layerCounts(cw, ch) {
   const s = Math.max(0.55, (cw * ch) / (1920 * 1080));
   return {
-    8: Math.round(10000 * s), // ultra-deep dust — most numerous
-    7: Math.round(7000 * s),  // very dim
-    6: Math.round(4500 * s),  // dim
-    5: Math.round(2400 * s),  // medium-faint
-    4: Math.round(1100 * s),  // medium
-    3: Math.round(500 * s),   // bright mid
-    2: Math.round(200 * s),   // bright
-    1: Math.round(90 * s),    // nearest bright — rarest
+    8: Math.round(10000 * s),
+    7: Math.round(7000 * s),
+    6: Math.round(4500 * s),
+    5: Math.round(2400 * s),
+    4: Math.round(1100 * s),
+    3: Math.round(500 * s),
+    2: Math.round(200 * s),
+    1: Math.round(90 * s),
   };
 }
 
-// ── Star clusters — small groupings that resemble open clusters / moving groups ──
+// ── Star clusters ──
 const clusters = [];
 function initClusters(w, h) {
   clusters.length = 0;
-  const count = 8 + Math.floor(Math.random() * 10); // 8-17 clusters
+  const count = 8 + Math.floor(Math.random() * 10);
   for (let c = 0; c < count; c++) {
     const cx = Math.random() * w;
     const cy = Math.random() * h;
@@ -72,7 +66,6 @@ function initClusters(w, h) {
     const starCount = 8 + Math.floor(Math.random() * 30);
     const members = [];
     for (let i = 0; i < starCount; i++) {
-      // Gaussian-like distribution within cluster
       const angle = Math.random() * Math.PI * 2;
       const dist = Math.abs(randomGaussian()) * radius;
       members.push({
@@ -88,7 +81,6 @@ function initClusters(w, h) {
   }
 }
 
-// Simple Box-Muller for cluster distribution
 function randomGaussian() {
   let u = 0, v = 0;
   while (u === 0) u = Math.random();
@@ -96,7 +88,7 @@ function randomGaussian() {
   return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
 }
 
-// ── Milky Way density — broad diagonal band with wavy edges ──
+// ── Milky Way density ──
 function milkyWay(x, y, w, h) {
   const cx = w * 0.38, cy = h * 0.45;
   const baseAngle = 0.6;
@@ -110,7 +102,7 @@ function milkyWay(x, y, w, h) {
   return Math.min(1, 0.45 + 0.55 * (core + halo));
 }
 
-// ── Nebula blobs — large, very faint colored patches ──
+// ── Nebulae ──
 const nebulae = [];
 function initNebulae(w, h) {
   nebulae.length = 0;
@@ -126,19 +118,19 @@ function initNebulae(w, h) {
   }
 }
 
-// ── Aurora borealis ──
+// ── Aurora ──
 const aurora = { bands: [] };
 function initAurora(w, h) {
   aurora.bands = [];
-  const count = 2 + Math.floor(Math.random() * 2); // 2-3 bands
+  const count = 2 + Math.floor(Math.random() * 2);
   for (let i = 0; i < count; i++) {
     aurora.bands.push({
-      baseY: h * (0.12 + Math.random() * 0.25), // near top
+      baseY: h * (0.12 + Math.random() * 0.25),
       amplitude: 25 + Math.random() * 60,
       frequency: 0.0008 + Math.random() * 0.002,
       speed: 0.0003 + Math.random() * 0.0008,
       phase: Math.random() * Math.PI * 2,
-      hue: [140, 160, 180, 280, 300][Math.floor(Math.random() * 5)], // green, teal, purple
+      hue: [140, 160, 180, 280, 300][Math.floor(Math.random() * 5)],
       thickness: 18 + Math.random() * 40,
       alpha: 0.025 + Math.random() * 0.04,
     });
@@ -148,7 +140,6 @@ function initAurora(w, h) {
 function drawAurora(ctx, w, h, frame) {
   for (const band of aurora.bands) {
     ctx.save();
-    // Build a wavy ribbon using a series of points
     const step = 4;
     const points = [];
     for (let x = -20; x <= w + 20; x += step) {
@@ -157,20 +148,15 @@ function drawAurora(ctx, w, h, frame) {
       const y = band.baseY + wave1 + wave2;
       points.push({ x, y });
     }
-
-    // Draw the ribbon as a filled shape
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y - band.thickness);
     for (let i = 0; i < points.length; i++) {
       ctx.lineTo(points[i].x, points[i].y - band.thickness * (0.5 + 0.5 * Math.sin(i * 0.1 + frame * band.speed * 2)));
     }
-    // Bottom edge (reverse)
     for (let i = points.length - 1; i >= 0; i--) {
       ctx.lineTo(points[i].x, points[i].y + band.thickness * (0.5 + 0.5 * Math.cos(i * 0.12 + frame * band.speed * 1.8)));
     }
     ctx.closePath();
-
-    // Vertical gradient for soft fade
     const grad = ctx.createLinearGradient(0, band.baseY - band.thickness * 2, 0, band.baseY + band.thickness * 2);
     const alpha = band.alpha * (0.7 + 0.3 * Math.sin(frame * 0.0003 + band.phase));
     grad.addColorStop(0, 'transparent');
@@ -180,13 +166,10 @@ function drawAurora(ctx, w, h, frame) {
     grad.addColorStop(1, 'transparent');
     ctx.fillStyle = grad;
     ctx.fill();
-
-    // Highlight along the ribbon peak
     ctx.strokeStyle = `hsla(${band.hue},80%,75%,${alpha * 0.5})`;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let i = 0; i < points.length - 1; i++) {
-      const midY = (points[i].y + points[i + 1].y) / 2;
       if (i === 0) ctx.moveTo(points[i].x, points[i].y);
       else ctx.lineTo(points[i].x, points[i].y);
     }
@@ -202,7 +185,6 @@ function initMoon(w, h) {
   moon.y = h * (0.12 + Math.random() * 0.2);
   moon.radius = Math.min(w, h) * (0.04 + Math.random() * 0.03);
   moon.glowRadius = moon.radius * 4;
-  // Generate persistent crater positions (relative to moon center)
   moon.craters = [];
   const craterCount = 5 + Math.floor(Math.random() * 8);
   for (let i = 0; i < craterCount; i++) {
@@ -220,10 +202,7 @@ function initMoon(w, h) {
 function drawMoon(ctx, frame) {
   const { x, y, radius, glowRadius, craters } = moon;
   if (!radius) return;
-
   const shimmer = 1 + 0.02 * Math.sin(frame * 0.001);
-
-  // Outer glow
   const gOuter = ctx.createRadialGradient(x, y, radius * 0.9, x, y, glowRadius * shimmer);
   gOuter.addColorStop(0, 'rgba(220,210,180,0.25)');
   gOuter.addColorStop(0.3, 'rgba(200,190,160,0.08)');
@@ -231,16 +210,12 @@ function drawMoon(ctx, frame) {
   gOuter.addColorStop(1, 'transparent');
   ctx.fillStyle = gOuter;
   ctx.beginPath(); ctx.arc(x, y, glowRadius * shimmer, 0, Math.PI * 2); ctx.fill();
-
-  // Inner glow
   const gInner = ctx.createRadialGradient(x, y, radius * 0.5, x, y, radius * 2);
   gInner.addColorStop(0, 'rgba(255,245,225,0.15)');
   gInner.addColorStop(0.5, 'rgba(240,230,210,0.05)');
   gInner.addColorStop(1, 'transparent');
   ctx.fillStyle = gInner;
   ctx.beginPath(); ctx.arc(x, y, radius * 2, 0, Math.PI * 2); ctx.fill();
-
-  // Moon body
   const gBody = ctx.createRadialGradient(x - radius * 0.2, y - radius * 0.2, radius * 0.1, x, y, radius * shimmer);
   gBody.addColorStop(0, '#faf5ea');
   gBody.addColorStop(0.4, '#f0ead8');
@@ -248,8 +223,6 @@ function drawMoon(ctx, frame) {
   gBody.addColorStop(1, '#b8b098');
   ctx.fillStyle = gBody;
   ctx.beginPath(); ctx.arc(x, y, radius * shimmer, 0, Math.PI * 2); ctx.fill();
-
-  // Terminator shadow (subtle crescent shadow on one side)
   const gShadow = ctx.createRadialGradient(x + radius * 0.35, y - radius * 0.1, radius * 0.2, x, y, radius * shimmer);
   gShadow.addColorStop(0, 'rgba(30,25,20,0.0)');
   gShadow.addColorStop(0.6, 'rgba(30,25,20,0.0)');
@@ -257,14 +230,11 @@ function drawMoon(ctx, frame) {
   gShadow.addColorStop(1, 'rgba(30,25,20,0.45)');
   ctx.fillStyle = gShadow;
   ctx.beginPath(); ctx.arc(x, y, radius * shimmer, 0, Math.PI * 2); ctx.fill();
-
-  // Craters
   for (const cr of craters) {
     const cx = x + cr.x;
     const cy = y + cr.y;
     ctx.fillStyle = `rgba(180,175,160,${cr.alpha})`;
     ctx.beginPath(); ctx.arc(cx, cy, cr.r, 0, Math.PI * 2); ctx.fill();
-    // Crater rim highlight
     ctx.strokeStyle = `rgba(220,215,200,${cr.alpha * 0.6})`;
     ctx.lineWidth = 0.4;
     ctx.beginPath(); ctx.arc(cx - cr.r * 0.1, cy - cr.r * 0.1, cr.r, 0, Math.PI * 2); ctx.stroke();
@@ -285,8 +255,8 @@ function spawnShooter(w, h) {
   };
 }
 
-// ── Star creation ──
-let stars = [];
+// ── Stars (bucketed by layer — no per-frame sort) ──
+const starsByLayer = { 1:[], 2:[], 3:[], 4:[], 5:[], 6:[], 7:[], 8:[] };
 let constellations = [];
 
 function createStar(layer, cw, ch) {
@@ -299,24 +269,27 @@ function createStar(layer, cw, ch) {
   const op = [0, 0.72, 0.55, 0.42, 0.30, 0.20, 0.12, 0.07, 0.04][layer];
   const boost = Math.random() < 0.06 ? 1.5 : 1;
 
-  // Atmospheric scintillation: stronger near horizon (y near h), weaker at zenith (y near 0)
-  // Light passing through more atmosphere = more turbulence = more twinkling
   const horizonFactor = Math.max(0.15, y / Math.max(1, ch));
   const scintAmp = 0.03 + horizonFactor * 0.10;
 
-  // ~3% of stars are variable stars with slow pulsation
   const isVariable = layer <= 4 && Math.random() < 0.03;
   const varPeriod = isVariable ? 300 + Math.random() * 1200 : 0;
   const varAmp = isVariable ? 0.15 + Math.random() * 0.30 : 0;
   const varPhase = Math.random() * Math.PI * 2;
+
+  // Increased drift velocity: layers 1-4 faster (0.08), layers 5-8 slower (0.03)
+  const driftMult = layer <= 4 ? 0.08 : 0.03;
+  // Constant drift component so stars visibly traverse the screen
+  const driftAngle = Math.random() * Math.PI * 2;
 
   return {
     layer, x, y,
     size: Math.max(0.18, sz + (Math.random() - 0.5) * sz * 0.5),
     baseOpacity: op * (0.6 + Math.random() * 0.4) * boost,
     opacity: 0,
-    vx: (Math.random() - 0.5) * layer * 0.018,
-    vy: (Math.random() - 0.5) * layer * 0.018,
+    // Constant drift + slight random jitter
+    vx: Math.cos(driftAngle) * driftMult + (Math.random() - 0.5) * driftMult * 0.25,
+    vy: Math.sin(driftAngle) * driftMult + (Math.random() - 0.5) * driftMult * 0.25,
     twFreq: (0.0003 + Math.random() * 0.001) * (9 - layer),
     twPhase: Math.random() * Math.PI * 2,
     twAmp: (9 - layer) * (scintAmp + Math.random() * 0.03),
@@ -329,7 +302,10 @@ function createStar(layer, cw, ch) {
 }
 
 function makeConstellations() {
-  const pool = stars.filter(s => s.layer <= 4);
+  const pool = [];
+  for (let l = 4; l >= 1; l--) {
+    for (const s of starsByLayer[l]) pool.push(s);
+  }
   const pairs = [];
   const maxD = Math.min(window.innerWidth, window.innerHeight) * 0.22;
   const used = new Set();
@@ -339,7 +315,7 @@ function makeConstellations() {
     for (let t = 0; t < 40; t++) {
       const b = pool[Math.floor(Math.random() * pool.length)];
       if (b === a || used.has(b)) continue;
-      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      const d = Math.hypot(a.x - b.x, b.y - a.y);
       if (d < maxD && d < bestD && d > 15) { best = b; bestD = d; }
     }
     if (best) { pairs.push({ a, b: best }); used.add(best); }
@@ -347,14 +323,62 @@ function makeConstellations() {
   return pairs;
 }
 
+function clearStars() {
+  for (let l = 1; l <= 8; l++) starsByLayer[l].length = 0;
+}
+
 function initStars(cw, ch) {
-  stars = [];
+  clearStars();
   const lc = layerCounts(cw, ch);
-  for (let l = 8; l >= 1; l--)
-    for (let i = 0; i < lc[l]; i++)
-      stars.push(createStar(l, cw, ch));
+  for (let l = 8; l >= 1; l--) {
+    for (let i = 0; i < lc[l]; i++) {
+      starsByLayer[l].push(createStar(l, cw, ch));
+    }
+  }
   initClusters(cw, ch);
   constellations = makeConstellations();
+}
+
+// ── Perf caches ────────────────────────────────────
+let _cachedAccent = '';
+let _accentFrameTTL = 0;
+
+function getCachedAccent() {
+  if (frameCount - _accentFrameTTL > 60) {
+    _cachedAccent = getComputedStyle(document.body).getPropertyValue('--accent').trim() || '#d4943a';
+    _accentFrameTTL = frameCount;
+  }
+  return _cachedAccent;
+}
+
+// Invalidate accent cache on theme change
+document.addEventListener('theme-changed', () => { _accentFrameTTL = 0; });
+
+// Glow gradient cache — keyed by (radius, color)
+const glowCache = new Map();
+function getGlowGradient(ctx, radius, colorHex) {
+  const key = `${radius.toFixed(1)}_${colorHex}`;
+  let g = glowCache.get(key);
+  if (!g) {
+    g = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
+    g.addColorStop(0, colorHex + '44');
+    g.addColorStop(0.2, colorHex + '18');
+    g.addColorStop(0.6, colorHex + '04');
+    g.addColorStop(1, 'transparent');
+    glowCache.set(key, g);
+  }
+  return g;
+}
+
+function drawGlowCached(ctx, x, y, radius, colorHex, intensity) {
+  const R = radius * intensity;
+  const g = getGlowGradient(ctx, R, colorHex);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.globalAlpha = 0.55;
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
 }
 
 // ── Main ──
@@ -378,26 +402,6 @@ export function initParticles() {
 
   setInterval(() => { constellations = makeConstellations(); }, 22000);
 
-  function accent() {
-    return getComputedStyle(document.body).getPropertyValue('--accent').trim() || '#d4943a';
-  }
-
-  // Glow halo for bright stars
-  function drawGlow(x, y, r, color, intensity) {
-    const R = r * intensity;
-    const g = ctx.createRadialGradient(x, y, 0, x, y, R);
-    const hx = color.length === 7 ? color : '#ffffff';
-    g.addColorStop(0, hx + '44');
-    g.addColorStop(0.2, hx + '18');
-    g.addColorStop(0.6, hx + '04');
-    g.addColorStop(1, 'transparent');
-    ctx.fillStyle = g;
-    ctx.globalAlpha = 0.55;
-    ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 1;
-  }
-
-  // Nebula blob
   function drawNebula(n) {
     const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, Math.max(n.rx, n.ry));
     const pulse = 0.85 + 0.15 * Math.sin(frameCount * 0.0004 + n.phase);
@@ -414,7 +418,6 @@ export function initParticles() {
     ctx.restore();
   }
 
-  // Shooting star
   function drawShooter(s) {
     const tailX = s.x - s.vx * s.len;
     const tailY = s.y - s.vy * s.len;
@@ -429,21 +432,18 @@ export function initParticles() {
     ctx.moveTo(s.x, s.y);
     ctx.lineTo(tailX, tailY);
     ctx.stroke();
-    drawGlow(s.x, s.y, 2, '#ffffff', 4 * s.life);
+    drawGlowCached(ctx, s.x, s.y, 2, '#ffffff', 4 * s.life);
   }
 
   function animate() {
     ctx.clearRect(0, 0, w, h);
-    const acc = accent();
     frameCount++;
 
     const px = Math.sin(frameCount * 0.00025) * 0.12;
     const py = Math.cos(frameCount * 0.0002) * 0.08;
+    const acc = getCachedAccent();
 
-    // Aurora (behind everything except deep sky)
     drawAurora(ctx, w, h, frameCount);
-
-    // Moon (behind stars but above nebulae)
     drawMoon(ctx, frameCount);
 
     // Nebulae
@@ -456,7 +456,7 @@ export function initParticles() {
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
     }
 
-    // Star clusters — draw first (background)
+    // Star clusters
     for (const cl of clusters) {
       for (const m of cl.members) {
         const n = Math.sin(frameCount * 0.0008 + m.twPhase);
@@ -470,45 +470,46 @@ export function initParticles() {
     }
     ctx.globalAlpha = 1;
 
-    // Stars — sort by layer (deepest first)
-    const sorted = [...stars].sort((a, b) => a.layer - b.layer);
-    for (const s of sorted) {
-      // Twinkling with atmospheric scintillation (stronger near horizon)
-      const n = Math.sin(frameCount * s.twFreq + s.twPhase);
-      let twinkle = s.baseOpacity * (1 - s.twAmp + s.twAmp * (0.5 + 0.5 * n));
+    // Stars — bucketed by layer, deep to near (8→1), NO sort needed
+    for (let layer = 8; layer >= 1; layer--) {
+      const bucket = starsByLayer[layer];
+      for (const s of bucket) {
+        const n = Math.sin(frameCount * s.twFreq + s.twPhase);
+        let twinkle = s.baseOpacity * (1 - s.twAmp + s.twAmp * (0.5 + 0.5 * n));
 
-      // Variable star pulsation
-      if (s.isVariable) {
-        const varMod = Math.sin(frameCount * (Math.PI * 2 / s.varPeriod) + s.varPhase);
-        twinkle *= (1 + s.varAmp * varMod);
+        if (s.isVariable) {
+          const varMod = Math.sin(frameCount * (Math.PI * 2 / s.varPeriod) + s.varPhase);
+          twinkle *= (1 + s.varAmp * varMod);
+        }
+
+        s.opacity = twinkle;
+
+        const ds = (9 - s.layer) * 0.012;
+        s.x += s.vx + px * ds;
+        s.y += s.vy + py * ds;
+        if (s.x < -8) s.x = w + 8;
+        if (s.x > w + 8) s.x = -8;
+        if (s.y < -8) s.y = h + 8;
+        if (s.y > h + 8) s.y = -8;
+
+        if (s.glow && s.opacity > 0.22) {
+          drawGlowCached(ctx, s.x, s.y, s.size, s.color, s.glowR);
+        }
+
+        if (layer >= 7 && s.opacity < 0.025 && Math.random() < 0.35) continue;
+
+        const size = s.size * (layer <= 2 && s.opacity > 0.45 ? 1.35 : 1);
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, Math.max(0.2, size), 0, Math.PI * 2);
+        ctx.fillStyle = s.color;
+        ctx.globalAlpha = Math.max(0.02, s.opacity);
+        ctx.fill();
       }
-
-      s.opacity = twinkle;
-
-      const ds = (9 - s.layer) * 0.012;
-      s.x += s.vx + px * ds;
-      s.y += s.vy + py * ds;
-      if (s.x < -8) s.x = w + 8;
-      if (s.x > w + 8) s.x = -8;
-      if (s.y < -8) s.y = h + 8;
-      if (s.y > h + 8) s.y = -8;
-
-      if (s.glow && s.opacity > 0.22)
-        drawGlow(s.x, s.y, s.size, s.color, s.glowR);
-
-      if (s.layer >= 7 && s.opacity < 0.025 && Math.random() < 0.35) continue;
-
-      ctx.beginPath();
-      const ds2 = s.size * (s.layer <= 2 && s.opacity > 0.45 ? 1.35 : 1);
-      ctx.arc(s.x, s.y, Math.max(0.2, ds2), 0, Math.PI * 2);
-      ctx.fillStyle = s.color;
-      ctx.globalAlpha = Math.max(0.02, s.opacity);
-      ctx.fill();
     }
     ctx.globalAlpha = 1;
 
-    // Shooting stars — increased frequency
-    if (Math.random() < 0.015 && shooters.length < 4) {
+    // Shooting stars
+    if (Math.random() < 0.025 && shooters.length < 5) {
       shooters.push(spawnShooter(w, h));
     }
     for (let i = shooters.length - 1; i >= 0; i--) {
@@ -529,6 +530,7 @@ export function initParticles() {
 window.addEventListener('resize', () => {
   if (!running) return;
   const cw = window.innerWidth, ch = window.innerHeight;
+  glowCache.clear();
   initStars(cw, ch);
   initNebulae(cw, ch);
   initAurora(cw, ch);

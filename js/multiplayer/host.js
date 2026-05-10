@@ -1,6 +1,6 @@
 // ==================== MULTIPLAYER: HOST MESSAGE HANDLING ====================
 // Game logic unchanged — transport replaced by WebSocket relay.
-import { state, THEME_NAMES, cocState, scenarioDbContent, ATTR_KEYS, ATTR_NAMES, KP_SYSTEM_PROMPTS } from '../state.js';
+import { state, THEME_NAMES, cocState, scenarioDbContent, ATTR_KEYS, ATTR_NAMES, KP_SYSTEM_PROMPTS, getCharSan, getCharHp, getCharMaxSan, getCharMaxHp } from '../state.js';
 import { modPct } from '../utils.js';
 import { showToast } from '../utils.js';
 import { M, sendToRelay, collectMyCharData, getGameStateSnapshot, applyCharDataToSheet } from './connection.js';
@@ -218,18 +218,18 @@ export function sendToPlayer(playerId, data) {
 // ── Sync Character ───────────────────────────────────
 export function syncCharToPlayer(playerId) {
   if (!M.players[playerId]) return;
-  M.players[playerId].hp = cocState.currentHp;
-  M.players[playerId].san = cocState.san;
+  M.players[playerId].hp = getCharHp();
+  M.players[playerId].san = getCharSan();
   M.players[playerId].charData = M.players[playerId].charData || {};
   Object.assign(M.players[playerId].charData, {
-    cocHp: cocState.currentHp, cocSan: cocState.san,
+    cocHp: getCharHp(), cocSan: getCharSan(),
     traits: state.traits.map(t => ({ ...t })),
     equipment: state.equipment.map(e => ({ ...e }))
   });
   sendToPlayer(playerId, {
     type: 'char-sync',
     charData: M.players[playerId].charData,
-    cocState: { san: cocState.san, maxSan: cocState.maxSan, luck: cocState.luck, maxHp: cocState.maxHp, currentHp: cocState.currentHp, mp: cocState.mp, maxMp: cocState.maxMp, cthulhuMythos: cocState.cthulhuMythos }
+    cocState: { san: getCharSan(), maxSan: getCharMaxSan(), luck: cocState.luck, maxHp: getCharMaxHp(), currentHp: getCharHp(), mp: cocState.mp, maxMp: cocState.maxMp, cthulhuMythos: cocState.cthulhuMythos }
   });
 }
 
@@ -381,7 +381,7 @@ export function buildMPSystemPrompt(actingPlayerId, actingPlayerName) {
 
   if (state.theme === 'coc') {
     extra += '\n--- 全局CoC状态 ---\n';
-    extra += 'SAN: ' + cocState.san + '/' + cocState.maxSan + ' | HP: ' + cocState.currentHp + '/' + cocState.maxHp;
+    extra += 'SAN: ' + getCharSan() + '/' + getCharMaxSan() + ' | HP: ' + getCharHp() + '/' + getCharMaxHp();
     extra += ' | LUCK: ' + cocState.luck + ' | MP: ' + cocState.mp + '/' + cocState.maxMp + '\n';
     if (cocState.skillChecks.length) extra += '技能提升标记: ' + cocState.skillChecks.join('、') + '\n';
     if (cocState.chronicle.length) {

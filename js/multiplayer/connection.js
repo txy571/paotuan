@@ -1,7 +1,7 @@
 // ==================== MULTIPLAYER: WEBSOCKET RELAY CONNECTION ====================
 // Replaces PeerJS WebRTC with Cloudflare Worker + Durable Objects WebSocket relay.
 // No NAT issues, no P2P — all messages pass through the relay server.
-import { state, cocState } from '../state.js';
+import { state, cocState, getCharSan, getCharHp, getCharMaxSan, getCharMaxHp } from '../state.js';
 import { showToast } from '../utils.js';
 import { renderCocStatus, renderCocChronicle } from '../coc-status.js';
 import { renderTraits, renderEquipment } from '../character.js';
@@ -81,7 +81,7 @@ export function connectRelay(roomCode, isHost) {
               M.players[M.playerId] = {
                 id: M.playerId, name: M.playerName, isHost: isHost,
                 joinedAt: Date.now(), ready: isHost,
-                charName: '', hp: cocState.currentHp || '?', san: cocState.san || '?',
+                charName: '', hp: getCharHp() || '?', san: getCharSan() || '?',
               };
             }
             resolved = true;
@@ -209,6 +209,8 @@ export function collectMyCharData() {
     level: document.getElementById('charLevel')?.value || 1,
     hp: document.getElementById('charHP')?.value || '',
     maxHp: document.getElementById('charMaxHP')?.value || '',
+    san: document.getElementById('charSan')?.value || '',
+    maxSan: document.getElementById('charMaxSan')?.value || '',
     ac: document.getElementById('charAC')?.value || '',
     background: document.getElementById('charBackground')?.value?.trim() || '',
     attributes: { ...state.attributes },
@@ -216,8 +218,8 @@ export function collectMyCharData() {
     traits: state.traits.map(t => ({ ...t })),
     feats: state.feats.map(f => ({ ...f })),
     equipment: state.equipment.map(e => ({ ...e })),
-    cocHp: cocState.currentHp,
-    cocSan: cocState.san,
+    cocHp: getCharHp(),
+    cocSan: getCharSan(),
   };
 }
 
@@ -230,6 +232,8 @@ export function applyCharDataToSheet(data) {
   setV('charLevel', data.level);
   setV('charHP', data.hp);
   setV('charMaxHP', data.maxHp);
+  setV('charSan', data.san);
+  setV('charMaxSan', data.maxSan);
   setV('charAC', data.ac);
   setV('charBackground', data.background);
   if (data.attributes) { state.attributes = data.attributes; document.dispatchEvent(new CustomEvent('character-render')); }
@@ -237,8 +241,8 @@ export function applyCharDataToSheet(data) {
   if (data.traits) { state.traits = data.traits; renderTraits(); }
   if (data.feats) { state.feats = data.feats; }
   if (data.equipment) { state.equipment = data.equipment; renderEquipment(); }
-  if (data.cocHp !== undefined) cocState.currentHp = data.cocHp;
-  if (data.cocSan !== undefined) cocState.san = data.cocSan;
+  if (data.cocHp !== undefined) setV('charHP', data.cocHp);
+  if (data.cocSan !== undefined) setV('charSan', data.cocSan);
   renderCocStatus();
 }
 
@@ -246,24 +250,28 @@ export function applyCharDataToSheet(data) {
 export function getGameStateSnapshot() {
   return {
     theme: state.theme,
-    cocState: { san: cocState.san, maxSan: cocState.maxSan, luck: cocState.luck, maxHp: cocState.maxHp, currentHp: cocState.currentHp, mp: cocState.mp, maxMp: cocState.maxMp, cthulhuMythos: cocState.cthulhuMythos, chronicle: cocState.chronicle.slice(-20), skillChecks: [...cocState.skillChecks] },
-    character: { name: document.getElementById('charName')?.value?.trim() || '', hp: document.getElementById('charHP')?.value || '', maxHp: document.getElementById('charMaxHP')?.value || '' }
+    cocState: { luck: cocState.luck, mp: cocState.mp, maxMp: cocState.maxMp, cthulhuMythos: cocState.cthulhuMythos, chronicle: cocState.chronicle.slice(-20), skillChecks: [...cocState.skillChecks] },
+    character: {
+      name: document.getElementById('charName')?.value?.trim() || '',
+      hp: getCharHp(), maxHp: getCharMaxHp(), san: getCharSan(), maxSan: getCharMaxSan()
+    }
   };
 }
 
 export function applyGameState(gs) {
   if (!gs) return;
   if (gs.cocState) {
-    cocState.san = gs.cocState.san ?? cocState.san;
-    cocState.maxSan = gs.cocState.maxSan ?? cocState.maxSan;
     cocState.luck = gs.cocState.luck ?? cocState.luck;
-    cocState.maxHp = gs.cocState.maxHp ?? cocState.maxHp;
-    cocState.currentHp = gs.cocState.currentHp ?? cocState.currentHp;
     cocState.mp = gs.cocState.mp ?? cocState.mp;
     cocState.maxMp = gs.cocState.maxMp ?? cocState.maxMp;
     cocState.cthulhuMythos = gs.cocState.cthulhuMythos ?? cocState.cthulhuMythos;
     cocState.chronicle = gs.cocState.chronicle || cocState.chronicle;
     cocState.skillChecks = gs.cocState.skillChecks || cocState.skillChecks;
     renderCocStatus(); renderCocChronicle();
+  }
+  if (gs.character) {
+    const setV = (id, v) => { const el = document.getElementById(id); if (el && v !== undefined) el.value = v; };
+    setV('charHP', gs.character.hp);
+    setV('charSan', gs.character.san);
   }
 }

@@ -1,13 +1,18 @@
 // ==================== AI COMMAND PARSER ====================
-import { state, cocState } from './state.js';
+import { state, cocState, setCharSan, setCharHp, getCharSan, getCharHp, getCharMaxHp } from './state.js';
 import { renderTraits, renderFeats, renderEquipment } from './character.js';
 import { renderCocChronicle, renderCocStatus } from './coc-status.js';
+import { applyMemoryCommand } from './memory-bank.js';
+
+// All known command types (memory types added at end)
+const CMD_TYPES = 'SAN|HP|LUCK|TRAIT|REMOVE_TRAIT|CHRONICLE|SKILL_CHECK|ITEM|REMOVE_ITEM|NPC|CLUE|PLOT|MEMORY';
+const CMD_RE = new RegExp(`【(${CMD_TYPES})[：:](.+?)】`);
 
 export function parseAICommands(text) {
   const commands = [];
   const lines = text.split('\n');
   for (const line of lines) {
-    const match = line.match(/【(SAN|HP|LUCK|TRAIT|REMOVE_TRAIT|CHRONICLE|SKILL_CHECK|ITEM|REMOVE_ITEM)[：:](.+?)】/);
+    const match = line.match(CMD_RE);
     if (match) {
       commands.push({ type: match[1], value: match[2].trim(), raw: line });
     }
@@ -17,11 +22,12 @@ export function parseAICommands(text) {
 
 export function applyAICommands(commands) {
   const changes = [];
+  const memoryChanges = [];
   for (const cmd of commands) {
     try {
       switch (cmd.type) {
         case 'SAN': {
-          const oldVal = cocState.san;
+          const oldVal = getCharSan();
           if (cmd.value.toLowerCase().startsWith('d')) {
             const diceMatch = cmd.value.match(/^(\d*)d(\d+)$/i);
             if (diceMatch) {
@@ -29,24 +35,24 @@ export function applyAICommands(commands) {
               const sides = parseInt(diceMatch[2]);
               let total = 0;
               for (let i = 0; i < count; i++) total += Math.floor(Math.random() * sides) + 1;
-              cocState.san = Math.max(0, cocState.san - total);
-              changes.push(`SAN: ${oldVal} → ${cocState.san} (投出${total})`);
+              setCharSan(oldVal - total);
+              changes.push(`SAN: ${oldVal} → ${getCharSan()} (投出${total})`);
             }
           } else {
             const delta = parseInt(cmd.value);
             if (!isNaN(delta)) {
-              cocState.san = Math.max(0, Math.min(cocState.maxSan, cocState.san + delta));
-              changes.push(`SAN: ${oldVal} → ${cocState.san} (${delta >= 0 ? '+' : ''}${delta})`);
+              setCharSan(oldVal + delta);
+              changes.push(`SAN: ${oldVal} → ${getCharSan()} (${delta >= 0 ? '+' : ''}${delta})`);
             }
           }
           break;
         }
         case 'HP': {
-          const oldVal = cocState.currentHp;
+          const oldVal = getCharHp();
           const delta = parseInt(cmd.value);
           if (!isNaN(delta)) {
-            cocState.currentHp = Math.max(-5, Math.min(cocState.maxHp, cocState.currentHp + delta));
-            changes.push(`HP: ${oldVal} → ${cocState.currentHp} (${delta >= 0 ? '+' : ''}${delta})`);
+            setCharHp(oldVal + delta);
+            changes.push(`HP: ${oldVal} → ${getCharHp()} (${delta >= 0 ? '+' : ''}${delta})`);
           }
           break;
         }
@@ -103,7 +109,7 @@ export function applyAICommands(commands) {
         case 'ITEM': {
           const name = cmd.value.trim();
           if (name && !state.equipment.find(e => e.name === name)) {
-            state.equipment.push({ name, qty: 1 });
+            state.equipment.push({ name, qty: 1, weight: '', desc: '', equipped: false, category: '' });
             changes.push(`物品: +${name}`);
             renderEquipment();
           }
@@ -119,14 +125,27 @@ export function applyAICommands(commands) {
           }
           break;
         }
+        // ── Memory commands ──
+        case 'NPC':
+        case 'CLUE':
+        case 'PLOT':
+        case 'MEMORY': {
+          const result = applyMemoryCommand(cmd.type, cmd.value);
+          if (result) memoryChanges.push(result);
+          break;
+        }
       }
     } catch(e) {
       console.warn('AI command parse error:', cmd, e);
     }
   }
+  // Append memory changes to display changes (less verbose)
+  if (memoryChanges.length) {
+    changes.push('记忆库: ' + memoryChanges.join('; '));
+  }
   return changes;
 }
 
 export function stripAICommands(text) {
-  return text.replace(/【(SAN|HP|LUCK|TRAIT|REMOVE_TRAIT|CHRONICLE|SKILL_CHECK|ITEM|REMOVE_ITEM)[：:].+?】\n?/g, '');
+  return text.replace(CMD_RE, '').replace(/\n{3,}/g, '\n\n').trim();
 }

@@ -46,6 +46,17 @@ export function buildSystemPrompt() {
     extra += '\n请确保你的所有叙述与上述设定保持一致。\n';
   }
 
+  // New game instruction — AI must build scenario from character card
+  if (kpState.apiHistory.length === 0) {
+    extra += '\n\n## 🎬 新游戏开始——必须遵循\n';
+    extra += '这是冒险的开始。你必须做到以下几点：\n';
+    extra += '1. 确认你已经理解了上述角色信息（姓名、职业、背景、技能等）。\n';
+    extra += '2. 基于角色的职业、背景和技能，构思一个适合该角色的开场场景和大致剧情方向。\n';
+    extra += '3. 在回复的第一段中，用简洁的语言确认角色设定（例如"你叫...，是一名...，此刻你正站在..."），然后直接进入叙事。\n';
+    extra += '4. 开头场景必须与角色背景有逻辑关联——不要凭空将角色扔进一个与背景无关的场景。\n';
+    extra += '5. 不要问"你想做什么"这类空洞的问题。给出具体、生动、有感官细节的开场场景，让角色自然进入故事。\n';
+  }
+
   if (state.theme === 'coc') {
     extra += `\n--- CoC 7e 当前状态 ---\n`;
     extra += `SAN: ${cocState.san}/${cocState.maxSan} | HP: ${cocState.currentHp}/${cocState.maxHp} | LUCK: ${cocState.luck} | MP: ${cocState.mp}/${cocState.maxMp}\n`;
@@ -471,12 +482,25 @@ async function compressContextAsync() {
   }
 }
 
+// ── Character Card Validation ───────────────────────
+export function hasCharacterCard() {
+  const name = document.getElementById('charName')?.value?.trim();
+  return !!name;
+}
+
 // ── Send Message ───────────────────────────────────
 export async function sendKPMessage() {
   const input = document.getElementById('kpInput');
   if (!input) return;
   const text = input.value.trim();
   if (!text || kpState.streaming) return;
+
+  // Block game start without a character card
+  if (!hasCharacterCard()) {
+    showToast('请先在左侧创建角色卡（至少填写姓名）后再开始游戏');
+    return;
+  }
+
   input.value = '';
   input.disabled = true;
 

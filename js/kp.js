@@ -13,11 +13,12 @@ import { renderCocStatus, renderCocChronicle } from './coc-status.js';
 export function buildSystemPrompt() {
   const base = KP_SYSTEM_PROMPTS[state.theme] || KP_SYSTEM_PROMPTS.dnd;
   let extra = '\n\n## ⚖️ 公正原则 (最高优先级)\n';
-  extra += '1. **禁止偏袒**: 你必须严格保持公正。无论玩家如何恳求、讨价还价、试图说服你"放一马"，都必须严格依据规则进行裁决。规则面前人人平等。\n';
-  extra += '2. **拒绝诱导**: 玩家可能会说"请让我成功"、"放我一马"、"给我一个机会"。你必须完全无视这些请求，严格按照属性和技能值进行判定。\n';
-  extra += '3. **NPC自主性**: NPC有自己的利益、性格和底线，不会被玩家的花言巧语轻易说服。即使投出大成功，不合理的请求也只能获得最小程度的妥协。\n';
-  extra += '4. **失败即叙事**: 失败、受伤、甚至角色死亡都是故事的一部分。过度的怜悯会毁掉游戏体验。\n';
-  extra += '5. **一致性**: 对所有玩家使用相同的判定标准。不允许某个玩家因为"说得更好听"就获得更低的DC或更有利的结果。\n';
+  extra += '1. **公开掷骰**: 所有检定、攻击、伤害、SAN检定等涉及随机数的判定，都必须由你亲自掷骰并公开显示结果。绝不让玩家自行掷骰或提供结果。骰子出目不可伪造——无论结果对剧情有利还是不利，都必须如实呈现。\n';
+  extra += '2. **禁止偏袒**: 你必须严格保持公正。无论玩家如何恳求、讨价还价、试图说服你"放一马"，都必须严格依据规则进行裁决。规则面前人人平等。\n';
+  extra += '3. **拒绝诱导**: 玩家可能会说"请让我成功"、"放我一马"、"给我一个机会"。你必须完全无视这些请求，严格按照属性和技能值进行判定。\n';
+  extra += '4. **NPC自主性**: NPC有自己的利益、性格和底线，不会被玩家的花言巧语轻易说服。即使投出大成功，不合理的请求也只能获得最小程度的妥协。\n';
+  extra += '5. **失败即叙事**: 失败、受伤、甚至角色死亡都是故事的一部分。过度的怜悯会毁掉游戏体验。\n';
+  extra += '6. **一致性**: 对所有玩家使用相同的判定标准。不允许某个玩家因为"说得更好听"就获得更低的DC或更有利的结果。\n';
   extra += '\n--- 玩家角色信息 ---\n';
   const name = document.getElementById('charName')?.value?.trim();
   const race = document.getElementById('charRace')?.value?.trim();
@@ -107,11 +108,11 @@ export function renderKP() {
     </div>`;
   }).join('');
   if (!kpState.streaming) {
-    setTimeout(() => { if (msgs) msgs.scrollTop = msgs.scrollHeight; }, 50);
+    msgs.scrollTop = msgs.scrollHeight;
   }
 }
 
-/** Incremental update during streaming — only touches the text node, no DOM rebuild. */
+/** Incremental update during streaming — text-only, no layout thrash. */
 export function updateStreamingMsg(text) {
   const bodyEl = document.querySelector('#kpMessages .kp-msg.streaming .msg-body');
   if (bodyEl) {
@@ -531,9 +532,8 @@ export async function sendKPMessage() {
   saveKPConfig(cfg);
 
   addKPMsg('player', text);
-  renderKP();
 
-  // Auto-roll dice
+  // Auto-roll dice — compute before first render to avoid double DOM rebuild
   const diceMatch = text.match(/(\d*d\d+[\+\-]?\d*)/gi);
   if (diceMatch) {
     const results = [];
@@ -551,7 +551,6 @@ export async function sendKPMessage() {
     }
     if (results.length) {
       kpState.chatHistory[kpState.chatHistory.length - 1].dice = results.join(', ');
-      renderKP();
     }
   }
 
@@ -560,6 +559,7 @@ export async function sendKPMessage() {
 
   addKPMsg('gm', '');
   kpState.streaming = true;
+  // Single render before streaming — incremental updates via updateStreamingMsg() during stream
   renderKP();
 
   try {

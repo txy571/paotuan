@@ -345,8 +345,9 @@ export function buildMPSystemPrompt(actingPlayerId, actingPlayerName) {
   let extra = '\n\n--- 多人联机游戏信息 ---\n';
   extra += '你正在同时为多名玩家主持游戏。你必须严格保持公正，对所有玩家一视同仁。\n\n';
   extra += '## 绝对公正原则 (最高优先级)\n';
-  extra += '1. 禁止偏袒任何玩家\n2. 拒绝玩家的讨价还价和诱导\n3. 失败是故事的一部分\n';
-  extra += '4. NPC有自己的利益和底线\n5. 规则面前人人平等\n6. 对所有玩家使用相同的判定标准\n\n';
+  extra += '1. **公开掷骰**: 所有检定必须由你亲自掷骰并公开显示结果，绝不让玩家自行掷骰。骰子出目不可伪造。\n';
+  extra += '2. 禁止偏袒任何玩家\n3. 拒绝玩家的讨价还价和诱导\n4. 失败是故事的一部分\n';
+  extra += '5. NPC有自己的利益和底线\n6. 规则面前人人平等\n7. 对所有玩家使用相同的判定标准\n\n';
 
   extra += '--- 当前玩家列表 ---\n';
   for (const [pid, pd] of Object.entries(M.players)) {

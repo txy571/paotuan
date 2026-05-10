@@ -47,16 +47,16 @@ function starColor() {
 // ── Layer config (counts for 1920×1080, scaled by viewport area) ──
 // Uses approximate power-law: many more dim stars than bright ones
 function layerCounts(cw, ch) {
-  const s = Math.max(0.45, (cw * ch) / (1920 * 1080));
+  const s = Math.max(0.55, (cw * ch) / (1920 * 1080));
   return {
-    8: Math.round(4800 * s), // ultra-deep dust — most numerous
-    7: Math.round(3400 * s), // very dim
-    6: Math.round(2200 * s), // dim
-    5: Math.round(1200 * s), // medium-faint
-    4: Math.round(560 * s),  // medium
-    3: Math.round(260 * s),  // bright mid
-    2: Math.round(110 * s),  // bright
-    1: Math.round(55 * s),   // nearest bright — rarest
+    8: Math.round(10000 * s), // ultra-deep dust — most numerous
+    7: Math.round(7000 * s),  // very dim
+    6: Math.round(4500 * s),  // dim
+    5: Math.round(2400 * s),  // medium-faint
+    4: Math.round(1100 * s),  // medium
+    3: Math.round(500 * s),   // bright mid
+    2: Math.round(200 * s),   // bright
+    1: Math.round(90 * s),    // nearest bright — rarest
   };
 }
 
@@ -64,7 +64,7 @@ function layerCounts(cw, ch) {
 const clusters = [];
 function initClusters(w, h) {
   clusters.length = 0;
-  const count = 4 + Math.floor(Math.random() * 6); // 4-9 clusters
+  const count = 8 + Math.floor(Math.random() * 10); // 8-17 clusters
   for (let c = 0; c < count; c++) {
     const cx = Math.random() * w;
     const cy = Math.random() * h;
@@ -508,7 +508,7 @@ export function initParticles() {
     ctx.globalAlpha = 1;
 
     // Shooting stars — increased frequency
-    if (Math.random() < 0.008 && shooters.length < 3) {
+    if (Math.random() < 0.015 && shooters.length < 4) {
       shooters.push(spawnShooter(w, h));
     }
     for (let i = shooters.length - 1; i >= 0; i--) {

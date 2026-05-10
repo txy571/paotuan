@@ -147,7 +147,7 @@ body::before {
 /* ---------- Particles Canvas ---------- */
 #particles {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  opacity: 0.35;
+  opacity: 0.55;
 }
 
 /* ---------- App Shell ---------- */
@@ -721,10 +721,14 @@ label:first-child { margin-top: 0; }
 .kp-chat-msgs {
   flex: 1; overflow-y: auto; padding: 8px 4px;
   display: flex; flex-direction: column; gap: 10px;
+  scroll-behavior: smooth;
 }
 .kp-msg {
   max-width: 85%; padding: 12px 16px; border-radius: var(--r-md);
-  font-size: .88rem; line-height: 1.6; animation: msgIn .3s ease;
+  font-size: .88rem; line-height: 1.6;
+}
+.kp-msg:not(.streaming):not(.no-anim) {
+  animation: msgIn .3s ease;
 }
 @keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 .kp-msg.gm {
@@ -753,9 +757,16 @@ label:first-child { margin-top: 0; }
   background: rgba(0,0,0,.3); border-radius: 12px;
   font-weight: bold; color: var(--text-gold); font-size: .85rem;
 }
+.kp-msg.streaming {
+  contain: layout style;
+}
+.kp-msg.streaming .msg-body {
+  min-height: 0;
+}
 .kp-msg.streaming::after {
   content: '▊'; animation: blink .8s step-end infinite;
   color: var(--text-gold); margin-left: 2px;
+  contain: strict;
 }
 @keyframes blink { 50% { opacity: 0; } }
 

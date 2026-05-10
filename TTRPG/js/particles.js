@@ -2,56 +2,98 @@
 // Multi-layer particle system simulating a realistic night sky.
 //
 // Layers (deepest → nearest):
-//   8 — ultra-deep field dust (tiny, dense)
-//   7 — very dim distant stars
-//   6 — dim field stars
-//   5 — medium-faint stars, subtle twinkle
-//   4 — medium stars, color tint
-//   3 — brighter mid-field, glow halos
-//   2 — bright stars, prominent glow
-//   1 — very bright, large halo, strong twinkle
+//   8 — ultra-deep field dust (tiny, dense, subtle)
+//   7 — very dim distant stars, barely perceptible
+//   6 — dim field stars, slight twinkle
+//   5 — medium-faint stars, gentle twinkle
+//   4 — medium stars, visible color tint
+//   3 — brighter mid-field, soft glow halos
+//   2 — bright stars, prominent glow, noticeable twinkle
+//   1 — very bright, large halo, strong atmospheric scintillation
 //
-// Features: Milky Way band, nebula blobs, shooting stars, stellar color spectrum,
-//            aurora borealis ribbons, moon with craters and glow.
+// Realism features:
+//   - Atmospheric scintillation (stronger near horizon)
+//   - Star clusters (small gravitationally-bound groupings)
+//   - Power-law magnitude distribution
+//   - Variable stars with slow pulsation cycles
+//   - Temperature-based stellar colors (O B A F G K M)
 
 let running = false;
 let frameCount = 0;
 
-// ── Stellar color temperatures (O B A F G K M) ──
+// ── Stellar color temperatures (O B A F G K M) with realistic spectral hues ──
 const STELLAR = [
-  '#9db4ff', // O/B blue (rare)
-  '#a8bfff','#b3c8ff','#bfd0ff','#cad8ff', // B/A blue-white
-  '#d4e0ff','#dde6ff','#e6ecff','#eff2ff', // A white
-  '#faf8f5','#fff6ed','#fff4e8','#fff0e0', // F yellow-white
-  '#ffedd5','#ffe8c8','#ffe3bb','#ffddb0', // G yellow
-  '#ffd7a3','#ffd096','#ffc885','#ffc075', // K orange
-  '#ffb765','#ffae55','#ffa345','#ff9835','#ff8c25','#ff7a18', // M red-orange
+  '#9db4ff', // O-type: blue-white (extremely rare, very hot ~30,000K+)
+  '#a8bfff','#b0c4ff','#b8c8ff','#c0ccff', // B-type: blue-white (~10,000-30,000K)
+  '#d0d8ff','#dae0ff','#e2e8ff','#e8ecff', // A-type: white (~7,500-10,000K)
+  '#f8f6f2','#fff8f0','#fff5eb','#fff2e5', // F-type: yellow-white (~6,000-7,500K)
+  '#ffeed8','#ffeacc','#ffe5c0','#ffe0b4', // G-type: yellow (~5,200-6,000K, like Sun)
+  '#ffd9a5','#ffd198','#ffc888','#ffc078', // K-type: orange (~3,700-5,200K)
+  '#ffb568','#ffaa58','#ff9f48','#ff9438','#ff8828','#ff7a18', // M-type: red-orange (~2,400-3,700K)
 ];
 
+// Realistic stellar population distribution (based on Milky Way observations)
 function starColor() {
   const r = Math.random();
-  if (r < 0.008) return STELLAR[0];                         // O/B
-  if (r < 0.05)  return STELLAR[Math.floor(Math.random()*4)+1];   // B/A
-  if (r < 0.20)  return STELLAR[Math.floor(Math.random()*4)+5];   // A
-  if (r < 0.42)  return STELLAR[Math.floor(Math.random()*4)+9];   // F
-  if (r < 0.64)  return STELLAR[Math.floor(Math.random()*4)+13];  // G
-  if (r < 0.88)  return STELLAR[Math.floor(Math.random()*4)+17];  // K
-  return STELLAR[Math.floor(Math.random()*6)+21];                   // M
+  if (r < 0.0003) return STELLAR[0];                              // O: ~0.00003% actual, bumped for visibility
+  if (r < 0.002)  return STELLAR[Math.floor(Math.random()*4)+1];  // B: ~0.13%
+  if (r < 0.015)  return STELLAR[Math.floor(Math.random()*4)+5];  // A: ~0.6%
+  if (r < 0.06)   return STELLAR[Math.floor(Math.random()*4)+9];  // F: ~3%
+  if (r < 0.18)   return STELLAR[Math.floor(Math.random()*4)+13]; // G: ~7.5% (Sun-like)
+  if (r < 0.38)   return STELLAR[Math.floor(Math.random()*4)+17]; // K: ~12%
+  return STELLAR[Math.floor(Math.random()*6)+21];                   // M: ~76% (most common, red dwarfs)
 }
 
 // ── Layer config (counts for 1920×1080, scaled by viewport area) ──
+// Uses approximate power-law: many more dim stars than bright ones
 function layerCounts(cw, ch) {
   const s = Math.max(0.35, (cw * ch) / (1920 * 1080));
   return {
-    8: Math.round(2000 * s), // ultra-deep dust
-    7: Math.round(1400 * s), // very dim
+    8: Math.round(2400 * s), // ultra-deep dust — most numerous
+    7: Math.round(1600 * s), // very dim
     6: Math.round(1000 * s), // dim
-    5: Math.round(600 * s),  // medium-faint
-    4: Math.round(350 * s),  // medium
-    3: Math.round(180 * s),  // bright mid
-    2: Math.round(80 * s),   // bright
-    1: Math.round(45 * s),   // nearest bright
+    5: Math.round(550 * s),  // medium-faint
+    4: Math.round(280 * s),  // medium
+    3: Math.round(130 * s),  // bright mid
+    2: Math.round(55 * s),   // bright
+    1: Math.round(30 * s),   // nearest bright — rarest
   };
+}
+
+// ── Star clusters — small groupings that resemble open clusters / moving groups ──
+const clusters = [];
+function initClusters(w, h) {
+  clusters.length = 0;
+  const count = 4 + Math.floor(Math.random() * 6); // 4-9 clusters
+  for (let c = 0; c < count; c++) {
+    const cx = Math.random() * w;
+    const cy = Math.random() * h;
+    const radius = 15 + Math.random() * 60;
+    const starCount = 8 + Math.floor(Math.random() * 30);
+    const members = [];
+    for (let i = 0; i < starCount; i++) {
+      // Gaussian-like distribution within cluster
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.abs(randomGaussian()) * radius;
+      members.push({
+        x: cx + Math.cos(angle) * dist,
+        y: cy + Math.sin(angle) * dist,
+        size: 0.18 + Math.random() * 0.55,
+        opacity: 0.04 + Math.random() * 0.12,
+        color: starColor(),
+        twPhase: Math.random() * Math.PI * 2,
+      });
+    }
+    clusters.push({ cx, cy, radius, members });
+  }
+}
+
+// Simple Box-Muller for cluster distribution
+function randomGaussian() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
 }
 
 // ── Milky Way density — broad diagonal band with wavy edges ──
@@ -255,20 +297,34 @@ function createStar(layer, cw, ch) {
   const siz = [0, 2.8, 1.8, 1.3, 0.95, 0.7, 0.5, 0.35, 0.22][layer];
   const sz = siz * (0.5 + Math.random() * 0.5);
   const op = [0, 0.72, 0.55, 0.42, 0.30, 0.20, 0.12, 0.07, 0.04][layer];
-  const boost = Math.random() < 0.08 ? 1.4 : 1;
+  const boost = Math.random() < 0.06 ? 1.5 : 1;
+
+  // Atmospheric scintillation: stronger near horizon (y near h), weaker at zenith (y near 0)
+  // Light passing through more atmosphere = more turbulence = more twinkling
+  const horizonFactor = Math.max(0.15, y / Math.max(1, ch));
+  const scintAmp = 0.03 + horizonFactor * 0.10;
+
+  // ~3% of stars are variable stars with slow pulsation
+  const isVariable = layer <= 4 && Math.random() < 0.03;
+  const varPeriod = isVariable ? 300 + Math.random() * 1200 : 0;
+  const varAmp = isVariable ? 0.15 + Math.random() * 0.30 : 0;
+  const varPhase = Math.random() * Math.PI * 2;
+
   return {
     layer, x, y,
     size: Math.max(0.18, sz + (Math.random() - 0.5) * sz * 0.5),
     baseOpacity: op * (0.6 + Math.random() * 0.4) * boost,
     opacity: 0,
-    vx: (Math.random() - 0.5) * layer * 0.025,
-    vy: (Math.random() - 0.5) * layer * 0.025,
+    vx: (Math.random() - 0.5) * layer * 0.018,
+    vy: (Math.random() - 0.5) * layer * 0.018,
     twFreq: (0.0003 + Math.random() * 0.001) * (9 - layer),
     twPhase: Math.random() * Math.PI * 2,
-    twAmp: (9 - layer) * (0.04 + Math.random() * 0.04),
+    twAmp: (9 - layer) * (scintAmp + Math.random() * 0.03),
+    horizonFactor,
     color: starColor(),
     glow: layer <= 3,
     glowR: layer === 1 ? 5.5 : layer === 2 ? 3.5 : 2,
+    isVariable, varPeriod, varAmp, varPhase,
   };
 }
 
@@ -297,6 +353,7 @@ function initStars(cw, ch) {
   for (let l = 8; l >= 1; l--)
     for (let i = 0; i < lc[l]; i++)
       stars.push(createStar(l, cw, ch));
+  initClusters(cw, ch);
   constellations = makeConstellations();
 }
 
@@ -398,13 +455,36 @@ export function initParticles() {
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
     }
 
+    // Star clusters — draw first (background)
+    for (const cl of clusters) {
+      for (const m of cl.members) {
+        const n = Math.sin(frameCount * 0.0008 + m.twPhase);
+        const alpha = m.opacity * (0.85 + 0.15 * n);
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, Math.max(0.15, m.size), 0, Math.PI * 2);
+        ctx.fillStyle = m.color;
+        ctx.globalAlpha = Math.max(0.02, alpha);
+        ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+
     // Stars — sort by layer (deepest first)
     const sorted = [...stars].sort((a, b) => a.layer - b.layer);
     for (const s of sorted) {
+      // Twinkling with atmospheric scintillation (stronger near horizon)
       const n = Math.sin(frameCount * s.twFreq + s.twPhase);
-      s.opacity = s.baseOpacity * (1 - s.twAmp + s.twAmp * (0.5 + 0.5 * n));
+      let twinkle = s.baseOpacity * (1 - s.twAmp + s.twAmp * (0.5 + 0.5 * n));
 
-      const ds = (9 - s.layer) * 0.015;
+      // Variable star pulsation
+      if (s.isVariable) {
+        const varMod = Math.sin(frameCount * (Math.PI * 2 / s.varPeriod) + s.varPhase);
+        twinkle *= (1 + s.varAmp * varMod);
+      }
+
+      s.opacity = twinkle;
+
+      const ds = (9 - s.layer) * 0.012;
       s.x += s.vx + px * ds;
       s.y += s.vy + py * ds;
       if (s.x < -8) s.x = w + 8;
@@ -415,13 +495,13 @@ export function initParticles() {
       if (s.glow && s.opacity > 0.22)
         drawGlow(s.x, s.y, s.size, s.color, s.glowR);
 
-      if (s.layer >= 7 && s.opacity < 0.03 && Math.random() < 0.35) continue;
+      if (s.layer >= 7 && s.opacity < 0.025 && Math.random() < 0.35) continue;
 
       ctx.beginPath();
       const ds2 = s.size * (s.layer <= 2 && s.opacity > 0.45 ? 1.35 : 1);
       ctx.arc(s.x, s.y, Math.max(0.2, ds2), 0, Math.PI * 2);
       ctx.fillStyle = s.color;
-      ctx.globalAlpha = Math.max(0.025, s.opacity);
+      ctx.globalAlpha = Math.max(0.02, s.opacity);
       ctx.fill();
     }
     ctx.globalAlpha = 1;

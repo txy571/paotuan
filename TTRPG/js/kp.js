@@ -382,7 +382,7 @@ async function _anthropic(cfg, systemPrompt, recentHistory, userMsg, controller)
   return _stream(
     'https://api.anthropic.com/v1/messages',
     { 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01' },
-    { model: cfg.model, max_tokens: 2048, system: systemPrompt, messages, stream: true },
+    { model: cfg.model, max_tokens: 4096, system: systemPrompt, messages, stream: true },
     controller,
     data => data.delta?.text || data.content_block?.text || ''
   );
@@ -399,7 +399,7 @@ async function _chatCompletions(endpoint, cfg, systemPrompt, recentHistory, user
   return _stream(
     endpoint,
     { 'Authorization': `Bearer ${cfg.key}` },
-    { model: cfg.model, max_tokens: 2048, messages, stream: true },
+    { model: cfg.model, max_tokens: 4096, messages, stream: true },
     controller,
     data => data.choices?.[0]?.delta?.content || ''
   );
@@ -443,8 +443,8 @@ async function compressContextAsync() {
   kpState._compressing = true;
   try {
     const total = kpState.apiHistory.length;
-    if (total <= 60) return;
-    const splitIdx = Math.floor(total * 0.6);
+    if (total <= 50) return;
+    const splitIdx = Math.floor(total * 0.55);
     const toCompress = kpState.apiHistory.slice(0, splitIdx);
     const toKeep = kpState.apiHistory.slice(splitIdx);
     const compressed = toCompress.map(m => (m.role === 'user' ? '玩家: ' : 'KP: ') + m.content).join('\n');
@@ -453,13 +453,13 @@ async function compressContextAsync() {
       kpState.apiHistory = kpState.apiHistory.slice(-60);
       return;
     }
-    const summaryPrompt = '请将以下跑团对话记录压缩为一段简明摘要(中文, 300字以内), 保留关键情节、重要NPC行动、战斗结果和状态变化:\n\n' + compressed.substring(compressed.length - 4000);
+    const summaryPrompt = '你是跑团会话压缩助手。请将以下跑团对话记录压缩为一段简明摘要（中文，500字以内），必须保留：关键剧情节点、重要NPC名称与行动、战斗结果、角色状态变化（SAN/HP/LUCK增减）、获得的线索与物品、当前未解决的悬念。格式自由，以叙述性文字呈现。\n\n' + compressed.substring(compressed.length - 6000);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
-    const summary = await callAPI(cfg, '你是游戏会话压缩助手。将对话记录压缩为简洁摘要。', [], summaryPrompt, controller);
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    const summary = await callAPI(cfg, '你是游戏会话压缩助手。将跑团对话记录压缩为详细摘要，保留关键剧情、NPC行动、战斗结果和状态变化。', [], summaryPrompt, controller);
     clearTimeout(timeout);
     if (summary && summary.trim()) {
-      const summaryEntry = { role: 'user', content: '[上下文压缩摘要] ' + summary.trim().substring(0, 2000) };
+      const summaryEntry = { role: 'user', content: '[会话摘要] ' + summary.trim().substring(0, 2500) };
       kpState.apiHistory = [summaryEntry, ...toKeep];
     } else {
       kpState.apiHistory = kpState.apiHistory.slice(-60);
@@ -549,11 +549,11 @@ export async function sendKPMessage() {
     kpState.apiHistory.push({ role: 'user', content: text });
     kpState.apiHistory.push({ role: 'assistant', content: fullResponse });
 
-    if (kpState.apiHistory.length > 80) {
+    if (kpState.apiHistory.length > 70) {
       compressContextAsync();
     }
-    if (kpState.apiHistory.length > 120) {
-      kpState.apiHistory = kpState.apiHistory.slice(-100);
+    if (kpState.apiHistory.length > 150) {
+      kpState.apiHistory = kpState.apiHistory.slice(-120);
     }
   } catch (err) {
     if (err.name === 'AbortError') {

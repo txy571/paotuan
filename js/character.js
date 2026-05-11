@@ -147,7 +147,7 @@ export function renderSpells() {
   const list = dom.spellsList;
   if (!list) return;
   if (!state.spells.length) {
-    list.innerHTML = '<div style="color:var(--text-dim);font-size:.8rem;padding:8px;">暂无法术，点击下方按钮添加</div>';
+    list.innerHTML = '<div class="empty-state">暂无法术，点击下方按钮添加</div>';
     return;
   }
   const grouped = {};
@@ -237,7 +237,7 @@ export function removeSpell(idx) {
 export function renderTraits() {
   if (!dom.traitList) return;
   dom.traitList.innerHTML = state.traits.length === 0
-    ? '<div style="color:var(--text-dim);font-size:.8rem;padding:8px;">暂无特质，点击下方按钮添加</div>'
+    ? '<div class="empty-state">暂无特质，点击下方按钮添加</div>'
     : state.traits.map((t, i) => `
       <div class="trait-tag">
         <input class="inline-input" value="${esc(t.name)}" placeholder="名称" onchange="document.dispatchEvent(new CustomEvent('trait-update',{detail:{i:${i},k:'name',v:this.value}}))">
@@ -253,7 +253,7 @@ export function removeTrait(i)    { state.traits.splice(i,1); renderTraits(); }
 export function renderFeats() {
   if (!dom.featList) return;
   dom.featList.innerHTML = state.feats.length === 0
-    ? '<div style="color:var(--text-dim);font-size:.8rem;padding:8px;">暂无专长，点击下方按钮添加</div>'
+    ? '<div class="empty-state">暂无专长，点击下方按钮添加</div>'
     : state.feats.map((f, i) => `
       <div class="trait-tag">
         <input class="inline-input" value="${esc(f.name)}" placeholder="专长名" onchange="document.dispatchEvent(new CustomEvent('feat-update',{detail:{i:${i},k:'name',v:this.value}}))">
@@ -270,7 +270,7 @@ export function removeFeat(i)     { state.feats.splice(i,1); renderFeats(); }
 export function renderEquipment() {
   if (!dom.equipTable) return;
   if (!state.equipment.length) {
-    dom.equipTable.innerHTML = '<tr><td colspan="6" style="color:var(--text-dim);text-align:center;padding:16px;">暂无装备</td></tr>';
+    dom.equipTable.innerHTML = '<tr><td colspan="6"><div class="empty-state">暂无装备</div></td></tr>';
     return;
   }
   dom.equipTable.innerHTML = state.equipment.map((eq, i) => `
@@ -496,19 +496,19 @@ export function renderSavedChars() {
   const chars = JSON.parse(localStorage.getItem('ttrpg-chars') || '{}');
   const entries = Object.values(chars);
   if (!entries.length) {
-    list.innerHTML = '<div style="color:var(--text-dim);font-size:.82rem;padding:12px;">暂无保存的角色</div>';
+    list.innerHTML = '<div class="empty-state">暂无保存的角色</div>';
     return;
   }
   list.innerHTML = entries.map(c => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:6px;cursor:pointer;transition:border-color var(--t);" data-action="character:load" data-id="${c.id}" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+    <div class="game-save-item" data-action="character:load" data-id="${c.id}">
       <div>
-        <div style="font-weight:600;color:var(--text);">${esc(c.name)}</div>
-        <div style="font-size:.78rem;color:var(--text-dim);">
+        <div class="game-save-name">${esc(c.name)}</div>
+        <div class="game-save-meta">
           ${esc(c.race||'?')} ${esc(c.cls||'?')} · Lv.${c.level||1}
           ${c.theme === 'coc' ? ' · SAN:' + (c.san || c.maxSan || 100) : ''}
         </div>
       </div>
-      <span style="color:var(--accent2);cursor:pointer;padding:4px 8px;font-size:.85rem;" data-action="character:delete" data-id="${c.id}">🗑️</span>
+      <button class="equip-del-btn" data-action="character:delete" data-id="${c.id}">🗑️</button>
     </div>`).join('');
 }
 

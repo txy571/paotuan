@@ -46,7 +46,7 @@
         <button class="btn btn-sm btn-secondary" data-action="nav:go" data-page="character">+ 创建新角色</button>
       </div>
       <div class="char-select-list" id="homeCharList">
-        <div class="char-select-empty">请先在"人物卡"页面创建角色，或点击上方按钮快速创建</div>
+        <div class="char-select-empty">还没有角色——去"人物卡"页面捏一个，或者点右边的按钮快速创建一个</div>
       </div>
     </div>
 
@@ -66,9 +66,9 @@
     <!-- ===== AI KP CHAT INTERFACE ===== -->
     <div class="kp-chat-wrapper" id="kpChatWrapper" style="display:none;">
       <div class="panel">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <h3 style="margin:0;padding:0;border:none;">AI 主持人 <span style="font-size:.75rem;color:var(--text-dim);">(<span id="kpCurrentTheme">D&D 5e</span>)</span></h3>
-          <div style="display:flex;gap:6px;">
+        <div class="panel-header">
+          <h3>AI 主持人 <span class="kp-theme-tag">(<span id="kpCurrentTheme">D&D 5e</span>)</span></h3>
+          <div class="panel-actions">
             <button class="btn btn-ghost btn-xs" data-action="kp:config" title="API 设置">设置</button>
             <button class="btn btn-ghost btn-xs" data-action="scenario:toggle" title="剧本知识库">剧本库</button>
             <button class="btn btn-ghost btn-xs" data-action="kp:clear" title="清空对话">清空</button>
@@ -113,9 +113,9 @@
             </div>
             <div>
               <label>API Key</label>
-              <input type="password" id="kpApiKey" placeholder="输入你的 API Key...">
+              <input type="password" id="kpApiKey" placeholder="粘贴你的 API Key...">
             </div>
-<div><button class="btn btn-save btn-sm" data-action="kp:saveConfig" style="height:42px;">保存配置</button></div>
+<div><button class="btn btn-save btn-sm" data-action="kp:saveConfig">保存配置</button></div>
           </div>
 
           <p style="font-size:.7rem;color:var(--text-dim);margin-top:8px;">⚠️ API Key 仅保存在浏览器本地存储中，不会上传到任何第三方服务器。</p>
@@ -165,9 +165,9 @@
     <!-- ===== SCENARIO KNOWLEDGE DATABASE ===== -->
     <div class="scenario-db-wrapper" id="scenarioDbWrapper" style="display:none;margin-bottom:20px;">
       <div class="panel">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <h3 style="margin:0;padding:0;border:none;">剧本知识库</h3>
-          <div style="display:flex;gap:6px;">
+        <div class="panel-header">
+          <h3>剧本知识库</h3>
+          <div class="panel-actions">
             <button class="btn btn-ghost btn-xs" data-action="scenario:save" title="保存">保存</button>
             <button class="btn btn-ghost btn-xs" data-action="scenario:export" title="导出">导出</button>
             <button class="btn btn-ghost btn-xs" data-action="scenario:import" title="导入">导入</button>
@@ -177,7 +177,7 @@
         <p style="font-size:.75rem;color:var(--text-dim);margin-bottom:10px;">
           NPC资料、地点描述、隐藏线索、剧情钩子等。AI主持人将参考此数据库进行游戏判定。
         </p>
-        <textarea id="scenarioDbContent" placeholder="输入剧本设定...&#10;&#10;格式示例:&#10;NPC: 艾尔文镇长 — 表面友善，暗中为邪教工作&#10;地点: 旧图书馆地下室 — 隐藏着通往地下墓穴的密道&#10;线索: 失踪的商队与月圆之夜有关&#10;核心冲突: 远古封印正在松动，需要收集三枚符文..." style="min-height:200px;font-family:var(--font-body);font-size:.85rem;line-height:1.6;"></textarea>
+        <textarea id="scenarioDbContent" placeholder="写下你的剧本设定...&#10;&#10;比如:&#10;NPC 艾尔文镇长 — 表面友善，暗中为邪教工作&#10;地点 旧图书馆地下室 — 隐藏着通往地下墓穴的密道&#10;线索 失踪的商队与月圆之夜有关&#10;核心冲突 远古封印正在松动，需要收集三枚符文..." style="min-height:200px;font-family:var(--font-body);font-size:.85rem;line-height:1.6;"></textarea>
       </div>
     </div>
 
@@ -274,7 +274,7 @@
           <div id="eraInfo" style="display:none;font-size:.72rem;color:var(--text-dim);margin-top:4px;line-height:1.4;"></div>
 
           <label>背景故事</label>
-          <textarea id="charBackground" rows="3" placeholder="角色的过往、性格、动机与目标..."></textarea>
+          <textarea id="charBackground" rows="3" placeholder="Ta 从哪里来？最害怕什么？有什么不能说的秘密..."></textarea>
 
           <div class="btn-row">
             <button class="btn btn-save btn-sm" data-action="character:save">保存</button>
@@ -327,7 +327,7 @@
           <h3>法术书</h3>
           <div id="spellsList"></div>
           <button class="btn btn-ghost btn-xs" style="margin-top:8px;width:100%;" data-action="character:addSpell">+ 添加法术</button>
-          <div style="font-size:.72rem;color:var(--text-dim);margin-top:4px;">提示: 点击"编辑"修改法术详情，点击 ◆/◇ 切换准备状态</div>
+          <div class="spells-hint">点击"编辑"修改法术详情，点击 ◆/◇ 切换准备状态</div>
         </div>
       </div>
 
@@ -404,16 +404,16 @@
         </div>
 
         <div class="roll-input-row">
-          <input type="text" id="customDice" placeholder="自定义投掷，例如: 2d6+3 或 4d8-1">
+          <input type="text" id="customDice" placeholder="自定义投掷: 2d6+3, 4d8-1, 甚至 3d20+5">
           <button class="btn btn-secondary" data-action="dice:custom">投掷</button>
         </div>
 
         <div class="dice-result-zone">
           <div class="dice-big-num" id="diceResultBig">—</div>
-          <div class="dice-sub-label" id="diceResultLabel">选择骰子然后点击下方按钮投掷</div>
+          <div class="dice-sub-label" id="diceResultLabel">选一颗骰子，然后扔出去</div>
         </div>
 
-        <button class="btn btn-primary" style="width:100%;padding:14px;font-size:1rem;margin-top:8px;" data-action="dice:roll">
+        <button class="btn btn-primary btn-full" data-action="dice:roll" style="margin-top:8px;">
           投掷 <span id="rollBtnLabel">d20</span>
         </button>
       </div>
@@ -421,7 +421,7 @@
       <div class="panel">
         <h3>投掷记录</h3>
         <div class="roll-history-list" id="rollHistory"></div>
-        <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:14px;" data-action="dice:clear">
+        <button class="btn btn-ghost btn-sm btn-full" style="margin-top:14px;" data-action="dice:clear">
           清空记录
         </button>
       </div>
@@ -434,10 +434,10 @@
       <div class="panel notes-editor">
         <h3>跑团笔记</h3>
         <div style="display:flex;gap:8px;margin-bottom:12px;">
-          <input type="text" id="sessionTitle" placeholder="章节 / 标题..." style="flex:1;">
+          <input type="text" id="sessionTitle" placeholder="给这篇笔记起个名字..." style="flex:1;">
           <button class="btn btn-save btn-sm" data-action="notes:save">保存</button>
         </div>
-        <textarea id="sessionContent" placeholder="记录你的冒险故事...&#10;&#10;遭遇、对话、战斗经过、重要发现、线索与谜题..."></textarea>
+        <textarea id="sessionContent" placeholder="写点什么吧，哪怕只是一句话...&#10;&#10;今天的遭遇、一段印象深刻的对白、战斗中差点团灭的瞬间、某个让你背后发凉的发现——都值得记下来。"></textarea>
       </div>
 
       <div class="panel">
@@ -473,7 +473,7 @@
             <div class="mp-char-info" id="mpCreateCharInfo" style="display:none;margin-top:6px;padding:8px 12px;font-size:.78rem;color:var(--text-dim);border:1px solid var(--border);border-radius:var(--r-md);background:rgba(0,0,0,.15);"></div>
             <label>房间名称 (可选)</label>
             <input type="text" id="mpRoomLabel" placeholder="给房间起个名字..." maxlength="30">
-            <button class="btn btn-primary" id="mpCreateBtn" data-action="mp:create" style="width:100%;padding:14px;font-size:1rem;margin-top:12px;" disabled>
+            <button class="btn btn-primary btn-full" id="mpCreateBtn" data-action="mp:create" style="margin-top:12px;" disabled>
               请先选择角色卡
             </button>
             <p class="mp-hint">房间创建后将自动生成房间号，分享给好友即可加入。</p>
@@ -493,7 +493,7 @@
             <div class="mp-char-info" id="mpJoinCharInfo" style="display:none;margin-top:6px;padding:8px 12px;font-size:.78rem;color:var(--text-dim);border:1px solid var(--border);border-radius:var(--r-md);background:rgba(0,0,0,.15);"></div>
             <label>房间号</label>
             <input type="text" id="mpJoinRoomId" placeholder="输入房主分享的房间号..." style="font-family:monospace;letter-spacing:.05em;">
-            <button class="btn btn-primary" id="mpJoinBtn" data-action="mp:join" style="width:100%;padding:14px;font-size:1rem;margin-top:12px;" disabled>
+            <button class="btn btn-primary btn-full" id="mpJoinBtn" data-action="mp:join" style="margin-top:12px;" disabled>
               请先选择角色卡
             </button>
             <p class="mp-hint">输入房主分享的房间号即可加入游戏。</p>
@@ -581,7 +581,7 @@
                 <button class="mp-input-tab" data-mp-input="chat">聊天</button>
               </div>
               <div class="mp-input-wrap">
-                <input type="text" id="mpInput" placeholder="输入行动指令，例如「调查书架」..." disabled>
+                <input type="text" id="mpInput" placeholder="输入行动，比如「调查书架」「说服守卫」..." disabled>
                 <button class="btn btn-primary btn-sm" id="mpSendBtn" data-action="mp:send" disabled>发送</button>
               </div>
             </div>

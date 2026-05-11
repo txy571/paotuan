@@ -10,7 +10,7 @@ const API_BASE = 'https://www.dnd5eapi.co/api';
 export async function fetchAPI(endpoint) {
   const container = dom.apiResults;
   if (!container) return;
-  container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim);">正在从 D&D 5e API 获取数据...</div>';
+  container.innerHTML = '<div class="loading-state">正在从 D&D 5e API 获取数据...</div>';
   try {
     const resp = await fetch(`${API_BASE}/${endpoint}`);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -23,14 +23,14 @@ export async function fetchAPI(endpoint) {
           <div class="api-desc">点击查看详情</div>
         </div>`).join('')}</div>`;
   } catch(err) {
-    container.innerHTML = `<div style="color:var(--accent2);padding:16px;">API 请求失败: ${err.message}<br><small>请检查网络，或尝试用 HTTP 服务器打开此页面。</small></div>`;
+    container.innerHTML = `<div class="error-state">API 请求失败: ${err.message}<br><small>请检查网络连接，或确认已通过 HTTP 服务器打开此页面</small></div>`;
   }
 }
 
 export async function fetchAPIDetail(endpoint, index) {
   const container = dom.apiResults;
   if (!container) return;
-  container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim);">获取详情中...</div>';
+  container.innerHTML = '<div class="loading-state">获取详情中...</div>';
   try {
     const resp = await fetch(`${API_BASE}/${endpoint}/${index}`);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -53,6 +53,6 @@ export async function fetchAPIDetail(endpoint, index) {
     html += '</div>';
     container.innerHTML = html;
   } catch(err) {
-    container.innerHTML = `<div style="color:var(--accent2);padding:16px;">获取详情失败: ${err.message}</div>`;
+    container.innerHTML = `<div class="error-state">获取详情失败: ${err.message}</div>`;
   }
 }

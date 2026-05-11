@@ -87,7 +87,7 @@ export function renderRollHistory() {
   const list = dom.rollHistory;
   if (!list) return;
   if (!state.rollHistory.length) {
-    list.innerHTML = '<div style="color:var(--text-dim);font-size:.82rem;padding:20px;text-align:center;">暂无投掷记录</div>';
+    list.innerHTML = '<div class="empty-state">还没有投过骰子，手气如何？</div>';
     return;
   }
   list.innerHTML = state.rollHistory.map(r => {

@@ -1,0 +1,81 @@
+/* ============================================================
+   CSS Module: Call of Cthulhu 7e Components
+   — Status bars (HP/SAN/LUCK), chronicle, skill rows
+   — Combat UI: round badge, combatant tags, timeout bar
+   ============================================================ */
+
+.coc-stat {
+  flex: 1; min-width: 90px;
+  text-align: center; padding: 6px 8px;
+  background: rgba(0,0,0,.2); border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+}
+
+.coc-stat-label { font-size: .68rem; color: var(--text-dim); display: block; margin-bottom: 2px; }
+
+.coc-stat-val   { font-size: .85rem; font-weight: bold; color: var(--text); }
+
+.coc-stat-bar {
+  height: 4px; background: rgba(0,0,0,.35); border-radius: 2px;
+  margin-top: 4px; overflow: hidden;
+}
+
+.coc-stat-fill { height: 100%; border-radius: 2px; transition: width .4s var(--ease-out); }
+
+.coc-stat-fill.hp   { background: #d4443a; }
+
+.coc-stat-fill.san  { background: #6a88cc; }
+
+.coc-stat-fill.luck { background: #44aa44; }
+
+.chronicle-time { font-size: .68rem; color: var(--text-dim); }
+
+.chronicle-text { font-size: .8rem; color: var(--text); margin-top: 2px; line-height: 1.5; }
+
+.coc-status-mini .coc-stat {
+  display: flex; align-items: center; gap: 4px;
+}
+
+.coc-status-mini .coc-stat-label {
+  color: var(--text-dim); font-size: .72rem;
+}
+
+.coc-status-mini .coc-stat-val {
+  font-weight: 600; color: var(--text);
+}
+
+.coc-status-mini .coc-stat-bar {
+  width: 40px; height: 4px; border-radius: 2px;
+  background: rgba(255,255,255,0.06); margin-left: 2px;
+}
+
+.coc-status-mini .coc-stat-fill {
+  height: 100%; border-radius: 2px;
+}
+
+.coc-status-mini .coc-stat-fill.luck { background: var(--text-gold); }
+
+.skill-row-coc:hover { background: rgba(255,255,255,.03); }
+
+.skill-name-coc {
+  flex: 1; font-size: .82rem; color: var(--text);
+  min-width: 80px;
+}
+
+.skill-base-coc {
+  font-size: .7rem; color: var(--text-dim); min-width: 60px; text-align: right;
+}
+
+.skill-val-input {
+  width: 44px; padding: 2px 4px; text-align: center;
+  background: rgba(0,0,0,.25); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  font-size: .8rem; font-family: inherit;
+}
+
+.skill-val-input:focus { border-color: var(--accent); outline: none; }
+
+.skill-pct {
+  font-weight: 600; font-size: .82rem; color: var(--text-gold);
+  min-width: 36px; text-align: right;
+}

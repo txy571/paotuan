@@ -1,0 +1,36 @@
+---
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/reset.css';
+import '../styles/themes.css';
+import '../styles/layout.css';
+import '../styles/components.css';
+import '../styles/character.css';
+import '../styles/dice.css';
+import '../styles/kp.css';
+import '../styles/multiplayer.css';
+import '../styles/coc.css';
+import '../styles/responsive.css';
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>跑团助手 — TTRPG Companion</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body data-theme="dnd">
+
+  <canvas id="particles"></canvas>
+
+  <div id="app">
+    <Nav />
+    <slot />
+    <Footer />
+  </div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

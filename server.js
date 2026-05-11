@@ -85,14 +85,21 @@ function removePid() {
 function serveStatic(res, filePath) {
   const ext = path.extname(filePath).toLowerCase();
   const ct = MIME[ext] || 'application/octet-stream';
-  try {
-    const data = fs.readFileSync(filePath);
-    res.writeHead(200, { 'Content-Type': ct });
-    res.end(data);
-  } catch (_) {
-    res.writeHead(404);
-    res.end('Not Found');
+  // Try multiple locations: root first, then public/ (Astro static assets)
+  const tryPaths = [
+    filePath,
+    path.join(DIR, 'public', path.relative(DIR, filePath)),
+  ];
+  for (const p of tryPaths) {
+    try {
+      const data = fs.readFileSync(p);
+      res.writeHead(200, { 'Content-Type': ct });
+      res.end(data);
+      return;
+    } catch (_) { /* try next */ }
   }
+  res.writeHead(404);
+  res.end('Not Found');
 }
 
 // ── API Proxy ────────────────────────────────────────

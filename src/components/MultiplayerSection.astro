@@ -1,0 +1,127 @@
+<section class="page" id="page-multiplayer">
+  <!-- Lobby View -->
+  <div class="mp-lobby" id="mpLobby">
+    <div class="mp-lobby-card">
+      <div class="mp-lobby-icon">TTRPG</div>
+      <h1>多人联机跑团</h1>
+      <p>与好友一起冒险，由同一个 AI 主持人主持游戏</p>
+
+      <div class="mp-tabs">
+        <button class="mp-tab active" data-mp-tab="create">创建房间</button>
+        <button class="mp-tab" data-mp-tab="join">加入房间</button>
+      </div>
+
+      <!-- Create Room Panel -->
+      <div class="mp-tab-panel active" id="mpTabCreate">
+        <div class="mp-form">
+          <label>你的昵称</label>
+          <input type="text" id="mpCreateName" placeholder="输入你的调查员/冒险者名字..." maxlength="20">
+          <label>选择角色卡</label>
+          <select id="mpCreateChar" style="width:100%;padding:10px 12px;background:rgba(0,0,0,.2);color:var(--text);border:1px solid var(--border);border-radius:var(--r-md);font-size:.85rem;">
+            <option value="">-- 请先在人物卡页面创建角色 --</option>
+          </select>
+          <div class="mp-char-info" id="mpCreateCharInfo" style="display:none;margin-top:6px;padding:8px 12px;font-size:.78rem;color:var(--text-dim);border:1px solid var(--border);border-radius:var(--r-md);background:rgba(0,0,0,.15);"></div>
+          <label>房间名称 (可选)</label>
+          <input type="text" id="mpRoomLabel" placeholder="给房间起个名字..." maxlength="30">
+          <button class="btn btn-primary btn-full" id="mpCreateBtn" data-action="mp:create" style="margin-top:12px;" disabled>
+            请先选择角色卡
+          </button>
+          <p class="mp-hint">房间创建后将自动生成房间号，分享给好友即可加入。</p>
+          <p class="mp-hint mp-tech-note">使用 Cloudflare Worker WebSocket 中继 · 无需局域网或公网 IP · 稳定低延迟</p>
+        </div>
+      </div>
+
+      <!-- Join Room Panel -->
+      <div class="mp-tab-panel" id="mpTabJoin">
+        <div class="mp-form">
+          <label>你的昵称</label>
+          <input type="text" id="mpJoinName" placeholder="输入你的调查员/冒险者名字..." maxlength="20">
+          <label>选择角色卡</label>
+          <select id="mpJoinChar" style="width:100%;padding:10px 12px;background:rgba(0,0,0,.2);color:var(--text);border:1px solid var(--border);border-radius:var(--r-md);font-size:.85rem;">
+            <option value="">-- 请先在人物卡页面创建角色 --</option>
+          </select>
+          <div class="mp-char-info" id="mpJoinCharInfo" style="display:none;margin-top:6px;padding:8px 12px;font-size:.78rem;color:var(--text-dim);border:1px solid var(--border);border-radius:var(--r-md);background:rgba(0,0,0,.15);"></div>
+          <label>房间号</label>
+          <input type="text" id="mpJoinRoomId" placeholder="输入房主分享的房间号..." style="font-family:monospace;letter-spacing:.05em;">
+          <button class="btn btn-primary btn-full" id="mpJoinBtn" data-action="mp:join" style="margin-top:12px;" disabled>
+            请先选择角色卡
+          </button>
+          <p class="mp-hint">输入房主分享的房间号即可加入游戏。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Room View -->
+  <div class="mp-room" id="mpRoom" style="display:none;">
+    <div class="mp-room-header">
+      <div class="mp-room-info">
+        <span class="mp-room-dot" id="mpConnDot"></span>
+        <span id="mpRoomLabelDisplay"></span>
+        <span class="mp-room-id" id="mpRoomIdDisplay"></span>
+        <span class="mp-phase-badge" id="mpPhaseBadge">准备阶段</span>
+      </div>
+      <div class="mp-room-actions">
+        <span class="mp-peer-count" id="mpPeerCount"></span>
+        <button class="btn btn-ghost btn-xs" data-action="mp:copyId">复制房间号</button>
+        <button class="btn btn-danger btn-xs" data-action="mp:leave">离开</button>
+      </div>
+    </div>
+
+    <!-- Turn Banner -->
+    <div class="mp-turn-banner" id="mpTurnBanner" style="display:none;">
+      <div class="mp-turn-info" id="mpTurnInfo"></div>
+      <button class="btn btn-accent btn-sm" id="mpEndTurnBtn" data-action="mp:endTurn" style="display:none;">结束回合</button>
+    </div>
+
+    <!-- Lobby Phase Controls -->
+    <div class="mp-lobby-controls" id="mpLobbyControls">
+      <div class="mp-lobby-msg"><span>准备阶段 — 请选择角色卡并点击准备就绪</span></div>
+      <div class="mp-char-pick" id="mpCharPick">
+        <label style="display:block;margin-bottom:6px;font-size:.8rem;color:var(--text-dim);">选择角色卡</label>
+        <select class="mp-char-sel" id="mpRoomCharSelect" data-action="mp:roomCharChanged" data-action-event="change">
+          <option value="">-- 选择已有角色卡或去人物卡页创建 --</option>
+        </select>
+        <div class="mp-char-info" id="mpRoomCharInfo" style="display:none;"></div>
+        <div class="mp-char-warn" id="mpRoomCharWarn" style="display:none;">未选择角色卡，无法准备</div>
+      </div>
+      <div class="mp-slots-grid" id="mpSlotsGrid"></div>
+      <div class="mp-lobby-btns">
+        <button class="btn btn-save btn-sm" id="mpReadyBtn" data-action="mp:ready" disabled>准备就绪</button>
+        <button class="btn btn-primary btn-sm" id="mpStartGameBtn" data-action="mp:start" style="display:none;" disabled>开始游戏</button>
+      </div>
+    </div>
+
+    <!-- Room Body -->
+    <div class="mp-room-body">
+      <div class="mp-sidebar">
+        <h3>玩家列表</h3>
+        <div class="mp-player-list" id="mpPlayerList"></div>
+        <div class="mp-sidebar-footer">
+          <div class="mp-my-info" id="mpMyInfo"></div>
+        </div>
+      </div>
+      <div class="mp-main">
+        <div class="mp-kp-panel">
+          <div class="mp-kp-header">
+            <h3>AI 主持人 <span id="mpKPTheme"></span></h3>
+            <div class="mp-conn-status" id="mpConnStatus"></div>
+          </div>
+          <div class="mp-kp-msgs" id="mpKPMessages"></div>
+          <div class="mp-kp-quick-actions" id="mpKPQuickActions"></div>
+          <div class="mp-kp-input-row">
+            <div class="mp-input-tabs">
+              <button class="mp-input-tab active" data-mp-input="public">公开</button>
+              <button class="mp-input-tab" data-mp-input="secret">秘密</button>
+              <button class="mp-input-tab" data-mp-input="chat">聊天</button>
+            </div>
+            <div class="mp-input-wrap">
+              <input type="text" id="mpInput" placeholder="输入行动，比如「调查书架」「说服守卫」..." disabled>
+              <button class="btn btn-primary btn-sm" id="mpSendBtn" data-action="mp:send" disabled>发送</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

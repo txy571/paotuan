@@ -1,0 +1,38 @@
+<section class="page" id="page-dice">
+  <div class="dice-layout">
+    <div class="panel">
+      <h3>骰子投掷</h3>
+      <div class="dice-strip">
+        <button class="dice-die" data-dice="4" data-action="dice:select">d4 <span>四面</span></button>
+        <button class="dice-die" data-dice="6" data-action="dice:select">d6 <span>六面</span></button>
+        <button class="dice-die" data-dice="8" data-action="dice:select">d8 <span>八面</span></button>
+        <button class="dice-die" data-dice="10" data-action="dice:select">d10<span>十面</span></button>
+        <button class="dice-die" data-dice="12" data-action="dice:select">d12<span>十二面</span></button>
+        <button class="dice-die active" data-dice="20" data-action="dice:select">d20<span>二十面</span></button>
+        <button class="dice-die" data-dice="100" data-action="dice:select">d%<span>百面</span></button>
+      </div>
+
+      <div class="roll-input-row">
+        <input type="text" id="customDice" placeholder="自定义投掷: 2d6+3, 4d8-1, 甚至 3d20+5">
+        <button class="btn btn-secondary" data-action="dice:custom">投掷</button>
+      </div>
+
+      <div class="dice-result-zone">
+        <div class="dice-big-num" id="diceResultBig">—</div>
+        <div class="dice-sub-label" id="diceResultLabel">选一颗骰子，然后扔出去</div>
+      </div>
+
+      <button class="btn btn-primary btn-full" data-action="dice:roll" style="margin-top:8px;">
+        投掷 <span id="rollBtnLabel">d20</span>
+      </button>
+    </div>
+
+    <div class="panel">
+      <h3>投掷记录</h3>
+      <div class="roll-history-list" id="rollHistory"></div>
+      <button class="btn btn-ghost btn-sm btn-full" style="margin-top:14px;" data-action="dice:clear">
+        清空记录
+      </button>
+    </div>
+  </div>
+</section>

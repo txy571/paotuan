@@ -1,0 +1,99 @@
+/* ============================================================
+   CSS Module: RPG Themes
+   — Four RPG system themes via CSS custom properties
+   — dnd (D&D 5e), coc (Call of Cthulhu 7e), cyberpunk, pathfinder
+   — Each theme defines: bg colors, text, accent, border, shadow, font, dice
+   ============================================================ */
+
+
+/* ---------- D&D 5e — 龙与地下城 ---------- */
+[data-theme="dnd"] {
+  --bg-base: #020206;
+  --bg-layer: #08080e;
+  --bg-card: linear-gradient(150deg, #0e0e18 0%, #0a0a12 55%, #06060e 100%);
+  --bg-panel: #0c0c16;
+  --text: #f0f0f8;
+  --text-dim: #8888a8;
+  --text-gold: #ff4444;
+  --accent: #d42020;
+  --accent-dim: rgba(212,32,32,0.2);
+  --accent2: #2244cc;
+  --accent3: #2266dd;
+  --border: #1e1e30;
+  --border-bright: #d42020;
+  --shadow: 0 2px 4px rgba(0,0,0,0.10), 0 6px 18px rgba(0,0,0,0.30);
+  --font-display: 'Georgia', 'KaiTi', serif;
+  --overlay: rgba(4,4,8,0.92);
+  --dice-face: #d42020;
+  --glow-spread: 0 0 24px rgba(212,32,32,0.2);
+  --ornament: "⚔️";
+}
+
+/* ---------- CoC — 克苏鲁的呼唤 ---------- */
+[data-theme="coc"] {
+  --bg-base: #020206;
+  --bg-layer: #08080e;
+  --bg-card: linear-gradient(150deg, #0e0e18 0%, #0a0a12 55%, #06060e 100%);
+  --bg-panel: #0c0c16;
+  --text: #f0f0f8;
+  --text-dim: #8888a8;
+  --text-gold: #2dd4bf;
+  --accent: #0d9488;
+  --accent-dim: rgba(13,148,136,0.2);
+  --accent2: #2244cc;
+  --accent3: #0f766e;
+  --border: #1e1e30;
+  --border-bright: #0d9488;
+  --shadow: 0 2px 4px rgba(0,0,0,0.10), 0 6px 18px rgba(0,0,0,0.30);
+  --font-display: 'Times New Roman', 'KaiTi', serif;
+  --overlay: rgba(4,4,8,0.92);
+  --dice-face: #0d9488;
+  --glow-spread: 0 0 24px rgba(13,148,136,0.2);
+  --ornament: "🐙";
+}
+
+/* ---------- Cyberpunk RED — 赛博朋克 ---------- */
+[data-theme="cyberpunk"] {
+  --bg-base: #020206;
+  --bg-layer: #08080e;
+  --bg-card: linear-gradient(150deg, #0e0e18 0%, #0a0a12 55%, #06060e 100%);
+  --bg-panel: #0c0c16;
+  --text: #f0f0f8;
+  --text-dim: #8888a8;
+  --text-gold: #44ccff;
+  --accent: #0088cc;
+  --accent-dim: rgba(0,136,204,0.2);
+  --accent2: #2244cc;
+  --accent3: #006699;
+  --border: #1e1e30;
+  --border-bright: #0088cc;
+  --shadow: 0 2px 4px rgba(0,0,0,0.10), 0 6px 18px rgba(0,0,0,0.30);
+  --font-display: 'Consolas', 'Courier New', monospace;
+  --overlay: rgba(4,4,8,0.92);
+  --dice-face: #0088cc;
+  --glow-spread: 0 0 24px rgba(0,136,204,0.2);
+  --ornament: ">";
+}
+
+/* ---------- Pathfinder — 开拓者 ---------- */
+[data-theme="pathfinder"] {
+  --bg-base: #020206;
+  --bg-layer: #08080e;
+  --bg-card: linear-gradient(150deg, #0e0e18 0%, #0a0a12 55%, #06060e 100%);
+  --bg-panel: #0c0c16;
+  --text: #f0f0f8;
+  --text-dim: #8888a8;
+  --text-gold: #e8b830;
+  --accent: #c89820;
+  --accent-dim: rgba(200,152,32,0.2);
+  --accent2: #2244cc;
+  --accent3: #8a7020;
+  --border: #1e1e30;
+  --border-bright: #c89820;
+  --shadow: 0 2px 4px rgba(0,0,0,0.10), 0 6px 18px rgba(0,0,0,0.30);
+  --font-display: 'Georgia', 'KaiTi', serif;
+  --overlay: rgba(4,4,8,0.92);
+  --dice-face: #c89820;
+  --glow-spread: 0 0 24px rgba(200,152,32,0.2);
+  --ornament: "🗡️";
+}

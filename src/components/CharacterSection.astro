@@ -1,0 +1,146 @@
+<section class="page" id="page-character">
+  <div class="char-layout">
+    <!-- Left Column: Portrait + Info -->
+    <div>
+      <div class="panel">
+        <h3>角色肖像</h3>
+        <div class="portrait-zone" id="portraitZone">
+          <div class="placeholder" id="portraitPlaceholder">
+            <span class="ph-icon">+</span> 点击或拖拽上传肖像
+          </div>
+          <img id="portraitImg" alt="角色肖像" style="display:none;">
+        </div>
+        <input type="file" id="portraitInput" accept="image/*" hidden>
+
+        <label>角色姓名</label>
+        <input type="text" id="charName" placeholder="输入角色姓名...">
+
+        <label>种族 / 血脉</label>
+        <input type="text" id="charRace" placeholder="人类、精灵、矮人...">
+
+        <label>职业 / 身份</label>
+        <input type="text" id="charClass" placeholder="战士、法师、调查员...">
+
+        <label>等级 / 经验</label>
+        <div style="display:flex;gap:8px;">
+          <input type="number" id="charLevel" value="1" min="1" max="20" style="width:70px;">
+          <input type="text" id="charXP" placeholder="经验值" style="flex:1;">
+        </div>
+
+        <label>时代背景</label>
+        <select id="charEra" data-action="character:changeEra" data-action-event="change"></select>
+        <div id="eraInfo" style="display:none;font-size:.72rem;color:var(--text-dim);margin-top:4px;line-height:1.4;"></div>
+
+        <label>背景故事</label>
+        <textarea id="charBackground" rows="3" placeholder="Ta 从哪里来？最害怕什么？有什么不能说的秘密..."></textarea>
+
+        <div class="btn-row">
+          <button class="btn btn-save btn-sm" data-action="character:save">保存</button>
+          <button class="btn btn-secondary btn-sm" data-action="character:export">导出</button>
+          <button class="btn btn-ghost btn-sm" data-action="character:import">导入</button>
+        </div>
+      </div>
+
+      <!-- Saved Characters -->
+      <div class="panel" style="margin-top:16px;">
+        <h3>已保存角色</h3>
+        <div id="savedCharsList"></div>
+      </div>
+    </div>
+
+    <!-- Center Column: Attributes & Skills -->
+    <div>
+      <div class="panel">
+        <h3>核心属性 <small style="color:var(--text-dim);font-weight:400;">(百分制 · 购点法)</small></h3>
+        <div id="attrGrid"></div>
+        <div class="pts-remaining-bar" id="ptsRemaining"></div>
+      </div>
+      <div class="panel" style="margin-top:16px;">
+        <h3>技能熟练</h3>
+        <div class="skills-grid" id="skillsList"></div>
+      </div>
+
+      <!-- Equipment -->
+      <div class="panel" style="margin-top:16px;">
+        <h3>装备与物品</h3>
+        <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;">
+          <input type="text" id="equipName" placeholder="物品名称..." style="flex:1;min-width:100px;">
+          <input type="number" id="equipQty" value="1" min="1" style="width:50px;" title="数量">
+          <input type="text" id="equipWeight" placeholder="重量" style="width:55px;" title="重量">
+          <input type="text" id="equipCategory" placeholder="分类" style="width:65px;" title="分类">
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+          <input type="text" id="equipDesc" placeholder="描述..." style="flex:1;">
+          <button class="btn btn-secondary btn-sm" data-action="character:addEquip">+ 添加</button>
+        </div>
+        <table class="equip-table">
+          <thead><tr><th>物品</th><th>数量</th><th>重量</th><th>分类</th><th>装备</th><th style="width:50px;"></th></tr></thead>
+          <tbody id="equipTable"></tbody>
+        </table>
+      </div>
+
+      <!-- Spells -->
+      <div class="panel" style="margin-top:16px;">
+        <h3>法术书</h3>
+        <div id="spellsList"></div>
+        <button class="btn btn-ghost btn-xs" style="margin-top:8px;width:100%;" data-action="character:addSpell">+ 添加法术</button>
+        <div class="spells-hint">点击"编辑"修改法术详情，点击 ◆/◇ 切换准备状态</div>
+      </div>
+    </div>
+
+    <!-- Right Column: Traits, Feats, Combat -->
+    <div>
+      <div class="panel">
+        <h3>特质</h3>
+        <div id="traitList"></div>
+        <button class="btn btn-ghost btn-xs" style="margin-top:8px;width:100%;" data-action="character:addTrait">+ 添加特质</button>
+      </div>
+
+      <div class="panel" style="margin-top:16px;">
+        <h3>专长与能力</h3>
+        <div id="featList"></div>
+        <button class="btn btn-ghost btn-xs" style="margin-top:8px;width:100%;" data-action="character:addFeat">+ 添加专长</button>
+      </div>
+
+      <div class="panel" style="margin-top:16px;">
+        <h3>战斗数据</h3>
+        <label>阵营</label>
+        <select id="charAlignment">
+          <option value="">选择阵营...</option>
+          <optgroup label="善良">
+            <option>守序善良</option><option>中立善良</option><option>混乱善良</option>
+          </optgroup>
+          <optgroup label="中立">
+            <option>守序中立</option><option>绝对中立</option><option>混乱中立</option>
+          </optgroup>
+          <optgroup label="邪恶">
+            <option>守序邪恶</option><option>中立邪恶</option><option>混乱邪恶</option>
+          </optgroup>
+        </select>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+          <div><label>当前 HP</label><input type="number" id="charHP" placeholder="HP" value="100"></div>
+          <div><label>最大 HP</label><input type="number" id="charMaxHP" placeholder="Max" value="100"></div>
+          <div><label>当前 SAN</label><input type="number" id="charSan" placeholder="SAN" value="100"></div>
+          <div><label>最大 SAN</label><input type="number" id="charMaxSan" placeholder="Max" value="100"></div>
+          <div><label>护甲 AC</label><input type="number" id="charAC" placeholder="AC"></div>
+          <div><label>先攻加值</label><input type="number" id="charInit" placeholder="±X"></div>
+        </div>
+      </div>
+
+      <!-- Initiative Tracker -->
+      <div class="panel initiative-panel" style="margin-top:16px;">
+        <h3>先攻追踪器</h3>
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+          <input type="text" id="initName" placeholder="角色名" style="flex:1;">
+          <input type="number" id="initRoll" placeholder="先攻值" style="width:70px;">
+          <button class="btn btn-secondary btn-xs" data-action="character:addInit">+</button>
+        </div>
+        <div id="initiativeList"></div>
+        <div class="btn-row" style="margin-top:8px;">
+          <button class="btn btn-ghost btn-xs" data-action="character:nextInit">▶ 下一回合</button>
+          <button class="btn btn-ghost btn-xs" data-action="character:clearInit">清空</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

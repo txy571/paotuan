@@ -1,0 +1,17 @@
+<section class="page" id="page-notes">
+  <div class="notes-layout">
+    <div class="panel notes-editor">
+      <h3>跑团笔记</h3>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input type="text" id="sessionTitle" placeholder="给这篇笔记起个名字..." style="flex:1;">
+        <button class="btn btn-save btn-sm" data-action="notes:save">保存</button>
+      </div>
+      <textarea id="sessionContent" placeholder="写点什么吧，哪怕只是一句话...&#10;&#10;今天的遭遇、一段印象深刻的对白、战斗中差点团灭的瞬间、某个让你背后发凉的发现——都值得记下来。"></textarea>
+    </div>
+
+    <div class="panel">
+      <h3>历史笔记</h3>
+      <div class="notes-list" id="sessionsList"></div>
+    </div>
+  </div>
+</section>

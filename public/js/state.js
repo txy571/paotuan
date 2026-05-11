@@ -133,6 +133,11 @@ export const ATTR_BASE  = 20;
 export const ATTR_MAX   = 100;
 export const ATTR_POOL  = 240;
 
+export const SKILL_MAX     = 99;   // 百分制技能单个上限
+export const SKILL_TOTAL   = 400;  // 百分制技能总值软上限
+export const MAX_TRAITS    = 6;    // 特质数量上限
+export const MAX_FEATS     = 6;    // 专长数量上限
+
 // ==================== STATE ====================
 export const state = {
   theme: 'dnd',

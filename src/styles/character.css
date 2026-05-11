@@ -103,6 +103,21 @@
 
 .trait-tag .trait-remove:hover { color: #ff4444; }
 
+.preset-tags {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.preset-tag {
+  display: inline-block; padding: 3px 10px; border-radius: 12px;
+  font-size: .72rem; cursor: pointer;
+  background: var(--accent-dim); color: var(--text-gold);
+  border: 1px solid var(--accent);
+  transition: background var(--t) var(--ease-out), transform var(--t) var(--ease-out);
+}
+
+.preset-tag:hover { background: var(--accent); color: #fff; transform: translateY(-1px); }
+
 .inline-input {
   background: transparent; border: none; border-bottom: 1px dotted var(--border-strong);
   color: var(--text); font-size: .82rem; padding: 2px 4px; width: 80px;

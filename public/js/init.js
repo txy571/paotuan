@@ -196,6 +196,8 @@ document.addEventListener('feat-remove', (e) => Character.removeFeat(e.detail));
 document.addEventListener('equip-remove', (e) => Character.removeEquip(e.detail));
 document.addEventListener('equip-toggle', (e) => Character.toggleEquip(e.detail));
 document.addEventListener('spell-remove', (e) => Character.removeSpell(e.detail));
+document.addEventListener('preset-trait-add', (e) => Character.addPresetTrait(e.detail.name, e.detail.desc));
+document.addEventListener('preset-feat-add', (e) => Character.addPresetFeat(e.detail.name, e.detail.desc));
 document.addEventListener('skill-update', (e) => { Character.setSkillValue(e.detail.id, e.detail.value); Character.renderSkills(); });
 document.addEventListener('dice-rolled', (e) => {
   if (Multiplayer.connected) {

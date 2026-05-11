@@ -1,7 +1,8 @@
 // ==================== CHARACTER SHEET ====================
-import { state, ATTR_KEYS, ATTR_NAMES, ATTR_COLORS, ATTR_BASE, ATTR_MAX, ATTR_POOL, SKILL_DEFINITIONS, COC_ERAS, SPELL_SCHOOLS, SPELL_LEVELS } from './state.js';
+import { state, ATTR_KEYS, ATTR_NAMES, ATTR_COLORS, ATTR_BASE, ATTR_MAX, ATTR_POOL, SKILL_MAX, SKILL_TOTAL, MAX_TRAITS, MAX_FEATS, SKILL_DEFINITIONS, COC_ERAS, SPELL_SCHOOLS, SPELL_LEVELS } from './state.js';
 import { esc, showToast, modPct, modPctNum } from './utils.js';
 import { dom } from './dom.js';
+import { PRESET_TRAITS, PRESET_FEATS } from './presets/index.js';
 
 // ── Proficiency ──────────────────────────────────
 function getProfBonus(level) {
@@ -108,8 +109,9 @@ export function renderSkills() {
       return `<div class="skill-row-coc">
         <span class="skill-name-coc">${s.name}</span>
         <span class="skill-base-coc">(基础 ${typeof s.base === 'number' ? s.base + '%' : '—'})</span>
-        <input type="number" class="skill-val-input" value="${current}" min="0" max="99"
-          onchange="document.dispatchEvent(new CustomEvent('skill-update',{detail:{id:'${s.id}',value:Math.max(0,Math.min(99,parseInt(this.value)||0))}}))">
+        <input type="number" class="skill-val-input" value="${current}" min="0" max="${SKILL_MAX}"
+          onchange="document.dispatchEvent(new CustomEvent('skill-update',{detail:{id:'${s.id}',value:Math.max(0,Math.min(${SKILL_MAX},parseInt(this.value)||0))}}))"
+          title="单个技能上限 ${SKILL_MAX}%">
         <span class="skill-pct">${current}%</span>
       </div>`;
     }).join('');
@@ -133,7 +135,16 @@ export function renderSkills() {
 
 export function setSkillValue(id, value) {
   if (!state.skills[id]) state.skills[id] = { value: 0, proficient: false };
-  state.skills[id].value = value;
+  state.skills[id].value = Math.min(value, SKILL_MAX);
+  // Soft warning on total
+  const total = totalSkillPoints();
+  if (total > SKILL_TOTAL) {
+    showToast(`技能总点数 (${total}) 超过建议上限 ${SKILL_TOTAL}`, 'warn');
+  }
+}
+
+export function totalSkillPoints() {
+  return Object.values(state.skills).reduce((sum, s) => sum + (typeof s.value === 'number' ? s.value : 0), 0);
 }
 
 export function toggleSkill(id) {
@@ -236,33 +247,97 @@ export function removeSpell(idx) {
 // ── Traits & Feats ───────────────────────────────
 export function renderTraits() {
   if (!dom.traitList) return;
-  dom.traitList.innerHTML = state.traits.length === 0
-    ? '<div class="empty-state">暂无特质，点击下方按钮添加</div>'
+  const count = state.traits.length;
+  const remaining = MAX_TRAITS - count;
+  const presets = PRESET_TRAITS[state.theme] || [];
+  // Filter out presets already in the list
+  const names = new Set(state.traits.map(t => t.name));
+  const available = presets.filter(p => !names.has(p.name));
+  const presetHTML = available.length && remaining
+    ? `<div class="preset-tags"><span style="font-size:.68rem;color:var(--text-dim);">快速添加:</span>${available.map(p =>
+        `<span class="preset-tag" onclick="document.dispatchEvent(new CustomEvent('preset-trait-add',{detail:{name:'${esc(p.name).replace(/'/g, "\\'")}',desc:'${esc(p.desc).replace(/'/g, "\\'")}'}}))">${esc(p.name)}</span>`
+      ).join('')}</div>`
+    : '';
+  dom.traitList.innerHTML = (count === 0
+    ? `<div class="empty-state">暂无特质，点击下方按钮添加 (最多 ${MAX_TRAITS} 个)</div>`
     : state.traits.map((t, i) => `
       <div class="trait-tag">
         <input class="inline-input" value="${esc(t.name)}" placeholder="名称" onchange="document.dispatchEvent(new CustomEvent('trait-update',{detail:{i:${i},k:'name',v:this.value}}))">
         <input class="inline-input wide" value="${esc(t.desc)}" placeholder="描述" onchange="document.dispatchEvent(new CustomEvent('trait-update',{detail:{i:${i},k:'desc',v:this.value}}))">
         <span class="trait-remove" onclick="document.dispatchEvent(new CustomEvent('trait-remove',{detail:${i}}))">×</span>
-      </div>`).join('');
+      </div>`).join(''))
+    + `<div style="font-size:.7rem;color:var(--text-dim);margin-top:4px;">${count}/${MAX_TRAITS} ${remaining ? '还可添加 ' + remaining + ' 个' : '已达上限'}</div>`
+    + presetHTML;
 }
 
-export function addTrait()       { state.traits.push({ name:'', desc:'' }); renderTraits(); }
+export function addPresetTrait(name, desc) {
+  if (state.traits.length >= MAX_TRAITS) {
+    showToast(`特质数量已达上限 (${MAX_TRAITS} 个)`, 'warn');
+    return;
+  }
+  // Check for duplicate
+  if (state.traits.some(t => t.name === name)) {
+    showToast(`特质 "${name}" 已存在`, 'warn');
+    return;
+  }
+  state.traits.push({ name, desc });
+  renderTraits();
+}
+
+export function addPresetFeat(name, desc) {
+  if (state.feats.length >= MAX_FEATS) {
+    showToast(`专长数量已达上限 (${MAX_FEATS} 个)`, 'warn');
+    return;
+  }
+  if (state.feats.some(f => f.name === name)) {
+    showToast(`专长 "${name}" 已存在`, 'warn');
+    return;
+  }
+  state.feats.push({ name, desc });
+  renderFeats();
+}
+
+export function addTrait() {
+  if (state.traits.length >= MAX_TRAITS) {
+    showToast(`特质数量已达上限 (${MAX_TRAITS} 个)`, 'warn');
+    return;
+  }
+  state.traits.push({ name:'', desc:'' }); renderTraits();
+}
 export function updateTrait(i,k,v){ state.traits[i][k] = v; }
 export function removeTrait(i)    { state.traits.splice(i,1); renderTraits(); }
 
 export function renderFeats() {
   if (!dom.featList) return;
-  dom.featList.innerHTML = state.feats.length === 0
-    ? '<div class="empty-state">暂无专长，点击下方按钮添加</div>'
+  const count = state.feats.length;
+  const remaining = MAX_FEATS - count;
+  const presets = PRESET_FEATS[state.theme] || [];
+  const names = new Set(state.feats.map(f => f.name));
+  const available = presets.filter(p => !names.has(p.name));
+  const presetHTML = available.length && remaining
+    ? `<div class="preset-tags"><span style="font-size:.68rem;color:var(--text-dim);">快速添加:</span>${available.map(p =>
+        `<span class="preset-tag" onclick="document.dispatchEvent(new CustomEvent('preset-feat-add',{detail:{name:'${esc(p.name).replace(/'/g, "\\'")}',desc:'${esc(p.desc).replace(/'/g, "\\'")}'}}))">${esc(p.name)}</span>`
+      ).join('')}</div>`
+    : '';
+  dom.featList.innerHTML = (count === 0
+    ? `<div class="empty-state">暂无专长，点击下方按钮添加 (最多 ${MAX_FEATS} 个)</div>`
     : state.feats.map((f, i) => `
       <div class="trait-tag">
         <input class="inline-input" value="${esc(f.name)}" placeholder="专长名" onchange="document.dispatchEvent(new CustomEvent('feat-update',{detail:{i:${i},k:'name',v:this.value}}))">
         <input class="inline-input wide" value="${esc(f.desc)}" placeholder="效果" onchange="document.dispatchEvent(new CustomEvent('feat-update',{detail:{i:${i},k:'desc',v:this.value}}))">
         <span class="trait-remove" onclick="document.dispatchEvent(new CustomEvent('feat-remove',{detail:${i}}))">×</span>
-      </div>`).join('');
+      </div>`).join(''))
+    + `<div style="font-size:.7rem;color:var(--text-dim);margin-top:4px;">${count}/${MAX_FEATS} ${remaining ? '还可添加 ' + remaining + ' 个' : '已达上限'}</div>`
+    + presetHTML;
 }
 
-export function addFeat()         { state.feats.push({ name:'', desc:'' }); renderFeats(); }
+export function addFeat() {
+  if (state.feats.length >= MAX_FEATS) {
+    showToast(`专长数量已达上限 (${MAX_FEATS} 个)`, 'warn');
+    return;
+  }
+  state.feats.push({ name:'', desc:'' }); renderFeats();
+}
 export function updateFeat(i,k,v) { state.feats[i][k] = v; }
 export function removeFeat(i)     { state.feats.splice(i,1); renderFeats(); }
 

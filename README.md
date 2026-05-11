@@ -1,11 +1,15 @@
 <h1 align="center">🎲 跑团助手 — TTRPG Companion</h1>
 
 <p align="center">
+  <strong>🌐 <a href="https://ttrpg.183107.xyz/">ttrpg.183107.xyz</a></strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Astro-6.x-BC52EE?style=for-the-badge&logo=astro&logoColor=white" alt="Astro">
   <img src="https://img.shields.io/badge/JavaScript-ES_Modules-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript">
-  <img src="https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js">
+  <img src="https://img.shields.io/badge/Node.js-22.x-43853D?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js 22">
   <img src="https://img.shields.io/badge/Cloudflare_Workers-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Cloudflare Workers">
   <img src="https://img.shields.io/badge/WebSocket-000000?style=for-the-badge&logo=socket.io&logoColor=white" alt="WebSocket">
-  <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5">
   <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3">
   <img src="https://img.shields.io/badge/Anthropic_Claude-000000?style=for-the-badge&logo=anthropic&logoColor=white" alt="Claude">
   <img src="https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white" alt="OpenAI">
@@ -22,7 +26,7 @@
 
 ## 项目简介
 
-**跑团助手（TTRPG Companion）** 是一个纯前端 SPA 应用，为桌面角色扮演游戏玩家提供一站式工具集合。接入 Anthropic Claude / OpenAI / DeepSeek 等大语言模型作为 AI 游戏主持人（KP/DM），实现自动叙事、实时判定、NPC 扮演等功能。
+**跑团助手（TTRPG Companion）** 是一个基于 Astro 框架的 SPA 应用，为桌面角色扮演游戏玩家提供一站式工具集合。接入 Anthropic Claude / OpenAI / DeepSeek 等大语言模型作为 AI 游戏主持人（KP/DM），实现自动叙事、实时判定、NPC 扮演等功能。
 
 无论是单人冒险还是多人联机跑团，只需打开浏览器即可开始游戏。无需安装、无需服务器——通过 GitHub Pages 部署，借助 Cloudflare Worker 实现 API 代理与 WebSocket 多人中继。
 
@@ -92,14 +96,16 @@
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    GitHub Pages (静态托管)                │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────────────┐  │
-│  │ index.html│  │ styles.css│  │    js/ (ES Modules)  │  │
-│  │ (SPA入口) │  │ (4套主题) │  │  20+ 模块化组件      │  │
-│  └──────────┘  └──────────┘  └──────────────────────┘  │
+│  ┌──────────────────────────────────────────────────┐  │
+│  │  Astro 构建输出 (dist/)                           │  │
+│  │  · SPA 入口 (index.html, CSS 构建合并)            │  │
+│  │  · 25+ ES Module 客户端脚本 (public/js/)          │  │
+│  │  · 5 个独立 Prompt 文件 (缓存优化)                 │  │
+│  └──────────────────────────────────────────────────┘  │
 │                                                         │
 │  ┌──────────────────────────────────────────────────┐  │
 │  │              AI KP 引擎 (kp.js)                   │  │
-│  │  · 系统 Prompt 构建 (buildSystemPrompt)           │  │
+│  │  · Prompt 组装 (共享前缀 + 系统专属 + 动态数据)    │  │
 │  │  · SSE 流式响应解析                               │  │
 │  │  · CoC 检定两遍检测 (check-resolver.js 掷骰)      │  │
 │  │  · 智能上下文压缩 (7类结构化摘要)                  │  │
@@ -127,8 +133,10 @@
 ```
 
 **架构亮点：**
-- **零依赖前端**：纯 ES Modules，无构建工具，无 npm 依赖
-- **双重部署模式**：GitHub Pages（静态） + Cloudflare Worker（API 代理/WS 中继），或 `node server.js` 本地一键启动
+- **Astro 构建**：组件化 HTML/CSS，构建时优化合并，产物为纯静态文件
+- **客户端 SPA**：ES Modules 驱动的单页应用，5 个页面区段无需刷新切换
+- **双层部署**：GitHub Pages（Astro 静态输出）+ Cloudflare Worker（API 代理/WS 中继）
+- **Prompt 缓存优化**：共享前言置于请求位置 0，4 系统切换时复用 Anthropic prompt cache
 - **安全 API 代理**：Worker 仅允许白名单域名（api.anthropic.com, api.openai.com, api.deepseek.com），API Key 仅存浏览器 localStorage
 - **WebSocket 中继**：基于 Cloudflare Durable Objects，自动广播/单播/排除，支持断线重连
 
@@ -136,23 +144,25 @@
 
 ## 快速开始
 
-### 方式一：本地运行（推荐开发）
+### 方式一：Astro 开发模式（推荐）
 
 ```bash
-node server.js
+npm install
+npx astro dev          # 启动开发服务器，HMR 热更新，http://localhost:4321
 ```
 
-零依赖（仅 Node.js 内置模块），自动打开浏览器。启动时自动清理旧端口占用。
-
-### 方式二：GitHub Pages + Cloudflare Worker
+### 方式二：本地服务器 + API 代理
 
 ```bash
-# 部署 Worker
-cd cloudflare
-npx wrangler deploy
+npm run build          # 先构建 dist/
+node server.js         # 启动 Node.js 服务器 + API 代理，http://127.0.0.1:8080
 ```
 
-将 Worker URL 填入应用配置即可。
+零依赖（仅 Node.js 内置模块），自动打开浏览器。
+
+### 方式三：Windows 一键启动
+
+双击 `TTRPG.bat`，选择启动模式。
 
 ### 使用 AI 主持人
 
@@ -167,46 +177,45 @@ npx wrangler deploy
 
 ```
 paotuan/
-├── index.html                  # SPA 入口（5 个页面区段）
-├── styles.css                  # 全局样式 + 4 套主题 CSS 变量
+├── astro.config.mjs            # Astro 构建配置
+├── package.json                # npm 依赖与脚本
 ├── server.js                   # Node.js 本地服务器 + API 代理
 ├── TTRPG.bat                   # Windows 一键启动脚本
+├── .github/workflows/
+│   └── deploy.yml              # GitHub Actions 自动部署
+├── src/                        # Astro 源码
+│   ├── layouts/
+│   │   └── MainLayout.astro    # 主布局（HTML5 shell, 全局 CSS, 导航, 页脚）
+│   ├── pages/
+│   │   └── index.astro         # SPA 入口（组合所有 5 个页面区段）
+│   ├── components/
+│   │   ├── Nav.astro           # 导航栏（5 页面标签 + 主题徽章）
+│   │   ├── Footer.astro        # 页脚（版权 + GitHub 链接）
+│   │   ├── HomeSection.astro   # 首页（AI KP 聊天, RPG 选择, 剧本库, 存档）
+│   │   ├── CharacterSection.astro  # 人物卡（3 栏布局）
+│   │   ├── DiceSection.astro   # 骰子投掷器
+│   │   ├── NotesSection.astro  # 跑团笔记
+│   │   └── MultiplayerSection.astro # 多人联机
+│   └── styles/                 # 10 个 CSS 模块（构建时合并优化）
+├── public/                     # Astro 静态资源（直接复制到 dist/）
+│   ├── CNAME                   # 自定义域名 ttrpg.183107.xyz
+│   └── js/                     # 客户端 ES Modules（25+ 文件）
+│       ├── app.js              # 模块入口
+│       ├── state.js            # 全局状态 + 常量 + 技能定义
+│       ├── kp.js               # AI KP 引擎
+│       ├── prompts/            # AI Prompt 文件（5 个，独立可编辑）
+│       │   ├── shared-preamble.js  # 4 系统共享前缀（缓存优化）
+│       │   ├── dnd.js          # D&D 5e 系统 Prompt
+│       │   ├── coc.js          # CoC 7e 系统 Prompt
+│       │   ├── cyberpunk.js    # CP:R 系统 Prompt
+│       │   └── pathfinder.js   # PF2e 系统 Prompt
+│       └── multiplayer/        # 多人联机模块（8 个）
 ├── cloudflare/
 │   ├── worker.js               # CF Worker（API 代理 + WebSocket 中继）
 │   └── wrangler.toml           # Wrangler 配置
-└── js/
-    ├── app.js                  # ES Module 入口
-    ├── init.js                 # 初始化 + 事件绑定 + 键盘快捷键
-    ├── state.js                # 全局状态 + 常量 + AI Prompt + CoC 扩展
-    ├── utils.js                # 工具函数（DOM 查询、HTML 转义、Toast）
-    ├── dom.js                  # DOM 元素引用缓存
-    ├── theme.js                # 规则系统切换 + 页面导航
-    ├── character.js            # 人物卡管理（属性/技能/法术/装备/特质）
-    ├── dice.js                 # 骰子投掷器
-    ├── kp.js                   # AI 主持人引擎（Prompt/Api/会话/压缩）
-    ├── commands.js             # AI 指令解析器（SAN/HP/特质/记忆等）
-    ├── check-resolver.js       # CoC 7e D100 检定解析与掷骰
-    ├── coc-rules.js            # CoC 7e 特殊规则（幸运/孤注/技能成长）
-    ├── coc-status.js           # CoC 状态渲染（SAN/HP/LUCK/编年史）
-    ├── san.js                  # CoC 7e SAN 疯狂机制
-    ├── saves.js                # 游戏存档系统
-    ├── scenario.js             # 剧本知识库管理
-    ├── notes.js                # 跑团笔记
-    ├── memory-bank.js          # 结构化记忆库（NPC/线索/剧情/地点）
-    ├── particles.js            # Canvas 星空粒子背景
-    ├── api-browser.js          # D&D 5e API 在线资源浏览器
-    └── multiplayer/
-        ├── index.js            # 多人联机主控（命名空间 + API）
-        ├── connection.js       # WebSocket 连接管理 + 重连 + 心跳
-        ├── host.js             # 房主消息处理 + AI 调度 + Prompt
-        ├── client.js           # 客户端消息处理 + 状态同步
-        ├── ui.js               # 联机 UI 渲染（房间/聊天/玩家列表）
-        ├── game-start.js       # AI 开场叙述生成
-        ├── combat.js           # CoC 7e 战斗管理器（DEX/超时/惩罚骰）
-        └── chase.js            # CoC 7e 追逐管理器（MOV/障碍/CON）
+└── docs/
+    └── architecture.md         # 架构文档
 ```
-
----
 
 ## 浏览器兼容性
 
@@ -225,5 +234,6 @@ MIT
 ---
 
 <p align="center">
-  <sub>跑团助手 — 让每一次冒险都独一无二</sub>
+  <sub>跑团助手 — 让每一次冒险都独一无二</sub><br>
+  <sub>© 2025 txy571. All rights reserved.</sub>
 </p>

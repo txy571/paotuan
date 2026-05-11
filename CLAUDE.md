@@ -12,30 +12,32 @@ An Astro-powered SPA for TTRPG. Supports solo play with an AI game master (KP/DM
 ## Architecture
 
 ```
-index.html              → Raw SPA shell (legacy, for node server.js quick dev)
-astro.config.mjs        → Astro build config (site: ttrpg.183107.xyz)
+astro.config.mjs            → Astro build config (site: ttrpg.183107.xyz)
+package.json                → npm scripts + deps
+.github/workflows/deploy.yml → CI/CD: build → GitHub Pages
 src/
-  pages/index.astro     → SPA entry point, composes all 5 page sections
-  layouts/MainLayout.astro → HTML shell: <head>, nav, <slot/>, footer, script loader
+  pages/index.astro         → SPA entry point, composes all 5 page sections
+  layouts/MainLayout.astro  → HTML shell: <head>, nav, <slot/>, footer, script loader
   components/
-    Nav.astro           → Global nav bar with theme badge + 5 page tabs
-    Footer.astro        → Copyright + GitHub icon link
-    HomeSection.astro   → Home: RPG cards, AI KP chat, scenario DB, game saves
-    CharacterSection.astro → Character sheet: 3-col (portrait/attrs+skills/traits+combat)
-    DiceSection.astro   → Dice roller: d4-d100 strip, custom expression, history
-    NotesSection.astro  → Session notes editor + history list
+    Nav.astro               → Global nav bar with theme badge + 5 page tabs
+    Footer.astro            → Copyright + GitHub icon link
+    HomeSection.astro       → Home: RPG cards, AI KP chat, scenario DB, game saves
+    CharacterSection.astro  → Character sheet: 3-col layout
+    DiceSection.astro       → Dice roller: d4-d100 strip, custom expression, history
+    NotesSection.astro      → Session notes editor + history list
     MultiplayerSection.astro → Lobby + room views, player sidebar, KP panel
-  styles/               → 10 CSS modules (bundled by Astro at build)
+  styles/                   → 10 CSS modules (bundled by Astro at build)
 public/
-  CNAME                 → Custom domain
-  js/                   → Client-side ES modules (copied as-is to dist/)
-    prompts/            → AI system prompts (5 files, imported by state.js)
-    multiplayer/        → Multiplayer modules (8 files)
+  CNAME                     → Custom domain
+  js/                       → Client-side ES modules (copied as-is to dist/)
+    prompts/                → AI system prompts (5 files, imported by state.js)
+    multiplayer/            → Multiplayer modules (8 files)
+dist/                       → Astro build output (static site)
 cloudflare/
-  worker.js             → CF Worker: API proxy + Durable Object WS relay
+  worker.js                 → CF Worker: API proxy + Durable Object WS relay
   wrangler.toml
-server.js               → Local dev server + API proxy (zero deps, Node built-ins)
-TTRPG.bat               → Windows multi-mode launcher (Astro dev / Node / preview)
+server.js                   → Local dev server + API proxy (serves dist/)
+TTRPG.bat                   → Windows multi-mode launcher
 ```
 
 ## Pages (SPA Navigation)
@@ -53,11 +55,12 @@ TTRPG.bat               → Windows multi-mode launcher (Astro dev / Node / prev
 ## Running Locally
 
 ```bash
-npm run dev           # node server.js (static files + API proxy + WS)
-npx astro dev         # Astro dev server with HMR
-npm run build         # Production build to dist/
-npm run preview       # Preview production build
-./TTRPG.bat           # Windows launcher menu
+npm install             # Install dependencies
+npx astro dev           # Astro dev server with HMR (http://localhost:4321)
+npm run build           # Production build to dist/
+npm run preview         # Preview production build
+node server.js          # Node.js static server + API proxy (serves dist/)
+./TTRPG.bat             # Windows launcher menu
 ```
 
 ## Build & Deploy

@@ -75,7 +75,7 @@ paotuan/
 ├── package.json                  # npm 依赖 + 脚本
 ├── server.js                     # Node.js 本地服务器 + API 代理
 ├── TTRPG.bat                     # Windows 启动器
-├── index.html                    # 原始 SPA 入口 (向后兼容)
+├── dist/                         # Astro 构建输出 (静态站点)
 ├── CLAUDE.md                     # Claude Code 配置
 └── docs/
     └── architecture.md           # 本文档
@@ -107,10 +107,14 @@ KP_SHARED_PREAMBLE (固定 ~2500 字符, 4 系统完全相同)
 ## 本地开发
 
 ```bash
-# Astro 开发模式 (HMR 热更新)
-npm run dev
+# 安装依赖
+npm install
 
-# 或使用 Node.js 本地服务器 + API 代理
+# Astro 开发模式 (HMR 热更新, 推荐)
+npx astro dev
+
+# Node.js 服务器 + API 代理 (需先构建)
+npm run build
 node server.js
 
 # 构建生产版本

@@ -31,18 +31,18 @@ goto :end
 
 :node_server
 echo.
+echo   检查构建产物...
+if not exist "dist\index.html" (
+    echo   dist/ 目录不存在，正在执行 npm run build...
+    call npx astro build
+    if %errorlevel% neq 0 (
+        echo   ❌ 构建失败，请检查错误信息
+        pause
+        goto :end
+    )
+)
 echo   启动 Node.js 本地服务器 + API 代理...
 node server.js
-if %errorlevel% equ 0 goto :end
-
-:: Fallback: Python
-echo   Node.js not found — trying Python...
-python server.py
-if %errorlevel% equ 0 goto :end
-
-:: Fallback: open directly
-echo   No server available — opening directly...
-start "" "index.html"
 goto :end
 
 :astro_preview

@@ -1,6 +1,7 @@
 /**
  * TTRPG Companion — Local Server + API Proxy
  * Zero dependencies (Node.js built-ins only).
+ * Serves static files from dist/ (Astro build) or public/ (Astro static).
  * Usage: node server.js
  */
 const http = require('http');
@@ -12,6 +13,13 @@ const { execSync } = require('child_process');
 const PORT_START = 8080;
 const DIR = __dirname;
 const PID_FILE = path.join(DIR, '.ttrpg_server.pid');
+
+// Static file search order: dist/ (build output) → public/ (Astro static) → root
+const STATIC_ROOTS = [
+  path.join(DIR, 'dist'),
+  path.join(DIR, 'public'),
+  DIR,
+];
 
 // ── MIME ──────────────────────────────────────────────
 const MIME = {
@@ -82,21 +90,22 @@ function removePid() {
 }
 
 // ── Static file serve ────────────────────────────────
-function serveStatic(res, filePath) {
-  const ext = path.extname(filePath).toLowerCase();
+function serveStatic(res, urlPath) {
+  const ext = path.extname(urlPath).toLowerCase();
   const ct = MIME[ext] || 'application/octet-stream';
-  // Try multiple locations: root first, then public/ (Astro static assets)
-  const tryPaths = [
-    filePath,
-    path.join(DIR, 'public', path.relative(DIR, filePath)),
-  ];
-  for (const p of tryPaths) {
+  const relPath = path.normalize(urlPath).replace(/^[/\\]+/, '');
+
+  for (const root of STATIC_ROOTS) {
     try {
+      const p = path.join(root, relPath);
+      // Security: ensure the resolved path is within a static root
+      const allowed = STATIC_ROOTS.some(r => p.startsWith(r));
+      if (!allowed) continue;
       const data = fs.readFileSync(p);
       res.writeHead(200, { 'Content-Type': ct });
       res.end(data);
       return;
-    } catch (_) { /* try next */ }
+    } catch (_) { /* try next root */ }
   }
   res.writeHead(404);
   res.end('Not Found');
@@ -108,7 +117,6 @@ function proxyRequest(req, res, target) {
   const isHttps = url.protocol === 'https:';
   const transport = isHttps ? https : http;
 
-  // Build upstream headers
   const upstreamHeaders = {};
   for (const [k, v] of Object.entries(req.headers)) {
     if (!HOP_BY_HOP.has(k.toLowerCase())) upstreamHeaders[k] = v;
@@ -161,7 +169,7 @@ function proxyRequest(req, res, target) {
 // ── Server ───────────────────────────────────────────
 killStaleServers();
 const port = findFreePort(PORT_START);
-const url = `http://127.0.0.1:${port}/index.html`;
+const url = `http://127.0.0.1:${port}/`;
 
 const server = http.createServer((req, res) => {
   // CORS
@@ -198,10 +206,7 @@ const server = http.createServer((req, res) => {
   // Static files
   let reqPath = req.url.split('?')[0];
   if (reqPath === '/') reqPath = '/index.html';
-  const safePath = path.normalize(reqPath).replace(/^[/\\]+/, '');
-  const filePath = path.join(DIR, safePath);
-  if (!filePath.startsWith(DIR)) { res.writeHead(403); res.end('Forbidden'); return; }
-  serveStatic(res, filePath);
+  serveStatic(res, reqPath);
 });
 
 server.listen(port, '127.0.0.1', () => {
@@ -210,10 +215,12 @@ server.listen(port, '127.0.0.1', () => {
   process.on('SIGINT', () => { removePid(); process.exit(0); });
   process.on('SIGTERM', () => { removePid(); process.exit(0); });
 
+  const hasDist = fs.existsSync(path.join(DIR, 'dist', 'index.html'));
   console.log('');
   console.log('  🎲 跑团助手 TTRPG Companion');
   console.log('  ─────────────────────────────');
   console.log(`  服务地址: ${url}`);
+  if (!hasDist) console.log('  ⚠ 未检测到 dist/，请先运行 npm run build 构建前端');
   console.log('  按 Ctrl+C 或关闭此窗口退出');
   console.log('');
 

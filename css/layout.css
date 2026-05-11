@@ -1,0 +1,533 @@
+/* ============================================================
+   CSS Module: Layout & Navigation
+   — Body background, particles canvas, app container
+   — Navigation bar, tabs, theme badge, page transitions
+   — Hero section, RPG card grid, API browser
+   — Character selection section (home page)
+   ============================================================ */
+
+/* ============================================================
+   TTRPG Companion — Complete Stylesheet
+   Four RPG system themes via CSS custom properties
+   ============================================================ */
+
+/* ---------- CSS Reset & Base ---------- */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ---------- D&D 5e — 龙与地下城 ---------- */
+
+/* ---------- CoC — 克苏鲁的呼唤 ---------- */
+
+/* ---------- Cyberpunk RED — 赛博朋克 ---------- */
+
+/* ---------- Pathfinder — 开拓者 ---------- */
+
+/* ---------- Body & Background ---------- */
+body {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  background: var(--bg-base);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background var(--t) var(--ease-out), color var(--t) var(--ease-out);
+  line-height: 1.55;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse at 15% 40%, var(--accent-dim) 0%, transparent 60%),
+    radial-gradient(ellipse at 85% 25%, rgba(34,68,204,0.04) 0%, transparent 55%);
+  pointer-events: none; z-index: 0; opacity: 0.18;
+}
+
+/* ---------- Particles Canvas ---------- */
+#particles {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  opacity: 0.55;
+}
+
+/* ---------- App Shell ---------- */
+#app { position: relative; z-index: 1; max-width: 1340px; margin: 0 auto; padding: 0 24px; }
+
+/* ---------- Navigation ---------- */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 22px; margin: 16px 0;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle); border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm); flex-wrap: wrap; gap: 10px;
+  backdrop-filter: blur(8px);
+}
+
+.nav-brand {
+  font-family: var(--font-display); font-size: 1.35rem; font-weight: bold;
+  color: var(--text-gold); display: flex; align-items: center; gap: 10px;
+}
+
+.nav-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.nav-tab {
+  padding: 10px 20px; border: 1px solid transparent;
+  background: transparent; color: var(--text-dim);
+  border-radius: var(--r-md); cursor: pointer; font-size: .92rem; font-weight: 500;
+  transition: background var(--t) var(--ease-out), color var(--t) var(--ease-out), border-color var(--t) var(--ease-out), opacity var(--t) var(--ease-out), transform var(--t) var(--ease-out); white-space: nowrap; position: relative;
+}
+
+.nav-tab:hover { color: var(--text); border-color: var(--border); background: rgba(255,255,255,.03); }
+
+.nav-tab.active { color: var(--text-gold); border-color: var(--border-bright); background: var(--accent-dim); }
+
+.nav-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 20%; width: 60%; height: 2px; background: var(--border-bright); border-radius: 1px; }
+
+.theme-badge {
+  padding: 5px 14px; border-radius: 20px; font-size: .78rem; font-weight: 600;
+  background: var(--accent-dim); color: var(--text-gold); border: 1px solid var(--border-bright);
+  letter-spacing: .02em;
+}
+
+/* ---------- Page Sections ---------- */
+.page { display: none; animation: fadeIn .35s var(--ease-out); }
+
+.page.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   HOME PAGE
+   ============================================================ */
+.hero {
+  text-align: center; padding: 48px 20px 24px;
+}
+
+.hero h1 {
+  font-family: var(--font-display); font-size: 2.8rem;
+  color: var(--text-gold); margin-bottom: 10px;
+  text-shadow: 0 0 20px var(--accent-dim);
+}
+
+.hero p { color: var(--text-dim); font-size: 1.1rem; max-width: 620px; margin: 0 auto; }
+
+.rpg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 22px; padding: 16px 0 28px;
+}
+
+.rpg-card {
+  position: relative; overflow: hidden;
+  border-radius: var(--r-xl); padding: 34px 26px 28px;
+  cursor: pointer; transition: background .35s var(--ease-in-out), color .35s var(--ease-out), border-color .35s var(--ease-out), opacity .35s var(--ease-out), transform .35s var(--ease-out);
+  border: 2px solid var(--border);
+  background: var(--bg-card); box-shadow: var(--shadow);
+  contain: layout style;
+}
+
+.rpg-card::before {
+  content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: radial-gradient(circle at 80% 0%, var(--accent-dim), transparent 60%);
+  opacity: 0; transition: opacity .4s;
+}
+
+.rpg-card:hover::before { opacity: 1; }
+
+.rpg-card:hover { transform: translateY(-3px); border-color: var(--border-bright); box-shadow: var(--shadow-md), var(--glow-spread); }
+
+.rpg-card.selected { border-color: var(--border-bright); box-shadow: 0 0 32px var(--accent-dim), var(--shadow-md); }
+
+.rpg-card.selected::after {
+  content: '✓'; position: absolute; top: 14px; right: 18px;
+  font-size: 1.1rem; color: #111; background: var(--text-gold);
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-weight: bold;
+}
+
+.rpg-card-icon { font-size: 2.4rem; font-weight: 900; margin-bottom: 14px; opacity: .9; letter-spacing: .04em; }
+
+.rpg-card h3 { font-family: var(--font-display); font-size: 1.4rem; color: var(--text-gold); margin-bottom: 2px; }
+
+.rpg-card .subtitle { color: var(--text-dim); font-size: .82rem; margin-bottom: 14px; }
+
+.rpg-card p { color: var(--text-dim); font-size: .88rem; line-height: 1.55; }
+
+.rpg-card .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 18px; }
+
+.rpg-card .tag {
+  padding: 4px 12px; border-radius: 14px; font-size: .73rem;
+  background: var(--accent-dim); color: var(--text-gold); border: 1px solid var(--accent);
+}
+
+.rpg-card.dnd-card       { border-top: 2px solid var(--accent); }
+
+.rpg-card.coc-card       { border-top: 2px solid var(--accent); }
+
+.rpg-card.cyberpunk-card { border-top: 2px solid var(--accent); }
+
+.rpg-card.pathfinder-card{ border-top: 2px solid var(--accent); }
+
+/* API Section */
+.api-section { margin-top: 10px; }
+
+.api-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+
+.api-card {
+  padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-md);
+  cursor: pointer; transition: background var(--t) var(--ease-out), color var(--t) var(--ease-out), border-color var(--t) var(--ease-out), opacity var(--t) var(--ease-out), transform var(--t) var(--ease-out); background: rgba(0,0,0,.15);
+}
+
+.api-card:hover { border-color: var(--accent); background: rgba(255,255,255,.03); transform: translateY(-1px); }
+
+.api-card h4 { color: var(--text-gold); font-size: .9rem; margin-bottom: 2px; }
+
+.api-card .api-desc { font-size: .78rem; color: var(--text-dim); line-height: 1.4; }
+
+/* ============================================================
+   CHARACTER SHEET
+   ============================================================ */
+.char-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr 290px;
+  gap: 20px; padding: 10px 0;
+}
+
+/* Form elements */
+input[type="text"], input[type="number"], select, textarea {
+  width: 100%; padding: 10px 14px; font-family: inherit; font-size: .88rem;
+  background: rgba(0,0,0,.25); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  transition: background var(--t) var(--ease-out), color var(--t) var(--ease-out), border-color var(--t) var(--ease-out), opacity var(--t) var(--ease-out), transform var(--t) var(--ease-out);
+}
+
+/* Portrait */
+.portrait-zone {
+  width: 100%; aspect-ratio: 3/4; border: 1px dotted var(--border-strong);
+  border-radius: var(--r-lg); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background var(--t) var(--ease-out), color var(--t) var(--ease-out), border-color var(--t) var(--ease-out), opacity var(--t) var(--ease-out), transform var(--t) var(--ease-out); background: rgba(0,0,0,.18);
+  overflow: hidden; position: relative; margin-bottom: 18px;
+}
+
+/* ---------- Attribute Bars (百分制) ---------- */
+.attr-section { margin-bottom: 10px; }
+
+/* ---------- Skills ---------- */
+.skills-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 3px;
+  max-height: 420px; overflow-y: auto; padding-right: 4px;
+}
+
+/* ---------- Traits / Feats ---------- */
+.tag-row {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px;
+}
+
+/* ---------- Equipment Table ---------- */
+.equip-table { width: 100%; font-size: .82rem; border-collapse: collapse; }
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn {
+  padding: 10px 22px; border-radius: var(--r-md); cursor: pointer;
+  font-size: .85rem; font-weight: 600; font-family: inherit;
+  transition: background var(--t) var(--ease-out), color var(--t) var(--ease-out), border-color var(--t) var(--ease-out), opacity var(--t) var(--ease-out), transform var(--t) var(--ease-out); border: 1px solid transparent;
+  display: inline-flex; align-items: center; gap: 6px;
+  user-select: none;
+}
+
+/* Reusable panel internals */
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px; flex-wrap: wrap; gap: 8px;
+}
+
+.field-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+
+.field-row > :first-child { flex: 1; }
+
+/* ============================================================
+   DICE ROLLER
+   ============================================================ */
+.dice-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 10px 0; }
+
+@keyframes pulse-border { 0%,100%{opacity:.3;transform:scale(1)} 50%{opacity:1;transform:scale(1.04)} }
+
+/* ============================================================
+   SESSION NOTES
+   ============================================================ */
+.notes-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+
+.notes-editor textarea {
+  min-height: 380px; resize: vertical; font-family: var(--font-display);
+  line-height: 1.8; font-size: .92rem;
+}
+
+.notes-list { max-height: 460px; overflow-y: auto; }
+
+.note-card {
+  padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--r-md);
+  margin-bottom: 10px; cursor: pointer; transition: background var(--t) var(--ease-out), color var(--t) var(--ease-out), border-color var(--t) var(--ease-out), opacity var(--t) var(--ease-out), transform var(--t) var(--ease-out);
+  background: rgba(0,0,0,.12);
+}
+
+.note-card:hover { border-color: var(--accent); background: rgba(255,255,255,.02); }
+
+.note-card .note-date { font-size: .73rem; color: var(--text-dim); }
+
+.note-card .note-title { font-size: .9rem; color: var(--text); margin-top: 4px; font-weight: 500; }
+
+/* ============================================================
+   INITIATIVE TRACKER
+   ============================================================ */
+.initiative-panel { margin-top: 18px; }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast-container {
+  position: fixed; bottom: 30px; right: 30px; z-index: 9999;
+  display: flex; flex-direction: column-reverse; gap: 8px;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 700px) {
+  .hero h1 { font-size: 1.8rem; }
+  .rpg-grid { grid-template-columns: 1fr; }
+  nav { padding: 8px 14px; }
+  .nav-tab { padding: 10px 16px; font-size: .82rem; min-height: 44px; }
+  .dice-big-num { font-size: 3.5rem; }
+  .char-layout { gap: 14px; }
+  .skills-grid { grid-template-columns: 1fr; }
+  .btn { min-height: 44px; }
+  .dice-die { width: 56px; height: 56px; }
+  body { overscroll-behavior: contain; }
+}
+
+/* Tablet: compact nav, 2-column grid */
+@media (min-width: 701px) and (max-width: 960px) {
+  .nav-tab { padding: 9px 16px; }
+  .hero h1 { font-size: 2.2rem; }
+  .rpg-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ============================================================
+   CHARACTER SELECTION ON HOME PAGE
+   ============================================================ */
+.char-select-section {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  background: var(--bg-panel);
+}
+
+/* ============================================================
+   AI KP (GAME MASTER) INTERFACE
+   ============================================================ */
+.kp-hero {
+  position: relative; overflow: hidden;
+  border-radius: var(--r-xl); padding: 0;
+  margin-bottom: 28px;
+  border: 2px solid var(--border-bright);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-md), 0 0 40px var(--accent-dim);
+  cursor: pointer;
+  transition: background .35s var(--ease-in-out), color .35s var(--ease-out), border-color .35s var(--ease-out), opacity .35s var(--ease-out), transform .35s var(--ease-out);
+}
+
+@keyframes kp-float {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-4px); }
+}
+
+@keyframes kp-pulse {
+  0%,100% { box-shadow: 0 0 0 0 var(--accent-dim); }
+  50%     { box-shadow: 0 0 0 6px transparent; }
+}
+
+@keyframes kp-arrow {
+  0%,100% { transform: translateX(0); opacity: .55; }
+  50%     { transform: translateX(4px); opacity: 1; }
+}
+
+/* KP Chat Panel */
+.kp-chat-wrapper {
+  margin-bottom: 28px; animation: fadeIn .4s ease;
+}
+
+/* KP Config Panel */
+.kp-config {
+  display: grid; grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 10px; align-items: end; padding: 14px 0;
+}
+
+/* ---------- CoC Status Bars ---------- */
+.coc-status-bar {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  padding: 10px 0; margin-bottom: 4px;
+}
+
+/* ---------- Game Save List ---------- */
+.empty-state {
+  color: var(--text-dim); font-size: .82rem; padding: 16px 8px;
+  text-align: center; line-height: 1.5;
+}
+
+/* ---------- Chronicle ---------- */
+.chronicle-entry {
+  padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.03);
+}
+
+/* Responsive KP */
+@media (max-width: 700px) {
+  .kp-hero-inner { flex-direction: column; text-align: center; padding: 20px; }
+  .kp-hero-arrow { display: none; }
+  .kp-chat-panel { height: 420px; }
+  .kp-msg { max-width: 92%; }
+}
+
+/* ============================================================
+   PRINT STYLES (for character sheets)
+   ============================================================ */
+/* ============================================================
+   MULTIPLAYER — PeerJS WebRTC 联机系统
+   ============================================================ */
+
+/* Lobby */
+.mp-lobby {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 70vh; padding: 20px;
+}
+
+/* Character selector in lobby */
+.mp-char-pick {
+  margin-top: 18px; padding: 14px; border: 1px solid var(--border);
+  border-radius: var(--r-md); background: rgba(0,0,0,.15);
+}
+
+/* Player slot grid (4 players) */
+.mp-slots-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  margin-top: 16px;
+}
+
+/* Room Container */
+.mp-room { animation: fadeIn .4s ease; }
+
+/* Sidebar */
+.mp-sidebar {
+  background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 16px;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* Main Game Area */
+.mp-main { display: flex; flex-direction: column; overflow: hidden; }
+
+/* Chat Messages (reuse kp-msg styles but add sender info) */
+.mp-msg {
+  max-width: 85%; padding: 10px 14px; border-radius: var(--r-md);
+  font-size: .84rem; line-height: 1.55; animation: msgIn .3s ease;
+}
+
+/* Phase Badge */
+.mp-phase-badge {
+  padding: 3px 10px; border-radius: 12px; font-size: .7rem;
+  font-weight: 600; background: var(--accent-dim); color: var(--text-gold);
+  border: 1px solid var(--accent);
+}
+
+/* Turn Banner */
+.mp-turn-banner {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  padding: 12px 18px; margin-bottom: 12px;
+  background: var(--accent-dim); border: 1px solid var(--text-gold);
+  border-radius: var(--r-md); font-size: .85rem; color: var(--text);
+}
+
+/* Lobby Controls */
+.mp-lobby-controls {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  padding: 12px 18px; margin-bottom: 12px;
+  background: var(--accent-dim); border: 1px solid var(--accent3);
+  border-radius: var(--r-md); font-size: .82rem; color: var(--text-dim);
+}
+
+/* Multiplayer Input Area */
+.mp-kp-quick-actions {
+  display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 16px 0;
+}
+
+/* Connection Overlay */
+.mp-overlay {
+  position: fixed; inset: 0; z-index: 9998;
+  background: var(--overlay); display: flex;
+  align-items: center; justify-content: center;
+}
+
+/* Reconnect Toast */
+.mp-reconnect-toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  z-index: 9999; padding: 12px 24px; border-radius: var(--r-md);
+  background: #e8a030; color: #000; font-weight: 600; font-size: .85rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,.4);
+  animation: toastIn .35s ease;
+}
+
+/* ============================================================
+   COC STATUS MINI (compact, no SAN/HP bars)
+   ============================================================ */
+.coc-status-mini {
+  display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+  padding: 8px 12px; margin-bottom: 12px;
+  border: 1px solid var(--border); border-radius: var(--r-md);
+  background: rgba(0,0,0,.12); font-size: .78rem;
+}
+
+/* ============================================================
+   SKILL ROWS (numeric, CoC percentile)
+   ============================================================ */
+.skill-row-coc {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 8px; border-radius: var(--r-sm);
+  background: rgba(0,0,0,.08); margin-bottom: 3px;
+  transition: background var(--t) var(--ease-out);
+}
+
+/* ============================================================
+   SPELL CARDS
+   ============================================================ */
+.spell-level-head {
+  font-size: .8rem; font-weight: 600; color: var(--text-gold);
+  padding: 8px 0 4px; border-bottom: 1px solid var(--border);
+  margin-bottom: 6px; font-family: var(--font-display);
+}
+
+/* Responsive */
+@media (max-width: 800px) {
+  .mp-room-body { grid-template-columns: 1fr; height: auto; }
+  .mp-sidebar { max-height: 200px; }
+  .mp-room-header { flex-direction: column; align-items: flex-start; }
+  .mp-msg { max-width: 94%; }
+  .mp-lobby-card { padding: 32px 20px; }
+}
+
+/* ── CoC 7e Combat UI ────────────────────────── */
+.combat-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+}
+
+/* ── Combat timeout bar ── */
+.timeout-bar {
+  height: 3px; background: var(--accent); border-radius: 2px;
+  transition: width 1s linear; margin-top: 4px; will-change: width;
+}
+
+/* ── Phase badge variants ── */
+.mp-phase-badge.combat { background: rgba(220,60,40,.15); color: #e04848; }

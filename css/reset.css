@@ -1,0 +1,43 @@
+/* ============================================================
+   CSS Module: Reset & Design Tokens
+   — CSS reset, :root custom properties, scrollbar styles
+   — Spacing scale, shadow hierarchy, border tokens, transition curves
+   ============================================================ */
+
+:root {
+  --t: 0.18s;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --r-sm: 4px;
+  --r-md: 7px;
+  --r-lg: 10px;
+  --r-xl: 14px;
+  --font-body: 'Segoe UI', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+  /* Spacing scale — 8px grid with deliberate offsets */
+  --space-xs: 5px;
+  --space-sm: 9px;
+  --space-md: 18px;
+  --space-lg: 26px;
+  --space-xl: 34px;
+  --space-2xl: 50px;
+  /* Border hierarchy */
+  --border-subtle: rgba(255,255,255,0.028);
+  --border: rgba(255,255,255,0.055);
+  --border-strong: rgba(255,255,255,0.09);
+  /* Shadow hierarchy — multi-layer, no single diffuse blob */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.12);
+  --shadow-md: 0 2px 4px rgba(0,0,0,0.10), 0 6px 18px rgba(0,0,0,0.30);
+  --shadow-lg: 0 3px 6px rgba(0,0,0,0.08), 0 10px 32px rgba(0,0,0,0.38);
+  font-size: 16px;
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 6px; }
+
+::-webkit-scrollbar-track { background: transparent; }
+
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; border: 1px solid transparent; background-clip: padding-box; }
+
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }

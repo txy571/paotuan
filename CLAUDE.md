@@ -12,14 +12,24 @@ A zero-dependency, single-page TTRPG companion app. Supports solo play with an A
 ## Architecture
 
 ```
-index.html          → SPA shell (5 pages, data-theme driven)
-styles.css          → All styling; 4 RPG themes via CSS custom properties
+index.html          → SPA shell (5 pages, data-theme driven), loads 10 CSS modules
+css/
+  reset.css         → CSS reset, :root custom properties, scrollbar styles
+  themes.css        → 4 RPG theme [data-theme] blocks (D&D, CoC, Cyberpunk, Pathfinder)
+  layout.css        → Body, particles, nav, hero, RPG grid, API browser, char select
+  components.css    → Shared: panels, forms, buttons, tags, toasts, empty/loading/error
+  character.css     → Character sheet: 3-col layout, attributes, skills, spells, equip, init
+  dice.css          → Dice roller: dice strip, result display, roll history
+  kp.css            → AI KP interface: banner, chat, quick actions, config, chronicle
+  multiplayer.css   → Multiplayer: lobby, room, chat, combat/chase phases
+  coc.css           → CoC-specific: status bars, chronicle, combat tags, timeout bar
+  responsive.css    → Responsive/print: mobile, tablet, component breakpoints, print styles
 js/
   app.js            → Sole module entry, re-exports init
   init.js           → Bootstrap: event delegation, data-action binding, autosave
-  state.js          → Global state, AI prompts (4 systems), CoC rules, skill defs
+  state.js          → Global state, KP_SHARED_PREAMBLE (prompt cache prefix), 4 system prompts, skill defs
   theme.js          → RPG switching (body[data-theme]), SPA page navigation
-  kp.js             → AI KP engine (SSE streaming, context compression, multi-provider)
+  kp.js             → AI KP engine (buildSystemPrompt uses KP_SHARED_PREAMBLE + base + extra)
   character.js      → Character sheet CRUD, portrait, attribute/skill/equipment rendering
   dice.js           → Dice roller (d4–d100), expression parser, roll history
   commands.js       → Parse/apply AI 【指令】 in chat output (SAN, HP, traits, memory)
@@ -49,6 +59,7 @@ cloudflare/
   wrangler.toml     → Wrangler config
 server.js           → Local dev server (Node.js, zero deps)
 TTRPG.bat           → Windows launcher (starts server.js + opens browser)
+split-css.js        → Build tool: splits styles.css into 10 modules via brace-depth parsing
 ```
 
 ## Running Locally
@@ -85,12 +96,26 @@ Four RPG systems controlled by `body[data-theme]` attribute:
 | Cyberpunk RED | `cyberpunk` | d10 | GM |
 | Pathfinder 2e | `pathfinder` | d20 | GM |
 
-CSS custom properties cascade from `[data-theme]` selectors in `styles.css`. Each theme has its own color palette, font, and visual identity.
+CSS custom properties cascade from `[data-theme]` selectors in `css/themes.css`. Each theme has its own color palette, font, and visual identity.
+
+## Prompt Architecture (Cache-Optimized)
+
+`buildSystemPrompt()` in `kp.js` assembles the final prompt as:
+
+```
+KP_SHARED_PREAMBLE (fixed ~2500 chars, identical for all 4 RPG systems)
+  + KP_SYSTEM_PROMPTS[theme] (system-specific dice/rules, ~200-800 chars)
+  + extra (character data, scenario DB, memory bank — dynamic per request)
+```
+
+`KP_SHARED_PREAMBLE` is defined in `state.js` and contains: core identity & fairness rules (7 items), probability distribution requirements, plot consistency rules, output format rules, memory/context rules, and narrative recording instructions (`【TRAIT:...】`, `【ITEM:...】`, etc.). 
+
+By placing this identical block at position 0 of every request, the Anthropic prompt cache prefix is reused across all RPG system switches, reducing latency and cost.
 
 ## AI KP Flow
 
 1. User opens chat, selects a character, clicks the KP banner
-2. `buildSystemPrompt()` assembles: base system prompt + fairness rules + character data + scenario DB + memory bank summary + recent chat history
+2. `buildSystemPrompt()` assembles 3 parts in fixed order: `KP_SHARED_PREAMBLE` (cache-friendly prefix) + `KP_SYSTEM_PROMPTS[theme]` (system rules) + dynamic `extra` (character data, scenario DB, memory bank)
 3. SSE streaming request sent to configured provider (Anthropic/OpenAI/DeepSeek)
 4. Responses stream in real-time via `ReadableStream` reader
 5. Context compression triggers when approaching token limits (7-category structured summary)

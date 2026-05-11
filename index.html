@@ -10,14 +10,35 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>跑团助手 — TTRPG Companion</title>
-<link rel="stylesheet" href="styles.css">
+<!-- CSS Modules: loaded in dependency order (reset → themes → layout → components → pages) -->
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/themes.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/character.css">
+<link rel="stylesheet" href="css/dice.css">
+<link rel="stylesheet" href="css/kp.css">
+<link rel="stylesheet" href="css/multiplayer.css">
+<link rel="stylesheet" href="css/coc.css">
+<link rel="stylesheet" href="css/responsive.css">
 </head>
 <body data-theme="dnd">
 
 <canvas id="particles"></canvas>
 
+<!--
+  ╔══════════════════════════════════════════╗
+  ║  TTRPG Companion — Single-Page App      ║
+  ║  Five pages: Home, Character, Dice,     ║
+  ║  Notes, Multiplayer                     ║
+  ╚══════════════════════════════════════════╝
+-->
 <div id="app">
-  <!-- ========== NAVIGATION ========== -->
+
+  <!-- ──=============================================================
+       MODULE: Navigation
+       — Global nav bar with page tabs and RPG theme badge
+       =============================================================── -->
   <nav>
     <div class="nav-brand">
       跑团助手
@@ -32,14 +53,19 @@
     </div>
   </nav>
 
-  <!-- ========== HOME PAGE ========== -->
+  <!-- ──=============================================================
+       MODULE: Home Page (page-home)
+       — RPG system selection cards, character selector, AI KP chat
+       — Scenario knowledge DB, game saves & chronicle panel
+       — D&D 5e SRD API browser
+       =============================================================── -->
   <section class="page active" id="page-home">
     <div class="hero">
       <h1>选择你的冒险规则</h1>
       <p>选择一套规则系统开始跑团之旅——不同规则将带来完全不同的视觉体验与专属工具。</p>
     </div>
 
-    <!-- ===== CHARACTER SELECTION ===== -->
+    <!-- ── Character Selector ── -->
     <div class="char-select-section" id="homeCharSelect">
       <div class="char-select-header">
         <h3>🎭 选择你的角色</h3>
@@ -50,7 +76,7 @@
       </div>
     </div>
 
-    <!-- ===== AI KP HERO BANNER ===== -->
+    <!-- ── AI KP Hero Banner ── -->
     <div class="kp-hero" id="kpHero" data-action="kp:open">
       <div class="kp-hero-inner">
         <div class="kp-hero-icon">AI</div>
@@ -63,7 +89,7 @@
       </div>
     </div>
 
-    <!-- ===== AI KP CHAT INTERFACE ===== -->
+    <!-- ── AI KP Chat Interface ── -->
     <div class="kp-chat-wrapper" id="kpChatWrapper" style="display:none;">
       <div class="panel">
         <div class="panel-header">
@@ -162,7 +188,7 @@
       </div>
     </div>
 
-    <!-- ===== SCENARIO KNOWLEDGE DATABASE ===== -->
+    <!-- ── Scenario Knowledge Database ── -->
     <div class="scenario-db-wrapper" id="scenarioDbWrapper" style="display:none;margin-bottom:20px;">
       <div class="panel">
         <div class="panel-header">
@@ -238,7 +264,12 @@
     </div>
   </section>
 
-  <!-- ========== CHARACTER PAGE ========== -->
+  <!-- ──=============================================================
+       MODULE: Character Sheet Page (page-character)
+       — 3-column layout: portrait+info / attributes+skills / traits+combat
+       — Point-buy attribute system, skill proficiency, equipment table
+       — Spell book, initiative tracker, save/load/import/export
+       =============================================================── -->
   <section class="page" id="page-character">
     <div class="char-layout">
       <!-- Left Column: Portrait + Info -->
@@ -388,7 +419,11 @@
     </div>
   </section>
 
-  <!-- ========== DICE PAGE ========== -->
+  <!-- ──=============================================================
+       MODULE: Dice Roller Page (page-dice)
+       — Dice strip (d4-d100), custom expression input
+       — Big result display, roll history with timestamps
+       =============================================================── -->
   <section class="page" id="page-dice">
     <div class="dice-layout">
       <div class="panel">
@@ -428,7 +463,11 @@
     </div>
   </section>
 
-  <!-- ========== NOTES PAGE ========== -->
+  <!-- ──=============================================================
+       MODULE: Session Notes Page (page-notes)
+       — Markdown-like editor with title input
+       — Saved notes list, load/delete
+       =============================================================── -->
   <section class="page" id="page-notes">
     <div class="notes-layout">
       <div class="panel notes-editor">
@@ -447,7 +486,12 @@
     </div>
   </section>
 
-  <!-- ========== MULTIPLAYER PAGE ========== -->
+  <!-- ──=============================================================
+       MODULE: Multiplayer Page (page-multiplayer)
+       — Lobby: create/join room via Cloudflare Worker WebSocket relay
+       — Room: player sidebar, AI KP chat panel, turn/phase management
+       — Combat phase: round tracker, combatant tags, timeout bar
+       =============================================================── -->
   <section class="page" id="page-multiplayer">
     <!-- Lobby View: Create / Join -->
     <div class="mp-lobby" id="mpLobby">

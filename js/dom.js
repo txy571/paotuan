@@ -1,3 +1,8 @@
+// ==================== DOM REFERENCE CACHE ====================
+// Centralized, lazily-evaluated DOM element references.
+// Each property is a getter that calls document.getElementById(),
+// allowing elements to be accessed by any module before the DOM is ready
+// (the lookup happens at access time, not at import time).
 import { $ } from './utils.js';
 
 export const dom = {

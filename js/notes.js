@@ -1,3 +1,7 @@
+// ==================== SESSION NOTES ====================
+// CRUD for run-session notes stored in localStorage.
+// Each note has a title, content, and timestamp; the full list is
+// rendered in reverse-chronological order with click-to-load.
 import { dom } from './dom.js';
 import { esc, showToast } from './utils.js';
 

@@ -1,4 +1,5 @@
 // ==================== TTRPG COMPANION — ENTRY POINT ====================
-// This file is the single module entry point loaded by index.html.
-// All initialization logic lives in init.js.
+// Single ES Module entry point loaded by index.html via <script type="module">.
+// Delegates all bootstrap logic to init.js — this file exists purely as the
+// import root so the browser can resolve the full module graph statically.
 import './init.js';

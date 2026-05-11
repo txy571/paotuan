@@ -720,7 +720,9 @@ export async function sendKPMessage() {
   try {
     const controller = new AbortController();
     kpState.streamingAbort = controller;
-    const fullResponse = await callAPIWithCheckLoop(cfg, systemPrompt, recentApi, text, controller);
+    const fullResponse = state.theme === 'coc'
+      ? await callAPIWithCheckLoop(cfg, systemPrompt, recentApi, text, controller)
+      : await callAPI(cfg, systemPrompt, recentApi, text, controller);
 
     const displayText = stripAICommands(fullResponse);
     kpState.chatHistory[kpState.chatHistory.length - 1].content = displayText;

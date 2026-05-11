@@ -1,3 +1,7 @@
+// ==================== THEME SWITCHER & PAGE NAVIGATION ====================
+// Switches between the four RPG rule systems (D&D 5e / CoC 7e / Cyberpunk RED /
+// Pathfinder 2e) by updating the body[data-theme] attribute, which triggers
+// CSS custom property cascading. Also handles SPA page navigation via nav tabs.
 import { state, THEME_NAMES, initCocState, cocState } from './state.js';
 import { showToast } from './utils.js';
 

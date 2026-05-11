@@ -1,3 +1,7 @@
+// ==================== DICE ROLLER ====================
+// Handles single-die selection (d4–d100), custom expression rolling (e.g. 2d6+3),
+// result animation, and persistent roll history (up to 100 entries).
+// Dispatches 'dice-rolled' custom event for multiplayer broadcast integration.
 import { state } from './state.js';
 import { showToast } from './utils.js';
 import { dom } from './dom.js';

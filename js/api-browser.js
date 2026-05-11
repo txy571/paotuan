@@ -1,3 +1,7 @@
+// ==================== D&D 5e API BROWSER ====================
+// Fetches data from the open dnd5eapi.co REST API (SRD content).
+// Displays paginated lists of races, classes, spells, monsters, equipment, feats
+// with click-to-expand detail cards. Used on the home page reference panel.
 import { dom } from './dom.js';
 import { esc } from './utils.js';
 

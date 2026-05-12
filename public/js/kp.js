@@ -21,32 +21,31 @@ export function buildSystemPrompt() {
   const cls  = document.getElementById('charClass')?.value?.trim();
   const bg   = document.getElementById('charBackground')?.value?.trim();
 
-  if (state.theme === 'coc') {
-    // CoC 7e: AI must NOT read character card data. Only send minimal context.
-    extra += '注意：你是守秘人(KP)，角色卡的具体数据（属性值、技能值、HP、SAN等）由网站系统管理，你无需知道具体数值。你只需要根据角色的职业和背景来构思合适的场景，需要检定时发出【检定请求】，系统会使用角色的真实技能值执行掷骰。\n';
-    if (name) extra += `调查员姓名: ${name}\n`;
-    if (cls)  extra += `职业: ${cls}\n`;
-    if (race) extra += `国籍/种族: ${race}\n`;
-    if (bg)   extra += `背景概要: ${bg}\n`;
-  } else {
-    // Non-CoC themes: send full character data as before
-    if (name) extra += `姓名: ${name}\n`;
-    if (race) extra += `种族/国籍: ${race}\n`;
-    if (cls)  extra += `职业/身份: ${cls}\n`;
-    if (bg)   extra += `背景: ${bg}\n`;
-    if (name || race || cls) {
-      extra += '\n属性值(百分制,50为基准):\n';
-      for (const k of ATTR_KEYS) {
-        extra += `  ${ATTR_NAMES[k]}: ${state.attributes[k]} (调整值 ${modPct(state.attributes[k])})\n`;
-      }
+  // All systems: send full character data so AI can roll with real skill targets
+  if (name) extra += `姓名: ${name}\n`;
+  if (race) extra += `种族/国籍: ${race}\n`;
+  if (cls)  extra += `职业/身份: ${cls}\n`;
+  if (bg)   extra += `背景: ${bg}\n`;
+  if (name || race || cls) {
+    extra += '\n属性值(百分制,50为基准):\n';
+    for (const k of ATTR_KEYS) {
+      extra += `  ${ATTR_NAMES[k]}: ${state.attributes[k]} (调整值 ${modPct(state.attributes[k])})\n`;
+    }
+    if (state.theme === 'coc') {
+      // CoC: show ALL skills with their percentage values (primary dice mechanic)
+      const cocSkills = Object.entries(state.skills)
+        .filter(([,v]) => typeof v === 'object' && typeof v.value === 'number')
+        .map(([k, v]) => `${k}:${v.value}%`);
+      if (cocSkills.length) extra += `技能值: ${cocSkills.join('、')}\n`;
+    } else {
       const skillEntries = Object.entries(state.skills)
         .filter(([,v]) => typeof v === 'object' && (v.proficient || v.value > 0))
         .map(([k, v]) => `${k}${v.proficient ? '*' : ''}:${typeof v.value === 'number' ? (v.value >= 0 ? '+' + v.value : v.value) : v.value}`);
       if (skillEntries.length) extra += `技能: ${skillEntries.join('、')}\n`;
-      if (state.traits.length) extra += `特质: ${state.traits.map(t=>t.name).filter(Boolean).join('、')}\n`;
-      if (state.feats.length)  extra += `专长: ${state.feats.map(f=>f.name).filter(Boolean).join('、')}\n`;
-      if (state.equipment.length) extra += `装备: ${state.equipment.map(e=>e.name+(e.qty>1?'×'+e.qty:'')).join('、')}\n`;
     }
+    if (state.traits.length) extra += `特质: ${state.traits.map(t=>t.name).filter(Boolean).join('、')}\n`;
+    if (state.feats.length)  extra += `专长: ${state.feats.map(f=>f.name).filter(Boolean).join('、')}\n`;
+    if (state.equipment.length) extra += `装备: ${state.equipment.map(e=>e.name+(e.qty>1?'×'+e.qty:'')).join('、')}\n`;
   }
 
   if (scenarioDbContent && scenarioDbContent.trim()) {
@@ -60,19 +59,14 @@ export function buildSystemPrompt() {
   if (kpState.apiHistory.length === 0) {
     extra += '\n\n## 🎬 新游戏开始——必须遵循\n';
     extra += '这是冒险的开始。你必须做到以下几点：\n';
-    if (state.theme === 'coc') {
-      extra += '1. 基于调查员的职业和背景概要，构思一个适合的开场场景和大致剧情方向。\n';
-      extra += '2. 你不需要确认角色的属性或技能值——那是网站系统的职责。你只需要基于职业和背景来设定场景。\n';
-    } else {
-      extra += '1. 确认你已经理解了上述角色信息（姓名、职业、背景、技能等）。\n';
-    }
-    extra += '3. 在回复的第一段中，直接进入叙事，将角色自然地引入场景。\n';
-    extra += '4. 开头场景必须与角色背景有逻辑关联。\n';
-    extra += '5. 不要问"你想做什么"这类空洞的问题。给出具体、生动、有感官细节的开场场景，让角色自然进入故事。\n';
+    extra += '1. 确认你已经理解了上述角色信息（姓名、职业、背景、技能等）。基于这些信息构思一个适合的开场场景和大致剧情方向。\n';
+    extra += '2. 在回复的第一段中，直接进入叙事，将角色自然地引入场景。\n';
+    extra += '3. 开头场景必须与角色背景有逻辑关联。\n';
+    extra += '4. 不要问"你想做什么"这类空洞的问题。给出具体、生动、有感官细节的开场场景，让角色自然进入故事。\n';
   }
 
   if (state.theme === 'coc') {
-    extra += `\n--- CoC 7e 当前状态（仅供叙事参考，具体数值由系统管理） ---\n`;
+    extra += `\n--- CoC 7e 当前状态 ---\n`;
     extra += `克苏鲁神话(CMI): ${cocState.cthulhuMythos}%（影响最大SAN = 99 - CMI）\n`;
     if (cocState.skillChecks.length) extra += `已标记技能提升检定: ${cocState.skillChecks.join('、')}\n`;
     if (cocState.chronicle.length) {

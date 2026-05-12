@@ -60,6 +60,7 @@ nav {
   border: 1px solid var(--border-subtle); border-radius: var(--r-lg);
   box-shadow: var(--shadow-sm); flex-wrap: wrap; gap: 10px;
   backdrop-filter: blur(8px);
+  position: relative; z-index: 50;
 }
 
 .nav-brand {

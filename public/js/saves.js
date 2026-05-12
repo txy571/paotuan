@@ -90,7 +90,11 @@ export function renderGameSaves() {
   const container = document.getElementById('gameSavesList');
   if (!container) return;
   const saves = JSON.parse(localStorage.getItem('ttrpg-game-saves') || '{}');
-  const entries = Object.entries(saves).sort(([,a],[,b]) => (b.timestamp||'').localeCompare(a.timestamp||''));
+  // Filter by current theme
+  const currentTheme = state.theme;
+  const entries = Object.entries(saves)
+    .filter(([, data]) => data.theme === currentTheme)
+    .sort(([,a],[,b]) => (b.timestamp||'').localeCompare(a.timestamp||''));
   if (!entries.length) {
     container.innerHTML = '<div style="color:var(--text-dim);font-size:.75rem;padding:8px;text-align:center;">暂无存档</div>';
     return;

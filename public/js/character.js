@@ -60,6 +60,30 @@ function compressPortrait(dataUrl, callback) {
   img.src = dataUrl;
 }
 
+export function selectEmojiPortrait(emoji) {
+  // Convert emoji to a data URL using canvas
+  const canvas = document.createElement('canvas');
+  canvas.width = 200;
+  canvas.height = 200;
+  const ctx = canvas.getContext('2d');
+  // Dark circle background
+  ctx.fillStyle = '#222';
+  ctx.beginPath();
+  ctx.arc(100, 100, 96, 0, Math.PI * 2);
+  ctx.fill();
+  // Emoji text centered
+  ctx.font = '120px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(emoji, 100, 108);
+  state.portraitData = canvas.toDataURL('image/png');
+  if (dom.portraitImg) {
+    dom.portraitImg.src = state.portraitData;
+    dom.portraitImg.style.display = 'block';
+  }
+  if (dom.portraitPlaceholder) dom.portraitPlaceholder.style.display = 'none';
+}
+
 export function setupPortrait() {
   const zone = dom.portraitZone;
   if (!zone) return;
@@ -86,60 +110,24 @@ function ptsRemaining() {
   return ATTR_POOL - ptsUsed();
 }
 
-// ── Attribute Drag & Drop ─────────────────────────
-let _dragSrcKey = null;
-
-function setupAttributeDrag() {
-  const grid = dom.attrGrid;
-  if (!grid || grid.dataset.dragSetup) return;
-  grid.dataset.dragSetup = 'true';
-
-  grid.addEventListener('dragstart', (e) => {
-    const row = e.target.closest('.attr-bar-row');
-    if (!row) return;
-    _dragSrcKey = row.dataset.attrKey;
-    row.style.opacity = '0.4';
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', _dragSrcKey);
-  });
-
-  grid.addEventListener('dragover', (e) => {
-    const row = e.target.closest('.attr-bar-row');
-    if (!row || row.dataset.attrKey === _dragSrcKey) return;
-    e.preventDefault();
-    row.style.borderColor = 'var(--accent)';
-    row.style.background = 'rgba(255,255,255,.06)';
-  });
-
-  grid.addEventListener('dragleave', (e) => {
-    const row = e.target.closest('.attr-bar-row');
-    if (!row) return;
-    row.style.borderColor = '';
-    row.style.background = '';
-  });
-
-  grid.addEventListener('drop', (e) => {
-    e.preventDefault();
-    const row = e.target.closest('.attr-bar-row');
-    if (!row || !_dragSrcKey || row.dataset.attrKey === _dragSrcKey) return;
-    const targetKey = row.dataset.attrKey;
-    const order = state.attrOrder || [...ATTR_KEYS];
-    const srcIdx = order.indexOf(_dragSrcKey);
-    const tgtIdx = order.indexOf(targetKey);
-    if (srcIdx === -1 || tgtIdx === -1) return;
-    order.splice(srcIdx, 1);
-    order.splice(tgtIdx, 0, _dragSrcKey);
+// ── Attribute Slider ────────────────────────────
+export function handleAttrSlider(k, newVal) {
+  newVal = Math.max(ATTR_BASE, Math.min(ATTR_MAX, Math.round(newVal)));
+  const oldVal = state.attributes[k];
+  if (newVal === oldVal) return;
+  const diff = newVal - oldVal;
+  // If increasing, check pool; if decreasing, always allowed
+  if (diff > 0 && ptsRemaining() < diff) {
+    newVal = oldVal + ptsRemaining();
+    // Correct the slider visual to match the clamped value
+    const slider = document.querySelector(`.attr-slider[data-attr="${k}"]`);
+    if (slider) slider.value = newVal;
+  }
+  if (newVal !== oldVal) {
+    state.attributes[k] = newVal;
     renderAttributes();
-  });
-
-  grid.addEventListener('dragend', () => {
-    _dragSrcKey = null;
-    grid.querySelectorAll('.attr-bar-row').forEach(row => {
-      row.style.opacity = '';
-      row.style.borderColor = '';
-      row.style.background = '';
-    });
-  });
+    renderSkills();
+  }
 }
 
 export function renderAttributes() {
@@ -155,11 +143,13 @@ export function renderAttributes() {
     const pct = v;
     const color = ATTR_COLORS[k];
     html += `
-      <div class="attr-bar-row" draggable="true" data-attr-key="${k}">
-        <div class="attr-bar-drag" title="拖动排序">⋮⋮</div>
+      <div class="attr-bar-row" data-attr-key="${k}">
         <div class="attr-bar-name">${ATTR_NAMES[k]}</div>
         <div class="attr-bar-track">
           <div class="attr-bar-fill" style="width:${pct}%;background:${v < 30 ? '#555' : color};"></div>
+          <input type="range" class="attr-slider" data-attr="${k}"
+            min="${ATTR_BASE}" max="${ATTR_MAX}" value="${v}"
+            oninput="document.dispatchEvent(new CustomEvent('attr-slider-input',{detail:{key:'${k}',value:parseInt(this.value)}}))">
         </div>
         <div class="attr-bar-val" style="color:${v >= 90 ? '#ffcc00' : 'var(--text)'}">${v}</div>
         <div class="attr-bar-mod" style="color:${parseInt(mod) > 5 ? '#ffcc00' : 'var(--text-dim)'}">${mod}</div>
@@ -173,7 +163,6 @@ export function renderAttributes() {
   }
 
   grid.innerHTML = html;
-  setupAttributeDrag();
 
   if (dom.ptsRemaining) {
     dom.ptsRemaining.textContent = `可分配点数: ${remaining} / ${ATTR_POOL}`;
@@ -694,7 +683,8 @@ export function renderSavedChars() {
   const list = dom.savedCharsList;
   if (!list) return;
   const chars = JSON.parse(localStorage.getItem('ttrpg-chars') || '{}');
-  const entries = Object.values(chars);
+  const currentTheme = state.theme;
+  const entries = Object.values(chars).filter(c => !c.theme || c.theme === currentTheme);
   if (!entries.length) {
     list.innerHTML = '<div class="empty-state">暂无保存的角色</div>';
     return;

@@ -65,6 +65,10 @@ const actionMap = {
   'character:nextInit': () => Character.nextInitiative(),
   'character:clearInit': () => Character.clearInitiative(),
   'character:addInit': () => Character.addInitiative(),
+  'character:selectEmojiPortrait': (el) => {
+    const emoji = el.dataset.emoji;
+    if (emoji) Character.selectEmojiPortrait(emoji);
+  },
 
   // kp / home
   'kp:selectChar': (el) => selectHomeChar(el.dataset.id),
@@ -223,6 +227,8 @@ document.addEventListener('theme-changed', (e) => {
   renderCocStatus();
   renderCocChronicle();
   updateApiSectionTheme();
+  Character.renderSavedChars();
+  renderHomeCharSelect();
   document.dispatchEvent(new CustomEvent('render-game-saves'));
 });
 
@@ -269,6 +275,9 @@ document.addEventListener('preset-feat-add', (e) => Character.addPresetFeat(e.de
 document.addEventListener('preset-trait-save', (e) => Character.saveTraitPreset(e.detail.i));
 document.addEventListener('preset-feat-save', (e) => Character.saveFeatPreset(e.detail.i));
 document.addEventListener('skill-update', (e) => { Character.setSkillValue(e.detail.id, e.detail.value); Character.renderSkills(); });
+document.addEventListener('attr-slider-input', (e) => {
+  Character.handleAttrSlider(e.detail.key, e.detail.value);
+});
 document.addEventListener('dice-rolled', (e) => {
   if (Multiplayer.connected) {
     Multiplayer.rollAndBroadcast(e.detail);

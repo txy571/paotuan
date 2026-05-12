@@ -11,6 +11,43 @@
 
 .portrait-zone img { width: 100%; height: 100%; object-fit: cover; }
 
+/* ── Emoji Portrait Picker ── */
+.emoji-portrait-picker {
+  margin-bottom: 18px;
+  text-align: center;
+}
+.emoji-picker-label {
+  font-size: .68rem;
+  color: var(--text-dim);
+  display: block;
+  margin-bottom: 6px;
+}
+.emoji-portrait-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+}
+.emoji-portrait-grid span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,.15);
+  transition: background var(--t) var(--ease-out), border-color var(--t) var(--ease-out), transform var(--t) var(--ease-out);
+  user-select: none;
+}
+.emoji-portrait-grid span:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  transform: scale(1.15);
+}
+
 .portrait-zone .placeholder { text-align: center; color: var(--text-dim); }
 
 .portrait-zone .placeholder .ph-icon { font-size: 2.8rem; margin-bottom: 10px; display: block; }
@@ -19,27 +56,9 @@
   display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
   padding: 6px 10px; border-radius: var(--r-sm);
   transition: background var(--t) var(--ease-out);
-  cursor: grab;
 }
-
-.attr-bar-row:active { cursor: grabbing; }
 
 .attr-bar-row:hover { background: rgba(255,255,255,.02); }
-
-.attr-bar-drag {
-  cursor: grab;
-  color: var(--text-dim);
-  font-size: .6rem;
-  letter-spacing: -2px;
-  user-select: none;
-  flex-shrink: 0;
-  width: 14px;
-  text-align: center;
-  opacity: .4;
-  transition: opacity var(--t) var(--ease-out);
-}
-
-.attr-bar-row:hover .attr-bar-drag { opacity: .8; }
 
 .attr-bar-name {
   width: 70px; font-family: var(--font-display); font-size: .8rem;
@@ -54,6 +73,29 @@
 
 .attr-bar-fill {
   height: 100%; border-radius: 9px; transition: width .3s var(--ease-out), background .3s var(--ease-out);
+  pointer-events: none;
+}
+
+/* ── Attribute Range Slider ── */
+.attr-slider {
+  position: absolute; top: 0; left: -1px; right: -1px; bottom: 0;
+  width: calc(100% + 2px); height: 18px;
+  -webkit-appearance: none; appearance: none;
+  background: transparent; cursor: pointer; margin: 0; padding: 0;
+  border: none; outline: none; z-index: 1; opacity: 0;
+  transition: opacity .2s ease;
+}
+.attr-bar-row:hover .attr-slider { opacity: 1; }
+.attr-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 16px; height: 22px; border-radius: 4px;
+  background: var(--accent); border: 2px solid var(--text-gold);
+  cursor: pointer; box-shadow: 0 0 6px var(--accent-dim);
+}
+.attr-slider::-moz-range-thumb {
+  width: 16px; height: 22px; border-radius: 4px;
+  background: var(--accent); border: 2px solid var(--text-gold);
+  cursor: pointer; box-shadow: 0 0 6px var(--accent-dim);
 }
 
 .attr-bar-val {

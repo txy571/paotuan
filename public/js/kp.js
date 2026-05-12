@@ -612,7 +612,8 @@ export function renderHomeCharSelect() {
   const list = document.getElementById('homeCharList');
   if (!list) return;
   const chars = JSON.parse(localStorage.getItem('ttrpg-chars') || '{}');
-  const entries = Object.values(chars);
+  const currentTheme = state.theme;
+  const entries = Object.values(chars).filter(c => !c.theme || c.theme === currentTheme);
   if (!entries.length) {
     list.innerHTML = '<div class="char-select-empty">请先在"人物卡"页面创建角色，或点击上方按钮快速创建</div>';
     return;
@@ -755,6 +756,22 @@ export function kpDiceRoll() {
   }, 800);
 }
 
+// ── Input injection protection ────────────────────
+const BLOCKED_PATTERNS = [
+  { pattern: /[\[\]]/,       msg: '禁止使用 [ 或 ] 字符，以免干扰系统指令格式' },
+  { pattern: /[{}]/,         msg: '禁止使用 { 或 } 字符' },
+  { pattern: /提示词/i,       msg: '输入包含可疑指令，请移除后重试' },
+  { pattern: /\bsystem\b/i,  msg: '输入包含可疑指令，请移除后重试' },
+  { pattern: /\bprompt\b/i,  msg: '输入包含可疑指令，请移除后重试' },
+];
+
+function validateInput(text) {
+  for (const { pattern, msg } of BLOCKED_PATTERNS) {
+    if (pattern.test(text)) return msg;
+  }
+  return null;
+}
+
 // ── Send Message ───────────────────────────────────
 export async function sendKPMessage(overrideText, skipPlayerMsg) {
   const input = document.getElementById('kpInput');
@@ -766,6 +783,12 @@ export async function sendKPMessage(overrideText, skipPlayerMsg) {
   if (!isAuto) {
     if (!hasCharacterCard()) {
       showToast('请先在左侧创建角色卡（至少填写姓名）后再开始游戏');
+      return;
+    }
+    // Validate input for injection attempts
+    const validationError = validateInput(text);
+    if (validationError) {
+      showToast(validationError, 'warn');
       return;
     }
     input.value = '';

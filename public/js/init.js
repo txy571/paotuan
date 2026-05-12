@@ -9,7 +9,7 @@ import { fetchAPI, fetchAPIDetail } from './api-browser.js';
 import { initParticles } from './particles.js';
 import {
   openKPPanel, closeKPPanel, clearKPChat, sendKPMessage, sendQuickAction,
-  stopKPStreaming, toggleKPConfig, toggleKPProviderUI, saveKPConfigFromUI,
+  stopKPStreaming, toggleKPProviderUI, saveKPConfigFromUI,
   loadKPConfig, loadKPChatHistory, renderKP, renderKPQuickActions, checkProxyAvailable,
   testKPConnection, selectHomeChar, renderHomeCharSelect, kpDiceRoll,
 } from './kp.js';
@@ -92,7 +92,7 @@ const actionMap = {
   'kp:clear': () => clearKPChat(),
   'kp:send': () => sendKPMessage(),
   'kp:stop': () => stopKPStreaming(),
-  'kp:config': () => { toggleKPConfig(); loadKPConfig(); },
+  // kp:config → now on config page via nav:go
   'kp:toggleProviderUI': () => toggleKPProviderUI(),
   'kp:saveConfig': () => saveKPConfigFromUI(),
   'kp:testConnection': () => testKPConnection(),
@@ -242,6 +242,7 @@ document.addEventListener('page-changed', (e) => {
     renderCocChronicle(); renderGameSaves(); renderHomeCharSelect();
   }
   if (page === 'multiplayer') Multiplayer.onPageOpen();
+  if (page === 'config') { loadKPConfig(); tts.syncToUI(); }
 });
 
 document.addEventListener('coc-render', () => {
@@ -292,6 +293,7 @@ document.addEventListener('keydown', e => {
   if (e.key === '3') navigateTo('notes');
   if (e.key === '4') navigateTo('multiplayer');
   if (e.key === '5') navigateTo('about');
+  if (e.key === '6') navigateTo('config');
 });
 
 // ── KP Panel Enter key ─────────────────────────────
@@ -417,7 +419,7 @@ async function init() {
   }, 500);
 
   console.log('🎲 TTRPG Companion 已就绪 (含 AI KP + 多人联机)');
-  console.log('   %c快捷键: 1首页 2人物卡 3笔记 4联机 5关于','color:var(--text-gold)');
+  console.log('   %c快捷键: 1首页 2人物卡 3笔记 4联机 5配置 6关于','color:var(--text-gold)');
   console.log('   %c🎲 骰子已嵌入AI主持面板，AI请求检定时会自动出现','color:var(--text-dim)');
 }
 

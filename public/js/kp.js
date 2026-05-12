@@ -221,17 +221,27 @@ export function renderKPQuickActions() {
 
 // ── KP Config ──────────────────────────────────────
 export function getKPConfig() {
-  const provider = document.getElementById('kpProvider')?.value || 'anthropic';
-  const key = document.getElementById('kpApiKey')?.value?.trim() || kpState.apiKey;
-  let model;
-  if (provider === 'anthropic') {
-    model = document.getElementById('kpModelAnthropic')?.value || 'claude-sonnet-4-6';
-  } else if (provider === 'deepseek') {
-    model = document.getElementById('kpModelDeepSeek')?.value || 'deepseek-v4-flash';
-  } else {
-    model = document.getElementById('kpModelOpenAI')?.value || 'gpt-4o';
+  const provEl = document.getElementById('kpProvider');
+  if (provEl) {
+    // Read from DOM (config page is visible)
+    const provider = provEl.value;
+    const key = document.getElementById('kpApiKey')?.value?.trim() || kpState.apiKey;
+    let model;
+    if (provider === 'anthropic') {
+      model = document.getElementById('kpModelAnthropic')?.value || kpState.model;
+    } else if (provider === 'deepseek') {
+      model = document.getElementById('kpModelDeepSeek')?.value || kpState.model;
+    } else {
+      model = document.getElementById('kpModelOpenAI')?.value || kpState.model;
+    }
+    return { provider, key, model };
   }
-  return { provider, key, model };
+  // Fallback to in-memory state (config page not visible, e.g. during gameplay)
+  return {
+    provider: kpState.provider,
+    key: kpState.apiKey,
+    model: kpState.model,
+  };
 }
 
 export function saveKPConfig(cfg) {

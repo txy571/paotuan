@@ -1,0 +1,127 @@
+<section class="page" id="page-config">
+  <div class="hero" style="padding:36px 20px 20px;">
+    <h1>配置</h1>
+    <p>管理 AI 大模型、语音输出与应用设置</p>
+  </div>
+
+  <div class="config-layout">
+    <!-- LLM Config -->
+    <div class="panel">
+      <h3><i class="fas fa-brain"></i> LLM 大模型配置</h3>
+      <p style="font-size:.82rem;color:var(--text-dim);margin-bottom:12px;">
+        AI 主持人使用的大语言模型。支持 Anthropic Claude、DeepSeek 和 OpenAI 兼容接口。配置保存后在首页 AI 主持人面板中生效。
+      </p>
+      <div class="kp-config">
+        <div>
+          <label>API 提供商</label>
+          <select id="kpProvider" data-action="kp:toggleProviderUI" data-action-event="change">
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="deepseek">DeepSeek</option>
+            <option value="openai">OpenAI 兼容</option>
+          </select>
+        </div>
+        <div id="kpModelAnthropicWrap">
+          <label>模型</label>
+          <select id="kpModelAnthropic">
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-7">Claude Opus 4.7</option>
+            <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+            <option value="claude-sonnet-4-5-20250929">Claude Sonnet 4.5</option>
+          </select>
+        </div>
+        <div id="kpModelDeepSeekWrap" style="display:none;">
+          <label>模型</label>
+          <select id="kpModelDeepSeek">
+            <option value="deepseek-v4-flash">DeepSeek V4 Flash</option>
+            <option value="deepseek-v4-pro">DeepSeek V4 Pro</option>
+          </select>
+        </div>
+        <div id="kpModelOpenAIWrap" style="display:none;">
+          <label>模型</label>
+          <select id="kpModelOpenAI">
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="gpt-4o-mini">GPT-4o Mini</option>
+            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+          </select>
+        </div>
+        <div>
+          <label>API Key</label>
+          <input type="password" id="kpApiKey" placeholder="粘贴你的 API Key...">
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-save btn-sm" data-action="kp:saveConfig">保存配置</button>
+          <button class="btn btn-secondary btn-sm" data-action="kp:testConnection" id="kpTestConnBtn">测试连通</button>
+          <span id="kpTestResult" style="font-size:.72rem;align-self:center;"></span>
+        </div>
+      </div>
+      <p style="font-size:.7rem;color:var(--text-dim);margin-top:8px;">⚠️ API Key 仅保存在浏览器本地存储中，不会上传到任何第三方服务器。</p>
+    </div>
+
+    <!-- TTS Config -->
+    <div class="panel">
+      <h3><i class="fas fa-volume-up"></i> 语音输出 (TTS)</h3>
+      <p style="font-size:.82rem;color:var(--text-dim);margin-bottom:12px;">
+        AI 主持人的回复可通过小米 MiMo TTS API 实时朗读。流式合成引擎按标点智能分句，当前句播放时下一句已预合成就绪，体验流畅无间隔。
+      </p>
+      <div class="kp-config">
+        <div>
+          <label>小米 MiMo API Key</label>
+          <input type="password" id="ttsMimoApiKey" placeholder="输入小米 MIMO TTS API Key...">
+        </div>
+        <div>
+          <label>音色</label>
+          <select id="ttsVoiceSelect">
+            <option value="mimo_default">mimo_default (自然)</option>
+            <option value="default_zh">default_zh (清晰女声)</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-size:.82rem;">
+            <input type="checkbox" id="ttsEnabled"> 启用语音输出
+          </label>
+          <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-size:.82rem;">
+            <input type="checkbox" id="ttsAutoStop"> 播完静音（每段输出结束后自动关闭语音）
+          </label>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-save btn-sm" data-action="tts:saveConfig">保存 TTS 配置</button>
+        </div>
+      </div>
+      <p style="font-size:.7rem;color:var(--text-dim);margin-top:6px;">
+        🔑 前往 <a href="https://xiaomimimo.com" target="_blank" rel="noopener" style="color:var(--accent);">xiaomimimo.com</a> 注册获取 MiMo API Key
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+.config-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-bottom: 30px;
+  max-width: 720px;
+}
+.config-layout .panel h3 {
+  font-family: var(--font-display);
+  color: var(--text-gold);
+  margin-bottom: 10px;
+  font-size: 1.05rem;
+}
+.config-layout .kp-config {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.config-layout .kp-config label {
+  font-size: .8rem;
+  color: var(--text-dim);
+  display: block;
+  margin-bottom: 2px;
+}
+.config-layout .kp-config input,
+.config-layout .kp-config select {
+  width: 100%;
+  box-sizing: border-box;
+}
+</style>

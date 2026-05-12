@@ -1,0 +1,84 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+---
+
+<MainLayout>
+  <main class="page-404">
+    <div class="error-code"><span class="d20">d</span>20</div>
+    <h1>检定大失败</h1>
+    <p class="error-desc">你掷出了一个 <strong>自然 1</strong> —— 这片领域不存在于这个世界。</p>
+    <p class="error-hint">将在 <span id="countdown">6</span> 秒后自动返回首页</p>
+    <a href="/" class="btn btn-primary btn-home">← 返回首页</a>
+  </main>
+</MainLayout>
+
+<style>
+  .page-404 {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
+    min-height: 65vh;
+    padding: 40px 20px 60px;
+    animation: fadeIn .5s var(--ease-out);
+  }
+  .error-code {
+    font-family: var(--font-display);
+    font-size: 6rem; font-weight: 900;
+    color: var(--text-gold);
+    text-shadow: 0 0 40px var(--accent-dim), 0 0 80px var(--accent-dim);
+    line-height: 1;
+    margin-bottom: 8px;
+    letter-spacing: .02em;
+  }
+  .d20 { color: var(--accent); }
+  .page-404 h1 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .error-desc {
+    color: var(--text-dim);
+    font-size: .95rem;
+    max-width: 420px;
+    line-height: 1.6;
+    margin-bottom: 6px;
+  }
+  .error-desc strong { color: var(--accent); }
+  .error-hint {
+    color: var(--text-dim);
+    font-size: .82rem;
+    margin-bottom: 28px;
+    opacity: .8;
+  }
+  .error-hint span {
+    display: inline-block;
+    min-width: 1.4em;
+    font-weight: 700;
+    color: var(--text-gold);
+  }
+  .btn-home { font-size: .88rem; }
+
+  @media (max-width: 700px) {
+    .error-code { font-size: 4rem; }
+    .page-404 h1 { font-size: 1.2rem; }
+    .error-desc { font-size: .85rem; }
+    .page-404 { min-height: 55vh; }
+  }
+</style>
+
+<script>
+(function() {
+  var seconds = 6;
+  var el = document.getElementById('countdown');
+  if (!el) return;
+  var timer = setInterval(function() {
+    seconds--;
+    if (seconds <= 0) {
+      clearInterval(timer);
+      location.href = '/';
+    } else {
+      el.textContent = seconds;
+    }
+  }, 1000);
+})();
+</script>

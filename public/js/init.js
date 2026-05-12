@@ -4,7 +4,6 @@ import { showToast } from './utils.js';
 import { dom } from './dom.js';
 import { selectRPG, navigateTo, toggleColorScheme, applyColorScheme, toggleThemePicker } from './theme.js';
 import * as Character from './character.js';
-import * as Dice from './dice.js';
 import * as Notes from './notes.js';
 import { fetchAPI, fetchAPIDetail } from './api-browser.js';
 import { initParticles } from './particles.js';
@@ -12,7 +11,7 @@ import {
   openKPPanel, closeKPPanel, clearKPChat, sendKPMessage, sendQuickAction,
   stopKPStreaming, toggleKPConfig, toggleKPProviderUI, saveKPConfigFromUI,
   loadKPConfig, loadKPChatHistory, renderKP, renderKPQuickActions, checkProxyAvailable,
-  testKPConnection, selectHomeChar, renderHomeCharSelect,
+  testKPConnection, selectHomeChar, renderHomeCharSelect, kpDiceRoll,
 } from './kp.js';
 import { saveGame, loadGame, deleteGame, loadAutosave, renderGameSaves } from './saves.js';
 import * as Scenario from './scenario.js';
@@ -69,12 +68,6 @@ const actionMap = {
   // kp / home
   'kp:selectChar': (el) => selectHomeChar(el.dataset.id),
 
-  // dice
-  'dice:select': (el) => Dice.selectDice(parseInt(el.dataset.dice), el),
-  'dice:roll': () => Dice.rollDice(),
-  'dice:custom': () => Dice.rollCustom(),
-  'dice:clear': () => Dice.clearRollHistory(),
-
   // notes
   'notes:save': () => Notes.saveSessionNote(),
   'notes:export': () => Notes.exportNotes(false),
@@ -99,6 +92,7 @@ const actionMap = {
   'kp:saveConfig': () => saveKPConfigFromUI(),
   'kp:testConnection': () => testKPConnection(),
   'kp:quick': (el) => sendQuickAction(el.dataset.actionName),
+  'kp:diceRoll': () => kpDiceRoll(),
 
   // saves
   'saves:save': () => {
@@ -141,7 +135,7 @@ function dispatchAction(action, el) {
     handler(el);
   } else if (action) {
     const [module, fn] = action.split(':');
-    const modMap = { Character, Dice, Notes, Multiplayer };
+    const modMap = { Character, Notes, Multiplayer };
     if (modMap[module] && typeof modMap[module][fn] === 'function') {
       modMap[module][fn](el);
     }
@@ -174,7 +168,7 @@ document.addEventListener('theme-changed', (e) => {
 document.addEventListener('page-changed', (e) => {
   const page = e.detail;
   if (page === 'character') Character.renderAllCharacter();
-  if (page === 'dice') Dice.renderRollHistory();
+  // 'dice' page removed — dice rolling is now embedded in the KP chat
   if (page === 'notes') { Notes.renderSessions(); Notes.renderNotesReference(); }
   if (page === 'home') {
     renderKPQuickActions(); renderKP(); renderCocStatus();
@@ -225,11 +219,9 @@ document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
   if (e.key === '1') navigateTo('home');
   if (e.key === '2') navigateTo('character');
-  if (e.key === '3') navigateTo('dice');
-  if (e.key === '4') navigateTo('notes');
-  if (e.key === '5') navigateTo('multiplayer');
-  if (e.key === '6') navigateTo('about');
-  if (e.key === 'Enter' && document.getElementById('page-dice')?.classList.contains('active')) Dice.rollDice();
+  if (e.key === '3') navigateTo('notes');
+  if (e.key === '4') navigateTo('multiplayer');
+  if (e.key === '5') navigateTo('about');
 });
 
 // ── KP Panel Enter key ─────────────────────────────
@@ -244,7 +236,6 @@ if (kpInput) {
 }
 
 // ── Other Enter key handlers ───────────────────────
-if (dom.customDice) dom.customDice.addEventListener('keydown', e => { if (e.key==='Enter') Dice.rollCustom(); });
 if (dom.equipName) dom.equipName.addEventListener('keydown', e => { if (e.key==='Enter') Character.addEquipment(); });
 if (dom.initRoll) dom.initRoll.addEventListener('keydown', e => { if (e.key==='Enter') Character.addInitiative(); });
 
@@ -286,7 +277,6 @@ async function init() {
   // Initial renders
   Character.renderAllCharacter();
   Character.renderInitiative();
-  Dice.renderRollHistory();
   Notes.renderSessions();
   renderKPQuickActions();
   loadKPChatHistory();
@@ -316,7 +306,8 @@ async function init() {
   });
 
   console.log('🎲 TTRPG Companion 已就绪 (含 AI KP + 多人联机)');
-  console.log('   %c快捷键: 1首页 2人物卡 3骰子 4笔记 5联机 6关于','color:var(--text-gold)');
+  console.log('   %c快捷键: 1首页 2人物卡 3笔记 4联机 5关于','color:var(--text-gold)');
+  console.log('   %c🎲 骰子已嵌入AI主持面板，AI请求检定时会自动出现','color:var(--text-dim)');
 }
 
 // Boot

@@ -156,3 +156,157 @@
 .game-save-name { font-weight: 600; color: var(--text); font-size: .85rem; }
 
 .game-save-meta { font-size: .78rem; color: var(--text-dim); margin-top: 2px; }
+
+/* ── KP Dice Card ─────────────────────────────── */
+.kp-dice-card {
+  background: var(--bg-panel);
+  border: 2px solid var(--accent);
+  border-radius: var(--r-lg);
+  padding: 18px 22px;
+  margin: 8px 4px;
+  text-align: center;
+  animation: kpDiceCardIn .35s var(--ease-out);
+  box-shadow: 0 0 20px var(--accent-dim);
+  position: relative;
+  overflow: hidden;
+}
+
+.kp-dice-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--text-gold), var(--accent));
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes kpDiceCardIn {
+  from { opacity: 0; transform: translateY(12px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.kp-dice-card-header {
+  font-size: .78rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 6px;
+}
+
+.kp-dice-card-skill {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-gold);
+  margin-bottom: 4px;
+}
+
+.kp-dice-card-expr {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text);
+  font-family: var(--font-display);
+  margin: 8px 0;
+}
+
+.kp-dice-card-vs {
+  font-size: .8rem;
+  color: var(--text-dim);
+  font-weight: 400;
+  margin: 0 6px;
+}
+
+.kp-dice-card-desc {
+  font-size: .82rem;
+  color: var(--text-dim);
+  font-style: italic;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.kp-dice-roll-btn {
+  font-size: 1.1rem;
+  padding: 14px 36px;
+  border-radius: 36px;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: transform var(--t) var(--ease-out), box-shadow var(--t) var(--ease-out);
+}
+
+.kp-dice-roll-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px var(--accent-dim);
+}
+
+.kp-dice-roll-btn:active {
+  transform: scale(0.97);
+}
+
+/* Dice Result Display (after rolling) */
+.kp-dice-result {
+  margin: 10px 0;
+}
+
+.kp-dice-result-num {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: var(--text-gold);
+  font-family: var(--font-display);
+  line-height: 1;
+  animation: popIn .45s cubic-bezier(.68,-.55,.27,1.55);
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.kp-dice-result-detail {
+  color: var(--text-dim);
+  font-size: .85rem;
+  margin-top: 4px;
+}
+
+.kp-dice-result-verdict {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 20px;
+  border-radius: 20px;
+  font-size: .95rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+}
+
+.kp-dice-result-verdict.success {
+  background: rgba(74, 207, 106, .2);
+  color: #4acf6a;
+  border: 1px solid rgba(74, 207, 106, .4);
+}
+
+.kp-dice-result-verdict.fail {
+  background: rgba(224, 72, 72, .2);
+  color: #e04848;
+  border: 1px solid rgba(224, 72, 72, .4);
+}
+
+.kp-dice-result-diff {
+  font-size: .72rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* rolled state: card border changes */
+.kp-dice-card.rolled {
+  border-color: var(--border-bright);
+  box-shadow: none;
+}
+
+.kp-dice-card.rolled::before {
+  display: none;
+}

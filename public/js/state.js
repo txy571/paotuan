@@ -166,6 +166,8 @@ export const kpState = {
   streaming: false,
   streamingAbort: null,
   _compressing: false,
+  // Pending dice request from AI: { skill, expression, difficulty, description, resolve }
+  pendingDiceRequest: null,
 };
 
 export let scenarioDbContent = '';

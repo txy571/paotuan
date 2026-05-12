@@ -7,7 +7,7 @@ import {
 } from './state.js';
 import { esc, showToast, modPct } from './utils.js';
 import { getGameSaveData } from './saves.js';
-import { parseAICommands, applyAICommands, stripAICommands } from './commands.js';
+import { parseAICommands, applyAICommands, stripAICommands, parseDiceRequest } from './commands.js';
 import { renderCocStatus, renderCocChronicle } from './coc-status.js';
 import { getMemorySummary, getNPCProfiles } from './memory-bank.js';
 
@@ -575,21 +575,108 @@ export function selectHomeChar(id) {
   });
 }
 
-// ── Send Message ───────────────────────────────────
-export async function sendKPMessage() {
-  const input = document.getElementById('kpInput');
-  if (!input) return;
-  const text = input.value.trim();
-  if (!text || kpState.streaming) return;
+// ── Execute a dice expression (e.g. "d20+5", "2d6+3", "d100") and return result details ──
+function executeDiceExpression(expr) {
+  const match = expr.match(/^(\d+)?d(\d+)([+-]\d+)?$/i);
+  if (!match) return null;
+  const count = parseInt(match[1]) || 1;
+  const sides = parseInt(match[2]);
+  const mod   = parseInt(match[3]) || 0;
+  const rolls = [];
+  let total = 0;
+  for (let i = 0; i < count; i++) {
+    const r = Math.floor(Math.random() * sides) + 1;
+    rolls.push(r);
+    total += r;
+  }
+  total += mod;
+  return { count, sides, mod, rolls, total, expression: expr };
+}
 
-  // Block game start without a character card
-  if (!hasCharacterCard()) {
-    showToast('请先在左侧创建角色卡（至少填写姓名）后再开始游戏');
-    return;
+// ── KP Dice Roll — user clicks the dice card button ──
+export function kpDiceRoll() {
+  const diceCard = document.getElementById('kpDiceCard');
+  if (!diceCard) return;
+  const skill = diceCard.dataset.skill || '检定';
+  const expression = diceCard.dataset.expression || 'd20';
+  const difficulty = diceCard.dataset.difficulty || '';
+
+  const result = executeDiceExpression(expression);
+  if (!result) { showToast('骰子表达式无效'); return; }
+
+  // Determine success/failure display
+  let successLabel = '';
+  if (difficulty) {
+    const dcMatch = difficulty.match(/(\d+)/);
+    if (dcMatch) {
+      const dc = parseInt(dcMatch[1]);
+      const sigDiff = difficulty.toLowerCase().startsWith('dc') ? dc : dc;
+      if (result.total >= sigDiff) successLabel = '成功';
+      else successLabel = '失败';
+    } else if (difficulty.startsWith('目标')) {
+      const targetMatch = difficulty.match(/(\d+)/);
+      if (targetMatch) {
+        const target = parseInt(targetMatch[1]);
+        if (result.total === 1 && result.sides === 100) successLabel = '大失败';
+        else if (result.total <= target) successLabel = '成功';
+        else successLabel = '失败';
+      }
+    }
   }
 
-  input.value = '';
-  input.disabled = true;
+  // Show result on the dice card
+  diceCard.classList.add('rolled');
+  const resultEl = document.getElementById('kpDiceResult');
+  if (resultEl) {
+    const rollDetail = result.rolls.length > 1
+      ? `(${result.rolls.join('+')})${result.mod !== 0 ? (result.mod > 0 ? '+' + result.mod : result.mod) : ''}`
+      : result.mod !== 0
+        ? `(出目${result.rolls[0]}${result.mod > 0 ? '+' + result.mod : result.mod})`
+        : '';
+    resultEl.innerHTML = `
+      <div class="kp-dice-result-num">${result.total}</div>
+      <div class="kp-dice-result-detail">${expression} = ${result.total} ${rollDetail}</div>
+      ${successLabel ? `<div class="kp-dice-result-verdict ${successLabel === '成功' ? 'success' : 'fail'}">${successLabel}</div>` : ''}
+      ${difficulty ? `<div class="kp-dice-result-diff">难度: ${difficulty}</div>` : ''}
+    `;
+  }
+  // Hide roll button
+  const rollBtn = document.getElementById('kpDiceRollBtn');
+  if (rollBtn) rollBtn.style.display = 'none';
+
+  // Format result message for AI
+  const successText = successLabel ? ` | ${successLabel}` : '';
+  const resultMsg = `【掷骰完成】${skill}: ${expression} = ${result.total} (实际出目${result.mod !== 0 ? (result.rolls[0] + (result.mod > 0 ? '+' + result.mod : result.mod)) : result.rolls[0]})${difficulty ? ' | ' + difficulty : ''}${successText}`;
+
+  // Add result as player message in chat
+  addKPMsg('player', resultMsg);
+  renderKP();
+
+  // Re-enable input after brief delay
+  setTimeout(() => {
+    const inp = document.getElementById('kpInput');
+    if (inp) inp.disabled = false;
+    // Auto-send the result to AI for continuation
+    sendKPMessage(resultMsg);
+  }, 800);
+}
+
+// ── Send Message ───────────────────────────────────
+export async function sendKPMessage(overrideText) {
+  const input = document.getElementById('kpInput');
+  const isAuto = !!overrideText;
+  const text = isAuto ? overrideText : (input ? input.value.trim() : '');
+  if (!text || kpState.streaming) return;
+
+  // Only validate character card for manual messages
+  if (!isAuto) {
+    if (!hasCharacterCard()) {
+      showToast('请先在左侧创建角色卡（至少填写姓名）后再开始游戏');
+      return;
+    }
+    input.value = '';
+    input.disabled = true;
+  }
 
   const sendBtn = document.getElementById('kpSendBtn');
   const stopBtn = document.getElementById('kpStopBtn');
@@ -601,31 +688,33 @@ export async function sendKPMessage() {
     showToast('请先配置 API Key (点击上方的齿轮按钮)');
     if (sendBtn) sendBtn.style.display = '';
     if (stopBtn) stopBtn.style.display = 'none';
-    input.disabled = false;
+    if (!isAuto && input) input.disabled = false;
     return;
   }
   saveKPConfig(cfg);
 
-  addKPMsg('player', text);
-
-  // Auto-roll dice — compute before first render to avoid double DOM rebuild
-  const diceMatch = text.match(/(\d*d\d+[\+\-]?\d*)/gi);
-  if (diceMatch) {
-    const results = [];
-    for (const d of diceMatch) {
-      const m = d.match(/^(\d+)?d(\d+)([+-]\d+)?$/i);
-      if (m) {
-        const count = parseInt(m[1]) || 1;
-        const sides = parseInt(m[2]);
-        const mod = parseInt(m[3]) || 0;
-        let total = 0;
-        for (let i = 0; i < count; i++) total += Math.floor(Math.random() * sides) + 1;
-        total += mod;
-        results.push(`${d}=${total}`);
+  // For manual messages only
+  if (!isAuto) {
+    addKPMsg('player', text);
+    // Auto-roll dice — but skip for dice result messages
+    const diceMatch = text.match(/(\d*d\d+[\+\-]?\d*)/gi);
+    if (diceMatch && !text.startsWith('【掷骰完成】')) {
+      const results = [];
+      for (const d of diceMatch) {
+        const m = d.match(/^(\d+)?d(\d+)([+-]\d+)?$/i);
+        if (m) {
+          const count = parseInt(m[1]) || 1;
+          const sides = parseInt(m[2]);
+          const mod = parseInt(m[3]) || 0;
+          let total = 0;
+          for (let i = 0; i < count; i++) total += Math.floor(Math.random() * sides) + 1;
+          total += mod;
+          results.push(`${d}=${total}`);
+        }
       }
-    }
-    if (results.length) {
-      kpState.chatHistory[kpState.chatHistory.length - 1].dice = results.join(', ');
+      if (results.length) {
+        kpState.chatHistory[kpState.chatHistory.length - 1].dice = results.join(', ');
+      }
     }
   }
 
@@ -646,8 +735,12 @@ export async function sendKPMessage() {
     kpState.chatHistory[kpState.chatHistory.length - 1].content = displayText;
 
     const commands = parseAICommands(fullResponse);
-    if (commands.length > 0) {
-      const changes = applyAICommands(commands);
+    const hasDiceRequest = commands.some(c => c.type === '掷骰请求');
+
+    // Apply non-dice commands normally
+    const nonDiceCommands = commands.filter(c => c.type !== '掷骰请求');
+    if (nonDiceCommands.length > 0) {
+      const changes = applyAICommands(nonDiceCommands);
       if (changes.length > 0) {
         addKPSystemMsg(`角色状态已更新: ${changes.join('; ')}`);
         renderCocStatus();
@@ -664,6 +757,15 @@ export async function sendKPMessage() {
     }
     if (kpState.apiHistory.length > 150) {
       kpState.apiHistory = kpState.apiHistory.slice(-120);
+    }
+
+    // If AI requested a dice roll and this isn't already a dice result resolution
+    if (hasDiceRequest && !isAuto) {
+      const diceCmd = commands.find(c => c.type === '掷骰请求');
+      if (diceCmd) {
+        const parsed = parseDiceRequest(diceCmd.value);
+        showKPDiceCard(parsed);
+      }
     }
   } catch (err) {
     if (err.name === 'AbortError') {
@@ -696,6 +798,38 @@ export async function sendKPMessage() {
     if (sb) sb.style.display = '';
     if (st) st.style.display = 'none';
   }
+}
+
+// ── Show Dice Card in Chat ─────────────────────────
+function showKPDiceCard(parsed) {
+  const container = document.getElementById('kpDiceCardContainer');
+  if (!container) return;
+
+  const { skill, expression, difficulty, description } = parsed;
+
+  container.innerHTML = `
+    <div class="kp-dice-card" id="kpDiceCard" data-skill="${skill}" data-expression="${expression}" data-difficulty="${difficulty}">
+      <div class="kp-dice-card-header">🎲 需要掷骰检定</div>
+      <div class="kp-dice-card-skill">${skill}</div>
+      <div class="kp-dice-card-expr">${expression}${difficulty ? '  <span class="kp-dice-card-vs">VS</span>  ' + difficulty : ''}</div>
+      ${description ? `<div class="kp-dice-card-desc">${description}</div>` : ''}
+      <div class="kp-dice-result" id="kpDiceResult"></div>
+      <button class="btn btn-primary kp-dice-roll-btn" id="kpDiceRollBtn" data-action="kp:diceRoll">
+        🎲 投掷 ${expression}
+      </button>
+    </div>
+  `;
+
+  container.style.display = '';
+
+  // Disable input until dice is resolved
+  const input = document.getElementById('kpInput');
+  if (input) input.disabled = true;
+
+  // Auto-scroll to the dice card
+  setTimeout(() => {
+    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 100);
 }
 
 // ── Test Connectivity ──────────────────────────────

@@ -5,7 +5,7 @@ import { renderCocChronicle, renderCocStatus } from './coc-status.js';
 import { applyMemoryCommand } from './memory-bank.js';
 
 // All known command types (memory types added at end)
-const CMD_TYPES = 'SAN|HP|LUCK|TRAIT|REMOVE_TRAIT|CHRONICLE|SKILL_CHECK|ITEM|REMOVE_ITEM|NPC|CLUE|PLOT|MEMORY|检定请求|检定结果|INITIATIVE|END_COMBAT|CHASE|END_CHASE';
+const CMD_TYPES = 'SAN|HP|LUCK|TRAIT|REMOVE_TRAIT|CHRONICLE|SKILL_CHECK|ITEM|REMOVE_ITEM|NPC|CLUE|PLOT|MEMORY|检定请求|检定结果|掷骰请求|INITIATIVE|END_COMBAT|CHASE|END_CHASE';
 const CMD_RE = new RegExp(`【(${CMD_TYPES})[：:](.+?)】`);
 
 export function parseAICommands(text) {
@@ -134,6 +134,11 @@ export function applyAICommands(commands) {
           if (result) memoryChanges.push(result);
           break;
         }
+        // ── Dice request (handled by KP module for frontend dice UI) ──
+        case '掷骰请求':
+          // This is handled by kp.js, not applied here
+          // The command is kept in stream so kp.js can detect it
+          break;
         // ── CoC 7e game-phase commands (handled by multiplayer/check-resolver) ──
         case '检定请求':
         case '检定结果':
@@ -153,6 +158,21 @@ export function applyAICommands(commands) {
     changes.push('记忆库: ' + memoryChanges.join('; '));
   }
   return changes;
+}
+
+/**
+ * Parse a 【掷骰请求】 value into structured data.
+ * Format: skill|expression|difficulty|description
+ * Example: 侦察检定|d20+5|DC15|寻找隐藏线索
+ */
+export function parseDiceRequest(value) {
+  const parts = value.split('|').map(s => s.trim());
+  return {
+    skill: parts[0] || '检定',
+    expression: parts[1] || 'd20',
+    difficulty: parts[2] || '',
+    description: parts[3] || '',
+  };
 }
 
 export function stripAICommands(text) {

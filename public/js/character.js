@@ -14,14 +14,50 @@ function handlePortraitFile(file) {
   if (!file || !file.type.startsWith('image/')) return;
   const reader = new FileReader();
   reader.onload = function(ev) {
-    state.portraitData = ev.target.result;
-    if (dom.portraitImg) {
-      dom.portraitImg.src = ev.target.result;
-      dom.portraitImg.style.display = 'block';
-    }
-    if (dom.portraitPlaceholder) dom.portraitPlaceholder.style.display = 'none';
+    compressPortrait(ev.target.result, (compressed) => {
+      state.portraitData = compressed;
+      if (dom.portraitImg) {
+        dom.portraitImg.src = compressed;
+        dom.portraitImg.style.display = 'block';
+      }
+      if (dom.portraitPlaceholder) dom.portraitPlaceholder.style.display = 'none';
+    });
   };
   reader.readAsDataURL(file);
+}
+
+function compressPortrait(dataUrl, callback) {
+  const img = new Image();
+  img.onload = function() {
+    const MAX_W = 400;
+    const MAX_H = 533;
+    let w = img.width;
+    let h = img.height;
+    // Scale down to fit within MAX_W × MAX_H, maintaining aspect ratio
+    if (w > MAX_W || h > MAX_H) {
+      const ratio = Math.min(MAX_W / w, MAX_H / h);
+      w = Math.round(w * ratio);
+      h = Math.round(h * ratio);
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+
+    // Try qualities from high to low until size < 100KB
+    const qualities = [0.7, 0.55, 0.4, 0.3];
+    let best = null;
+    for (const q of qualities) {
+      const result = canvas.toDataURL('image/jpeg', q);
+      best = result;
+      // Estimate base64 size: ~4/3 of binary size
+      const estimatedBytes = (result.length - result.indexOf(',') - 1) * 0.75;
+      if (estimatedBytes < 100 * 1024) break;
+    }
+    callback(best);
+  };
+  img.src = dataUrl;
 }
 
 export function setupPortrait() {

@@ -4,17 +4,17 @@
    — Print styles: hide interactive elements
    ============================================================ */
 
-@media (max-width: 1150px) { .char-layout { grid-template-columns: 1fr; } }
+@media (max-width: 700px) {
+  .site-footer { padding: 14px 12px; margin-top: 20px; }
+  .footer-inner { gap: 12px; }
+  .footer-copyright { font-size: .7rem; }
+  .notes-editor textarea { min-height: 220px; }
+  input[type="text"], input[type="number"], select, textarea { padding: 8px 10px; font-size: .82rem; }
+  .portrait-zone { max-width: 240px; margin: 0 auto 14px; }
+}
 
-@media (max-width: 850px) { .dice-layout { grid-template-columns: 1fr; } }
-
-@media (max-width: 800px) { .notes-layout { grid-template-columns: 1fr; } }
-
-@media (max-width: 850px) { .kp-config { grid-template-columns: 1fr 1fr; } }
-
-@media print {
-  body { background: #fff; color: #000; }
-  nav, .btn-row, .toast-container, #particles { display: none !important; }
-  .panel { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
-  .char-layout { grid-template-columns: 1fr; }
+@media (min-width: 701px) and (max-width: 960px) {
+  .nav-tab { padding: 9px 14px; font-size: .84rem; }
+  .hero h1 { font-size: 2.2rem; }
+  .rpg-grid { grid-template-columns: repeat(2, 1fr); }
 }

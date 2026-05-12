@@ -6,16 +6,38 @@
         <input type="text" id="sessionTitle" placeholder="给这篇笔记起个名字..." style="flex:1;">
         <input type="text" id="sessionTags" placeholder="标签, 用逗号分隔" style="width:180px;font-size:.75rem;">
       </div>
-      <textarea id="sessionContent" placeholder="写点什么吧，哪怕只是一句话...&#10;&#10;今天的遭遇、一段印象深刻的对白、战斗中差点团灭的瞬间、某个让你背后发凉的发现——都值得记下来。&#10;&#10;提示：可以在这里梳理剧情脉络、记录NPC关系、标记未解谜团。"></textarea>
-      <div style="display:flex;gap:8px;align-items:center;">
+      <div class="editor-toolbar">
+        <button type="button" data-action="notes:toolbar" data-md="**粗体**" title="粗体 (Ctrl+B)"><b>B</b></button>
+        <button type="button" data-action="notes:toolbar" data-md="*斜体*" title="斜体 (Ctrl+I)"><i>I</i></button>
+        <button type="button" data-action="notes:toolbar" data-md="## 标题" title="标题">H</button>
+        <button type="button" data-action="notes:toolbar" data-md="- 列表项" title="无序列表">•≡</button>
+        <button type="button" data-action="notes:toolbar" data-md="1. 列表项" title="有序列表">1.</button>
+        <button type="button" data-action="notes:toolbar" data-md="[链接](url)" title="链接">🔗</button>
+        <button type="button" data-action="notes:toolbar" data-md="> 引用" title="引用">❝</button>
+        <button type="button" data-action="notes:toolbar" data-md="`代码`" title="行内代码">&lt;/&gt;</button>
+        <button type="button" data-action="notes:toolbar" data-md="---" title="分割线">—</button>
+        <span style="flex:1;"></span>
+        <button type="button" id="notesPreviewToggle" data-action="notes:togglePreview" class="active" style="font-size:.7rem;">预览</button>
+      </div>
+      <textarea id="sessionContent" placeholder="支持 Markdown 语法...&#10;&#10;# 标题&#10;**粗体** *斜体* &#10;- 列表&#10;> 引用&#10;---&#10;&#10;所见即所得，实时渲染预览。"></textarea>
+      <div class="notes-preview" id="notesPreview"></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
         <button class="btn btn-save btn-sm" data-action="notes:save">保存</button>
-        <button class="btn btn-ghost btn-sm" data-action="notes:export">导出全部笔记</button>
         <span style="font-size:.68rem;color:var(--text-dim);margin-left:auto;" id="notesCount"></span>
       </div>
     </div>
 
     <div class="panel">
-      <h3>历史笔记 <span style="font-size:.68rem;color:var(--text-dim);font-weight:normal;" id="notesFilterLabel"></span></h3>
+      <div class="panel-header">
+        <h3>历史笔记 <span style="font-size:.68rem;color:var(--text-dim);font-weight:normal;" id="notesFilterLabel"></span></h3>
+      </div>
+      <div class="notes-toolbar">
+        <span class="note-select-all" data-action="notes:selectAll">全选</span>
+        <button class="btn btn-ghost btn-xs" data-action="notes:exportSelected">导出选中</button>
+        <button class="btn btn-ghost btn-xs" data-action="notes:exportEncrypted">🔒 加密导出</button>
+        <button class="btn btn-ghost btn-xs" data-action="notes:importPrompt">导入笔记</button>
+        <button class="btn btn-ghost btn-xs" data-action="notes:export">导出全部</button>
+      </div>
       <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;" id="notesTagFilter"></div>
       <div class="notes-list" id="sessionsList"></div>
     </div>

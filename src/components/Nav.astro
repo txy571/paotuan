@@ -1,7 +1,21 @@
 <nav>
   <div class="nav-brand">
     跑团助手
-    <span class="theme-badge" id="themeBadge">D&D 5e</span>
+    <div class="theme-picker" id="themePicker">
+      <span class="theme-badge" id="themeBadge" data-action="theme:togglePicker" title="点击切换规则系统">D&D 5e <i class="fas fa-chevron-down" style="font-size:.6rem;margin-left:2px;"></i></span>
+      <div class="theme-dropdown" id="themeDropdown" style="display:none;">
+        <div class="theme-dropdown-item" data-action="theme:select" data-theme="dnd"><span class="theme-dot" style="background:#d42020;"></span>D&D 5e</div>
+        <div class="theme-dropdown-item" data-action="theme:select" data-theme="coc"><span class="theme-dot" style="background:#0d9488;"></span>克苏鲁的呼唤</div>
+        <div class="theme-dropdown-item" data-action="theme:select" data-theme="cyberpunk"><span class="theme-dot" style="background:#0088cc;"></span>赛博朋克 RED</div>
+        <div class="theme-dropdown-item" data-action="theme:select" data-theme="pathfinder"><span class="theme-dot" style="background:#c89820;"></span>开拓者</div>
+      </div>
+      <select class="theme-select-native" id="themeSelect" data-action="theme:select" data-action-event="change" style="display:none;">
+        <option value="dnd">D&D 5e</option>
+        <option value="coc">克苏鲁的呼唤</option>
+        <option value="cyberpunk">赛博朋克 RED</option>
+        <option value="pathfinder">开拓者</option>
+      </select>
+    </div>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" data-action="nav:go" data-page="home">首页</button>
@@ -10,4 +24,7 @@
     <button class="nav-tab" data-action="nav:go" data-page="notes">笔记</button>
     <button class="nav-tab" data-action="nav:go" data-page="multiplayer">联机</button>
   </div>
+  <button class="color-scheme-toggle" id="colorSchemeToggle" data-action="theme:toggleColorScheme" title="切换浅色/深色模式">
+    <i class="fas fa-sun"></i>
+  </button>
 </nav>

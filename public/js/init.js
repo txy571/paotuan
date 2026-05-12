@@ -2,7 +2,7 @@
 import { state, kpState, cocState, ATTR_BASE, ATTR_KEYS, THEME_NAMES } from './state.js';
 import { showToast } from './utils.js';
 import { dom } from './dom.js';
-import { selectRPG, navigateTo } from './theme.js';
+import { selectRPG, navigateTo, toggleColorScheme, applyColorScheme, toggleThemePicker } from './theme.js';
 import * as Character from './character.js';
 import * as Dice from './dice.js';
 import * as Notes from './notes.js';
@@ -41,7 +41,9 @@ setInterval(() => {
 // ── DATA-ACTION binding ────────────────────────────
 const actionMap = {
   // theme
-  'theme:select': (el) => selectRPG(el.dataset.theme),
+  'theme:select': (el) => selectRPG(el.dataset.theme || el.value),
+  'theme:togglePicker': () => toggleThemePicker(),
+  'theme:toggleColorScheme': () => toggleColorScheme(),
   'nav:go': (el) => navigateTo(el.dataset.page),
 
   // character
@@ -75,7 +77,13 @@ const actionMap = {
 
   // notes
   'notes:save': () => Notes.saveSessionNote(),
-  'notes:export': () => Notes.exportNotes(),
+  'notes:export': () => Notes.exportNotes(false),
+  'notes:exportSelected': () => Notes.exportSelected(),
+  'notes:exportEncrypted': () => Notes.exportEncrypted(),
+  'notes:importPrompt': () => Notes.importNotesPrompt(),
+  'notes:selectAll': () => Notes.selectAllNotes(),
+  'notes:togglePreview': () => Notes.togglePreview(),
+  'notes:toolbar': (el) => Notes.insertMarkdown(el.dataset.md),
 
   // api
   'api:fetch': (el) => fetchAPI(el.dataset.endpoint),
@@ -189,6 +197,7 @@ document.addEventListener('render-game-saves', () => renderGameSaves());
 
 document.addEventListener('load-session', (e) => Notes.loadSession(e.detail));
 document.addEventListener('notes-filter', (e) => Notes.filterNotesByTag(e.detail));
+document.addEventListener('notes-toggle-select', (e) => Notes.toggleNoteSelect(e.detail));
 document.addEventListener('fetch-api', (e) => fetchAPI(e.detail));
 document.addEventListener('fetch-detail', (e) => fetchAPIDetail(e.detail.endpoint, e.detail.index));
 
@@ -237,11 +246,34 @@ if (dom.customDice) dom.customDice.addEventListener('keydown', e => { if (e.key=
 if (dom.equipName) dom.equipName.addEventListener('keydown', e => { if (e.key==='Enter') Character.addEquipment(); });
 if (dom.initRoll) dom.initRoll.addEventListener('keydown', e => { if (e.key==='Enter') Character.addInitiative(); });
 
+// Notes markdown live preview
+const sessionContent = document.getElementById('sessionContent');
+if (sessionContent) {
+  sessionContent.addEventListener('input', () => {
+    Notes.updatePreview();
+  });
+}
+
 // ── Bootstrap ──────────────────────────────────────
 async function init() {
   // Load saved theme
   const savedTheme = localStorage.getItem('ttrpg-theme');
   if (savedTheme && THEME_NAMES[savedTheme]) selectRPG(savedTheme);
+
+  // Load saved color scheme
+  const savedScheme = localStorage.getItem('ttrpg-color-scheme') || 'dark';
+  applyColorScheme(savedScheme);
+
+  // Theme dropdown outside-click dismiss
+  document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('themeDropdown');
+    const picker = document.getElementById('themePicker');
+    if (dropdown && picker && dropdown.style.display !== 'none') {
+      if (!picker.contains(e.target)) {
+        dropdown.style.display = 'none';
+      }
+    }
+  });
 
   // Set up portrait
   Character.setupPortrait();

@@ -1,0 +1,38 @@
+{
+  "name": "跑团助手 - TTRPG Companion",
+  "short_name": "跑团助手",
+  "description": "AI 驱动的桌面角色扮演游戏伴侣，支持 D&D 5e、克苏鲁的呼唤、赛博朋克 RED、开拓者 2e",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020206",
+  "theme_color": "#d42020",
+  "orientation": "any",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "/icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

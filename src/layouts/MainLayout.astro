@@ -19,9 +19,21 @@ import '../styles/responsive.css';
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>跑团助手 — TTRPG Companion</title>
+  <meta name="description" content="AI 驱动的桌面角色扮演游戏伴侣，支持 D&D 5e、CoC 7e、赛博朋克 RED、开拓者 2e">
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#020206">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="跑团助手">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon.png">
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Markdown parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
-<body data-theme="dnd">
+<body data-theme="dnd" data-color-scheme="dark">
 
   <canvas id="particles"></canvas>
 

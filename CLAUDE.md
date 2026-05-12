@@ -19,12 +19,12 @@ src/
   pages/index.astro         → SPA entry point, composes all 5 page sections
   layouts/MainLayout.astro  → HTML shell: <head>, nav, <slot/>, footer, script loader
   components/
-    Nav.astro               → Global nav bar with theme badge + 5 page tabs
-    Footer.astro            → Copyright + GitHub icon link
+    Nav.astro               → Global nav bar: light/dark toggle, clickable theme badge dropdown (desktop) / native select (mobile) + 5 page tabs
+    Footer.astro            → Copyright + GitHub link + 问题反馈 (issues link)
     HomeSection.astro       → Home: RPG cards, AI KP chat, scenario DB, game saves
     CharacterSection.astro  → Character sheet: 3-col layout
     DiceSection.astro       → Dice roller: d4-d100 strip, custom expression, history
-    NotesSection.astro      → Session notes editor + history list
+    NotesSection.astro      → Markdown WYSIWYG editor (live preview), multi-select export/import, optional AES-GCM encryption
     MultiplayerSection.astro → Lobby + room views, player sidebar, KP panel
   styles/                   → 10 CSS modules (bundled by Astro at build)
 public/
@@ -69,6 +69,23 @@ node server.js          # Node.js static server + API proxy (serves dist/)
 - **Deploy**: Push to `main` → GitHub Actions (`.github/workflows/deploy.yml`) builds with Astro and deploys to GitHub Pages
 - **GitHub Pages Setting**: MUST be set to **"GitHub Actions"** (not "Deploy from a branch")
 - **Custom domain**: ttrpg.183107.xyz (CNAME in `public/`)
+- **PWA**: manifest.json in `public/`, icons in `public/icons/` (see plan for required sizes)
+
+## Theme System
+
+- **RPG theme**: `body[data-theme]` controls rule system (dnd/coc/cyberpunk/pathfinder) — accent colors, fonts, ornaments differ per system
+- **Color scheme**: `body[data-color-scheme]` controls light/dark mode, orthogonal to RPG theme (works with all 4 systems)
+- Theme badge in Nav: click to open dropdown (desktop) or use native `<select>` (mobile ≤700px)
+- Light mode toggle button (sun/moon icon) in nav bar
+- All color scheme preferences persisted in `localStorage` key `ttrpg-color-scheme`
+
+## Notes System (Enhanced)
+
+- **Markdown WYSIWYG**: textarea with real-time rendered preview below (via marked.js CDN)
+- **Toolbar**: quick-insert buttons for bold, italic, heading, list, link, quote, code, hr
+- **Multi-select export**: checkboxes on note cards, "导出选中" for JSON download
+- **Encrypted export**: AES-GCM via Web Crypto API (PBKDF2 key derivation, 100k iterations)
+- **Import**: merge-import JSON files, auto-detect encrypted envelopes, skip duplicates by id
 
 ## AI KP Flow
 
@@ -91,3 +108,4 @@ All in `public/js/prompts/`:
 - localStorage keys prefixed `ttrpg-`
 - Chinese UI language throughout
 - No TypeScript, no JSX (Astro components are `.astro` HTML superset)
+- Character portrait auto-compresses to <100KB (canvas resize + JPEG quality adjustment) on upload

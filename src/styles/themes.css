@@ -97,3 +97,91 @@
   --glow-spread: 0 0 24px rgba(200,152,32,0.2);
   --ornament: "🗡️";
 }
+
+/* ============================================================
+   LIGHT COLOR SCHEME — overrides dark bg/text/shadow variables
+   ============================================================ */
+[data-color-scheme="light"] {
+  --bg-base: #f0f0f5;
+  --bg-layer: #e8e8f0;
+  --bg-card: linear-gradient(150deg, #ffffff 0%, #f5f5fa 55%, #eeeef5 100%);
+  --bg-panel: #fafaff;
+  --text: #1a1a2e;
+  --text-dim: #6a6a88;
+  --border: #d0d0dc;
+  --border-subtle: rgba(0,0,0,0.06);
+  --border-strong: rgba(0,0,0,0.10);
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 2px 4px rgba(0,0,0,0.05), 0 6px 16px rgba(0,0,0,0.12);
+  --shadow-lg: 0 3px 6px rgba(0,0,0,0.04), 0 10px 28px rgba(0,0,0,0.15);
+  --overlay: rgba(240,240,245,0.92);
+
+  /* Light-mode dim accents — tone down the glow */
+  --accent-dim: rgba(120,120,160,0.12);
+  --glow-spread: 0 0 16px rgba(120,120,160,0.08);
+  --accent2: #3355cc;
+  --accent3: #4477dd;
+}
+
+/* Per-theme light accent colors (keep them distinct) */
+[data-color-scheme="light"][data-theme="dnd"] {
+  --accent-dim: rgba(212,32,32,0.10);
+  --glow-spread: 0 0 16px rgba(212,32,32,0.08);
+  --text-gold: #c42020;
+}
+[data-color-scheme="light"][data-theme="coc"] {
+  --accent-dim: rgba(13,148,136,0.10);
+  --glow-spread: 0 0 16px rgba(13,148,136,0.08);
+  --text-gold: #0a8a7e;
+}
+[data-color-scheme="light"][data-theme="cyberpunk"] {
+  --accent-dim: rgba(0,136,204,0.10);
+  --glow-spread: 0 0 16px rgba(0,136,204,0.08);
+  --text-gold: #0077bb;
+}
+[data-color-scheme="light"][data-theme="pathfinder"] {
+  --accent-dim: rgba(200,152,32,0.10);
+  --glow-spread: 0 0 16px rgba(200,152,32,0.08);
+  --text-gold: #b08820;
+}
+
+/* Tweak body::before gradient for light mode */
+[data-color-scheme="light"] body::before {
+  opacity: 0.08;
+}
+
+/* Tweak particles for light mode */
+[data-color-scheme="light"] #particles {
+  opacity: 0.2;
+}
+
+/* Nav active tab underline fix for light mode */
+[data-color-scheme="light"] .nav-tab.active { background: rgba(0,0,0,0.05); }
+[data-color-scheme="light"] .nav-tab:hover { background: rgba(0,0,0,0.03); }
+
+/* Button hover fix */
+[data-color-scheme="light"] .nav-tab:hover { border-color: var(--border-strong); }
+
+/* Light mode scrollbar */
+[data-color-scheme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); }
+[data-color-scheme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.35); }
+
+/* Ensure form elements look correct */
+[data-color-scheme="light"] input[type="text"],
+[data-color-scheme="light"] input[type="number"],
+[data-color-scheme="light"] select,
+[data-color-scheme="light"] textarea {
+  background: rgba(0,0,0,0.04);
+}
+[data-color-scheme="light"] .note-card { background: rgba(0,0,0,0.03); }
+[data-color-scheme="light"] .note-card:hover { background: rgba(0,0,0,0.05); }
+[data-color-scheme="light"] .skill-row-coc { background: rgba(0,0,0,0.03); }
+
+/* Print styles: force light */
+@media print {
+  [data-color-scheme="dark"] body {
+    --bg-base: #fff;
+    --text: #000;
+  }
+}

@@ -157,8 +157,14 @@
 }
 
 /* Nav active tab underline fix for light mode */
-[data-color-scheme="light"] .nav-tab.active { background: rgba(0,0,0,0.05); }
-[data-color-scheme="light"] .nav-tab:hover { background: rgba(0,0,0,0.03); }
+[data-color-scheme="light"] .nav-tab { color: #333355; }
+[data-color-scheme="light"] .nav-tab.active { background: rgba(0,0,0,0.05); color: var(--text-gold); }
+[data-color-scheme="light"] .nav-tab:hover { background: rgba(0,0,0,0.03); color: #1a1a2e; }
+
+/* Light mode theme picker text */
+[data-color-scheme="light"] .theme-dropdown-item { color: #333355; }
+[data-color-scheme="light"] .theme-dropdown-item:hover { color: #1a1a2e; }
+[data-color-scheme="light"] .theme-select-native { color: #333355; }
 
 /* Button hover fix */
 [data-color-scheme="light"] .nav-tab:hover { border-color: var(--border-strong); }

@@ -93,6 +93,10 @@ const actionMap = {
   'kp:saveConfig': () => saveKPConfigFromUI(),
   'kp:testConnection': () => testKPConnection(),
   'kp:quick': (el) => sendQuickAction(el.dataset.actionName),
+  'kp:actionBtn': (el) => {
+    if (kpState.streaming) return;
+    sendKPMessage(el.dataset.actionName);
+  },
   'kp:diceRoll': () => kpDiceRoll(),
 
   // saves

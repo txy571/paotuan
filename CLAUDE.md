@@ -23,7 +23,6 @@ src/
     Footer.astro            → Copyright + GitHub link + 问题反馈 (issues link)
     HomeSection.astro       → Home: RPG cards, AI KP chat, scenario DB, game saves
     CharacterSection.astro  → Character sheet: 3-col layout
-    DiceSection.astro       → Dice roller: d4-d100 strip, custom expression, history
     NotesSection.astro      → Markdown WYSIWYG editor (live preview), multi-select export/import, optional AES-GCM encryption
     MultiplayerSection.astro → Lobby + room views, player sidebar, KP panel
   styles/                   → 10 CSS modules (bundled by Astro at build)
@@ -48,7 +47,6 @@ TTRPG.bat                   → Windows multi-mode launcher
 |------|-----|-----------|-------------|
 | Home | `#page-home` | HomeSection | AI KP chat, RPG selection, saves, scenario DB |
 | Character | `#page-character` | CharacterSection | 3-col character sheet |
-| Dice | `#page-dice` | DiceSection | Dice roller d4-d100 |
 | Notes | `#page-notes` | NotesSection | Session notes |
 | Multiplayer | `#page-multiplayer` | MultiplayerSection | Lobby + room |
 

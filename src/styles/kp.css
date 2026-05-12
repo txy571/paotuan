@@ -96,6 +96,14 @@
   font-weight: 600; letter-spacing: .03em;
 }
 
+/* ── Bracket content: gray italic small ── */
+.kp-msg .msg-bracket {
+  font-style: italic;
+  font-size: .78rem;
+  color: var(--text-dim);
+  opacity: .72;
+}
+
 .kp-msg .msg-dice {
   display: inline-block; margin: 6px 2px; padding: 4px 10px;
   background: rgba(0,0,0,.3); border-radius: 12px;
@@ -125,6 +133,28 @@
 
 .kp-input-row input {
   flex: 1; padding: 12px 16px; font-size: .9rem;
+}
+
+/* ── Action Buttons (from AI's ACTIONS command) ── */
+.kp-action-buttons {
+  display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 4px 4px;
+  justify-content: center;
+}
+.kp-action-btn {
+  padding: 10px 22px; border-radius: 24px; font-size: .88rem; font-weight: 600;
+  border: 2px solid var(--accent); background: var(--accent-dim);
+  color: var(--text-gold); cursor: pointer;
+  transition: transform var(--t) var(--ease-out), box-shadow var(--t) var(--ease-out);
+  font-family: var(--font-body);
+  flex: 0 1 auto; min-width: 80px;
+}
+.kp-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px var(--accent-dim);
+  background: var(--accent); color: #fff;
+}
+.kp-action-btn:active {
+  transform: scale(0.97);
 }
 
 .kp-quick-actions {

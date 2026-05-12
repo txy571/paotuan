@@ -209,7 +209,7 @@ paotuan/
 │   │   ├── Footer.astro        # 页脚（版权 + GitHub 链接）
 │   │   ├── HomeSection.astro   # 首页（AI KP 聊天, RPG 选择, 剧本库, 存档）
 │   │   ├── CharacterSection.astro  # 人物卡（3 栏布局）
-│   │   ├── DiceSection.astro   # 骰子投掷器
+
 │   │   ├── NotesSection.astro  # 跑团笔记
 │   │   └── MultiplayerSection.astro # 多人联机
 │   └── styles/                 # 10 个 CSS 模块（构建时合并优化）

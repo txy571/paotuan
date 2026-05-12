@@ -119,6 +119,20 @@ nav {
 }
 
 /* ── Color scheme toggle button ── */
+/* ── Game active: lock theme picker & hide welcome ── */
+[data-game-active] .theme-badge,
+[data-game-active] .theme-select-native {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+[data-game-active] #page-home .hero,
+[data-game-active] .rpg-grid,
+[data-game-active] .char-select-section,
+[data-game-active] .api-section {
+  display: none !important;
+}
+
 .color-scheme-toggle {
   width: 36px; height: 36px; border-radius: 50%;
   border: 1px solid var(--border); background: transparent;

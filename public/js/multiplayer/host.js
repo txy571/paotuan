@@ -7,7 +7,7 @@ import { M, sendToRelay, collectMyCharData, getGameStateSnapshot, applyCharDataT
 import { addChatMessage, renderAllRoom } from './ui.js';
 import { callAnthropicAPI, callOpenAIAPI, getKPConfig } from '../kp.js';
 import { getGameSaveData } from '../saves.js';
-import { parseAICommands, applyAICommands, stripAICommands } from '../commands.js';
+import { parseAICommands, applyAICommands } from '../commands.js';
 import { startCombat, endCombat, advanceCombatTurn, skipCombatTurn, isCurrentCombatant, parseInitiativeCommand, clearCombatTimeout } from './combat.js';
 import { startChase, endChase, parseChaseCommand } from './chase.js';
 
@@ -281,7 +281,7 @@ export async function processHostAIAction(playerId, playerName, actionText) {
     }
     clearTimeout(timeout);
 
-    const displayText = stripAICommands(fullResponse);
+    const displayText = fullResponse.replace(/【ACTIONS[：:][^】]*】/g, '').trim();
     const commands = parseAICommands(fullResponse);
     if (commands.length > 0) {
       // Handle phase-change commands first
@@ -367,7 +367,7 @@ export async function processHostAISecret(playerId, playerName, actionText) {
       fullResponse = await callOpenAIAPI(cfg, systemPrompt, apiHistory, secretPrompt, controller);
     }
     clearTimeout(timeout);
-    const displayText = stripAICommands(fullResponse);
+    const displayText = fullResponse.replace(/【ACTIONS[：:][^】]*】/g, '').trim();
     const commands = parseAICommands(fullResponse);
     if (commands.length > 0) {
       applyAICommands(commands);

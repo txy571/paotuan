@@ -7,7 +7,7 @@ import {
 } from './state.js';
 import { esc, showToast, modPct } from './utils.js';
 import { getGameSaveData } from './saves.js';
-import { parseAICommands, applyAICommands, stripAICommands, parseDiceRequest } from './commands.js';
+import { parseAICommands, applyAICommands, parseDiceRequest } from './commands.js';
 import { renderCocStatus, renderCocChronicle } from './coc-status.js';
 import { getMemorySummary, getNPCProfiles } from './memory-bank.js';
 import { setCharacterCardLock } from './character.js';
@@ -135,6 +135,12 @@ export function addKPSystemMsg(content) {
   kpState.chatHistory.push({ role: 'system', content, time: Date.now() });
 }
 
+/** Format message text: escape HTML, then wrap 【】 with gray italic styling */
+function formatMsgContent(text) {
+  const escaped = esc(text);
+  return escaped.replace(/【([^】]*)】/g, '<span class="msg-bracket">【$1】</span>');
+}
+
 export function renderKP() {
   const msgs = document.getElementById('kpMessages');
   if (!msgs) return;
@@ -156,7 +162,7 @@ export function renderKP() {
     const realIdx = truncated ? i + skipCount : i;
     const isStreaming = kpState.streaming && realIdx === history.length - 1 && m.role === 'gm';
     if (m.role === 'system') {
-      return `<div class="kp-msg system">${esc(m.content)}</div>`;
+      return `<div class="kp-msg system">${formatMsgContent(m.content)}</div>`;
     }
     const header = m.role === 'gm'
       ? `<div class="msg-header">🎭 ${THEME_NAMES[state.theme]} 主持人</div>`
@@ -166,7 +172,7 @@ export function renderKP() {
       diceHTML = m.dice.split(',').map(d => `<span class="msg-dice">${d.trim()}</span>`).join('');
     }
     return `<div class="kp-msg ${m.role === 'gm' ? 'gm' : 'player'} ${isStreaming ? 'streaming' : ''}">
-      ${header}<div class="msg-body">${m.content}</div>${diceHTML}
+      ${header}<div class="msg-body">${formatMsgContent(m.content)}</div>${diceHTML}
     </div>`;
   }).join('');
   msgs.innerHTML = html;
@@ -178,11 +184,11 @@ export function renderKP() {
 let _lastScrollTime = 0;
 let _scrollRaf = null;
 
-/** Incremental update during streaming — text-only, throttled scroll. */
+/** Incremental update during streaming — HTML for bracket formatting, throttled scroll. */
 export function updateStreamingMsg(text) {
   const bodyEl = document.querySelector('#kpMessages .kp-msg.streaming .msg-body');
   if (bodyEl) {
-    bodyEl.textContent = text;
+    bodyEl.innerHTML = formatMsgContent(text);
     const now = Date.now();
     if (now - _lastScrollTime > 100) {
       _lastScrollTime = now;
@@ -302,6 +308,7 @@ export function openKPPanel() {
   }
   kpState.active = true;
   setCharacterCardLock(true);
+  document.body.dataset.gameActive = 'true';
   const hero = document.getElementById('kpHero');
   const panel = document.getElementById('kpChatWrapper');
   if (hero) hero.style.display = 'none';
@@ -325,8 +332,10 @@ export function openKPPanel() {
 }
 
 export function closeKPPanel() {
+  clearActionButtons();
   kpState.active = false;
   setCharacterCardLock(false);
+  delete document.body.dataset.gameActive;
   if (kpState.streamingAbort) { kpState.streamingAbort.abort(); kpState.streamingAbort = null; }
   kpState.streaming = false;
   const hero = document.getElementById('kpHero');
@@ -360,6 +369,7 @@ export function sendQuickAction(action) {
 
 // ── Stop Streaming ─────────────────────────────────
 export function stopKPStreaming() {
+  clearActionButtons();
   if (kpState.streamingAbort) {
     kpState.streamingAbort.abort();
     kpState.streamingAbort = null;
@@ -442,7 +452,9 @@ async function _stream(endpoint, reqHeaders, reqBody, controller, parseDelta) {
               text += delta;
               if (kpState.chatHistory.length) kpState.chatHistory[kpState.chatHistory.length - 1].content = text;
               updateStreamingMsg(text);
-              tts.feedChunk(delta);
+              // Strip 【】 content for TTS
+              const ttsClean = delta.replace(/【[^】]*】/g, '');
+              tts.feedChunk(ttsClean);
             }
           } catch(e) { /* skip malformed SSE chunk */ }
         }
@@ -753,6 +765,9 @@ export async function sendKPMessage(overrideText) {
   }
   saveKPConfig(cfg);
 
+  // Clear previous action buttons before sending
+  clearActionButtons();
+
   // For manual messages only
   if (!isAuto) {
     addKPMsg('player', text);
@@ -791,8 +806,13 @@ export async function sendKPMessage(overrideText) {
     kpState.streamingAbort = controller;
     const fullResponse = await callAPI(cfg, systemPrompt, recentApi, text, controller);
 
-    const displayText = stripAICommands(fullResponse);
+    // Strip ACTIONS from display (replaced by buttons below); keep other brackets as gray italic
+    const displayText = fullResponse.replace(/【ACTIONS[：:][^】]*】/g, '').trim();
     kpState.chatHistory[kpState.chatHistory.length - 1].content = displayText;
+
+    // Parse action buttons from the raw response
+    const actions = parseActions(fullResponse);
+    renderActionButtons(actions);
 
     const commands = parseAICommands(fullResponse);
     const hasDiceRequest = commands.some(c => c.type === '掷骰请求');
@@ -952,6 +972,35 @@ export async function testKPConnection() {
 export async function checkProxyAvailable() {
   const base = await detectProxy();
   return base !== null;
+}
+
+// ── Action Buttons (parsed from AI's 【ACTIONS】 command) ──
+export function parseActions(text) {
+  const match = text.match(/【ACTIONS[：:]([^】]*)】/);
+  if (!match) return [];
+  return match[1].split('|').map(s => s.trim()).filter(Boolean);
+}
+
+export function renderActionButtons(actions) {
+  const container = document.getElementById('kpActionButtons');
+  if (!container) return;
+  if (!actions || actions.length === 0) {
+    container.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = actions.map(a =>
+    `<button class="kp-action-btn" data-action="kp:actionBtn" data-action-name="${esc(a)}">${a}</button>`
+  ).join('');
+  container.style.display = 'flex';
+}
+
+export function clearActionButtons() {
+  const container = document.getElementById('kpActionButtons');
+  if (container) {
+    container.style.display = 'none';
+    container.innerHTML = '';
+  }
 }
 
 // ── Listen for character list changes ──────────────────

@@ -3,13 +3,14 @@
 // Pathfinder 2e) by updating the body[data-theme] attribute, which triggers
 // CSS custom property cascading. Also handles SPA page navigation via nav tabs
 // and light/dark color scheme toggling.
-import { state, THEME_NAMES, initCocState, cocState } from './state.js';
+import { state, kpState, THEME_NAMES, initCocState, cocState } from './state.js';
 import { showToast } from './utils.js';
 
 export const THEME_ORDER = ['dnd', 'coc', 'cyberpunk', 'pathfinder'];
 
 export function selectRPG(theme) {
   if (!THEME_NAMES[theme]) return;
+  if (kpState.active) { showToast('游戏进行中，无法切换规则系统'); return; }
   state.theme = theme;
   document.body.setAttribute('data-theme', theme);
   const themeBadge = document.getElementById('themeBadge');
@@ -33,6 +34,7 @@ export function selectRPG(theme) {
 
 // ── Theme dropdown picker ──────────────────────────
 export function toggleThemePicker() {
+  if (kpState.active) { showToast('游戏进行中，无法切换规则系统'); return; }
   const dropdown = document.getElementById('themeDropdown');
   if (!dropdown) return;
   dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';

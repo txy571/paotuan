@@ -18,6 +18,7 @@ import * as Scenario from './scenario.js';
 import { renderCocStatus, renderCocChronicle } from './coc-status.js';
 import { initMemoryBank } from './memory-bank.js';
 import { Multiplayer } from './multiplayer/index.js';
+import { tts } from './tts.js';
 
 // ── Set up periodic tasks ──────────────────────────
 setInterval(() => {
@@ -139,6 +140,23 @@ const actionMap = {
     Multiplayer.sendMessage();
   },
   'mp:roomCharChanged': () => Multiplayer.mpRoomCharChanged(),
+
+  // tts
+  'tts:toggle': () => {
+    tts.enabled = !tts.enabled;
+    _updateTtsUI();
+    tts.saveConfig();
+  },
+  'tts:saveConfig': () => {
+    tts.syncFromUI();
+    tts.saveConfig();
+    showToast('TTS 配置已保存');
+    _updateTtsUI();
+  },
+  'tts:stop': () => {
+    tts.stop();
+    _updateTtsUI();
+  },
 };
 
 // Helper to dispatch an action string
@@ -286,6 +304,24 @@ if (sessionContent) {
   });
 }
 
+// ── TTS UI update ──────────────────────────────
+function _updateTtsUI() {
+  const btn = document.getElementById('ttsToggleBtn');
+  const ctrl = document.getElementById('kpTtsControls');
+  const statusLabel = document.getElementById('ttsStatusLabel');
+  const stopBtn = document.getElementById('ttsStopBtn');
+  if (btn) {
+    btn.textContent = tts.enabled ? '🔊' : '🔇';
+    btn.style.opacity = tts.enabled ? '1' : '.5';
+    btn.title = tts.enabled ? '关闭语音输出' : '开启语音输出';
+  }
+  if (ctrl) ctrl.style.display = tts.enabled ? 'flex' : 'none';
+  if (statusLabel) {
+    statusLabel.textContent = tts.isPlaying ? '正在播放...' : (tts.enabled ? '语音就绪' : '已关闭');
+  }
+  if (stopBtn) stopBtn.style.display = tts.isPlaying ? '' : 'none';
+}
+
 // ── Bootstrap ──────────────────────────────────────
 async function init() {
   // Load saved theme
@@ -346,6 +382,25 @@ async function init() {
       Multiplayer.stopHeartbeat();
     }
   });
+
+  // ── TTS Init ──
+  tts.loadConfig();
+  tts.syncToUI();
+  _updateTtsUI();
+
+  // Auto-stop checkbox live sync
+  const autoStopCb = document.getElementById('ttsAutoStop');
+  if (autoStopCb) {
+    autoStopCb.addEventListener('change', () => {
+      tts.syncFromUI();
+      tts.saveConfig();
+    });
+  }
+
+  // Keep TTS UI updated during playback
+  setInterval(() => {
+    if (tts.enabled) _updateTtsUI();
+  }, 500);
 
   console.log('🎲 TTRPG Companion 已就绪 (含 AI KP + 多人联机)');
   console.log('   %c快捷键: 1首页 2人物卡 3笔记 4联机 5关于','color:var(--text-gold)');

@@ -11,6 +11,7 @@ import { parseAICommands, applyAICommands, stripAICommands, parseDiceRequest } f
 import { renderCocStatus, renderCocChronicle } from './coc-status.js';
 import { getMemorySummary, getNPCProfiles } from './memory-bank.js';
 import { setCharacterCardLock } from './character.js';
+import { tts } from './tts.js';
 
 // ── System Prompt ─────────────────────────────────
 export function buildSystemPrompt() {
@@ -340,6 +341,7 @@ export function clearKPChat() {
   kpState.apiHistory  = [];
   if (kpState.streamingAbort) { kpState.streamingAbort.abort(); kpState.streamingAbort = null; }
   kpState.streaming = false;
+  tts.stop();
   if (state.theme === 'coc') { initCocState(); initScenarioMeta(); }
   renderKP();
   renderCocStatus();
@@ -363,6 +365,7 @@ export function stopKPStreaming() {
     kpState.streamingAbort = null;
   }
   kpState.streaming = false;
+  tts.stop();
   const input = document.getElementById('kpInput');
   if (input) input.disabled = false;
   const sendBtn = document.getElementById('kpSendBtn');
@@ -424,6 +427,7 @@ async function _stream(endpoint, reqHeaders, reqBody, controller, parseDelta) {
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let text = '', buf = '';
+      tts.streamBegin();
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -438,10 +442,12 @@ async function _stream(endpoint, reqHeaders, reqBody, controller, parseDelta) {
               text += delta;
               if (kpState.chatHistory.length) kpState.chatHistory[kpState.chatHistory.length - 1].content = text;
               updateStreamingMsg(text);
+              tts.feedChunk(delta);
             }
           } catch(e) { /* skip malformed SSE chunk */ }
         }
       }
+      tts.flush();
       return text;
     } catch (e) {
       lastError = e;

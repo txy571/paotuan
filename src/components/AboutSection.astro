@@ -70,6 +70,13 @@
         <div class="about-step">
           <span class="about-step-num">5</span>
           <div>
+            <strong>语音输出 (可选)</strong>
+            <p>在 KP 设置的"语音输出"区域填入小米 MiMo API Key 并开启语音。AI 的叙述将自动朗读——按标点智能分句、流式预合成、自然衔接。点击顶栏的喇叭图标可随时开关，勾选"播完静音"可在每段输出结束后自动关闭。</p>
+          </div>
+        </div>
+        <div class="about-step">
+          <span class="about-step-num">5</span>
+          <div>
             <strong>骰子 & 笔记</strong>
             <p>"骰子"页面支持 d4-d100 所有常用骰子，也支持自定义表达式（如 3d6+2）。"笔记"页面提供 Markdown 实时预览编辑器，支持加密导出和多选批量导出。</p>
           </div>
@@ -105,6 +112,14 @@
             <strong>OpenAI 兼容接口</strong>
             <p>支持所有兼容 OpenAI Chat Completions 格式的 API 服务（如 OpenAI 官方、Azure OpenAI、Ollama 本地模型、Groq 等）。</p>
             <p class="about-meta">对于自建代理或第三方中转，选择此项并在后端配置对应地址即可。</p>
+          </div>
+        </div>
+        <div class="about-api-item">
+          <div class="about-api-icon" style="background:rgba(255,107,53,0.15);"><i class="fas fa-volume-up"></i></div>
+          <div>
+            <strong>小米 MiMo TTS — 语音合成</strong>
+            <p>AI 主持人的回复可实时转换为语音朗读。前往 <a href="https://xiaomimimo.com" target="_blank" rel="noopener">xiaomimimo.com</a> 注册账号，在控制台创建 API Key 并充值即可使用。支持多种音色选择。</p>
+            <p class="about-meta">在 KP 设置面板的"语音输出"区域填入 API Key。支持按标点智能分句、流式预合成，播放流畅无间隔。</p>
           </div>
         </div>
       </div>
@@ -182,6 +197,10 @@
           <p>在对话中直接输入骰子表达式（如 "1d20+5"），AI 会自动识别并投掷，将结果融入叙述中。</p>
         </div>
         <div class="about-feature">
+          <strong>语音输出 (TTS)</strong>
+          <p>支持小米 MiMo TTS API，AI 主持人的回复可实时朗读。流式合成引擎按标点智能分句，当前句播放时下一句已预合成就绪，体验流畅无间隔。可在游戏中随时开关声音，支持输出完后自动静音。</p>
+        </div>
+        <div class="about-feature">
           <strong>Markdown 笔记</strong>
           <p>WYSIWYG 编辑器，实时预览，支持标签分类和全文检索。批量导出为 JSON，方便备份和迁移。</p>
         </div>
@@ -210,6 +229,7 @@
         <span>Cloudflare Workers</span><span>Durable Objects</span><span>WebRTC (PeerJS)</span>
         <span>Web Crypto API</span><span>GitHub Pages</span><span>GitHub Actions</span>
         <span>Markdown (marked.js)</span><span>Font Awesome 6</span><span>SSE Streaming</span>
+        <span>MiMo TTS API</span><span>Web Audio API</span>
       </div>
     </div>
 

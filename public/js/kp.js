@@ -1067,8 +1067,8 @@ export async function sendKPMessage(overrideText, skipPlayerMsg) {
       kpState.apiHistory = kpState.apiHistory.slice(-120);
     }
 
-    // If AI requested a dice roll and this isn't already a dice result resolution
-    if (hasDiceRequest && !isAuto) {
+    // If AI requested a dice roll, show the dice card
+    if (hasDiceRequest) {
       const diceCmd = commands.find(c => c.type === '掷骰请求');
       if (diceCmd) {
         const parsed = parseDiceRequest(diceCmd.value);

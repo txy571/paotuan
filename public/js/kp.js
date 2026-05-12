@@ -698,6 +698,62 @@ export async function sendKPMessage() {
   }
 }
 
+// ── Test Connectivity ──────────────────────────────
+export async function testKPConnection() {
+  const resultEl = document.getElementById('kpTestResult');
+  const btnEl = document.getElementById('kpTestConnBtn');
+  const cfg = getKPConfig();
+  if (!cfg.key) {
+    if (resultEl) { resultEl.textContent = '请先填写 API Key'; resultEl.style.color = '#e04848'; }
+    return;
+  }
+  saveKPConfig(cfg);
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '测试中…'; }
+  if (resultEl) { resultEl.textContent = '⏳ 正在测试…'; resultEl.style.color = 'var(--text-dim)'; }
+
+  const startTime = Date.now();
+  try {
+    const proxyBase = await detectProxy();
+    let resp;
+    if (cfg.provider === 'anthropic') {
+      resp = await fetch(proxyBase, {
+        method: 'POST',
+        headers: { 'X-Proxy-Target': _ENDPOINT.anthropic, 'Content-Type': 'application/json', 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model: cfg.model, max_tokens: 10, messages: [{ role: 'user', content: 'Hi' }] }),
+        signal: AbortSignal.timeout(15000),
+      });
+    } else {
+      const headers = { 'Content-Type': 'application/json' };
+      if (cfg.provider === 'openai') headers['Authorization'] = `Bearer ${cfg.key}`;
+      else headers['Authorization'] = `Bearer ${cfg.key}`;
+      resp = await fetch(proxyBase, {
+        method: 'POST',
+        headers: { 'X-Proxy-Target': _ENDPOINT[cfg.provider] || _ENDPOINT.openai, 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify({ model: cfg.model, max_tokens: 5, messages: [{ role: 'user', content: 'Hi' }] }),
+        signal: AbortSignal.timeout(15000),
+      });
+    }
+    const latency = Date.now() - startTime;
+    if (resp.ok) {
+      const data = await resp.json().catch(() => ({}));
+      const modelName = data.model || cfg.model;
+      if (resultEl) { resultEl.textContent = `✅ 连通成功 · ${modelName} · ${latency}ms`; resultEl.style.color = '#4acf6a'; }
+      showToast(`API 连通成功 (${latency}ms)`);
+    } else {
+      const err = await resp.json().catch(() => ({}));
+      const msg = err.error?.message || `HTTP ${resp.status}`;
+      if (resultEl) { resultEl.textContent = `❌ 失败: ${msg}`; resultEl.style.color = '#e04848'; }
+      showToast(`连接失败: ${msg}`);
+    }
+  } catch (e) {
+    const latency = Date.now() - startTime;
+    if (resultEl) { resultEl.textContent = `❌ 连接失败: ${e.message}`; resultEl.style.color = '#e04848'; }
+    showToast(`连接失败: ${e.message}`);
+  } finally {
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = '测试连通'; }
+  }
+}
+
 // ── Proxy Detection ────────────────────────────────
 export async function checkProxyAvailable() {
   const base = await detectProxy();

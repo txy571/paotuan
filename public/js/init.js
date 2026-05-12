@@ -12,7 +12,7 @@ import {
   openKPPanel, closeKPPanel, clearKPChat, sendKPMessage, sendQuickAction,
   stopKPStreaming, toggleKPConfig, toggleKPProviderUI, saveKPConfigFromUI,
   loadKPConfig, loadKPChatHistory, renderKP, renderKPQuickActions, checkProxyAvailable,
-  selectHomeChar, renderHomeCharSelect,
+  testKPConnection, selectHomeChar, renderHomeCharSelect,
 } from './kp.js';
 import { saveGame, loadGame, deleteGame, loadAutosave, renderGameSaves } from './saves.js';
 import * as Scenario from './scenario.js';
@@ -97,6 +97,7 @@ const actionMap = {
   'kp:config': () => { toggleKPConfig(); loadKPConfig(); },
   'kp:toggleProviderUI': () => toggleKPProviderUI(),
   'kp:saveConfig': () => saveKPConfigFromUI(),
+  'kp:testConnection': () => testKPConnection(),
   'kp:quick': (el) => sendQuickAction(el.dataset.actionName),
 
   // saves
@@ -227,6 +228,7 @@ document.addEventListener('keydown', e => {
   if (e.key === '3') navigateTo('dice');
   if (e.key === '4') navigateTo('notes');
   if (e.key === '5') navigateTo('multiplayer');
+  if (e.key === '6') navigateTo('about');
   if (e.key === 'Enter' && document.getElementById('page-dice')?.classList.contains('active')) Dice.rollDice();
 });
 
@@ -314,7 +316,7 @@ async function init() {
   });
 
   console.log('🎲 TTRPG Companion 已就绪 (含 AI KP + 多人联机)');
-  console.log('   %c快捷键: 1首页 2人物卡 3骰子 4笔记 5联机','color:var(--text-gold)');
+  console.log('   %c快捷键: 1首页 2人物卡 3骰子 4笔记 5联机 6关于','color:var(--text-gold)');
 }
 
 // Boot

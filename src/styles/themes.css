@@ -68,7 +68,7 @@
   --border: #1e1e30;
   --border-bright: #0088cc;
   --shadow: 0 2px 4px rgba(0,0,0,0.10), 0 6px 18px rgba(0,0,0,0.30);
-  --font-display: 'Consolas', 'Courier New', monospace;
+  --font-display: 'Trebuchet MS', 'KaiTi', 'Microsoft YaHei', sans-serif;
   --overlay: rgba(4,4,8,0.92);
   --dice-face: #0088cc;
   --glow-spread: 0 0 24px rgba(0,136,204,0.2);
@@ -169,6 +169,7 @@
 
 /* Ensure form elements look correct */
 [data-color-scheme="light"] input[type="text"],
+[data-color-scheme="light"] input[type="password"],
 [data-color-scheme="light"] input[type="number"],
 [data-color-scheme="light"] select,
 [data-color-scheme="light"] textarea {

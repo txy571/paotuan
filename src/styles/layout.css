@@ -67,6 +67,7 @@ nav {
   font-family: var(--font-display); font-size: 1.35rem; font-weight: bold;
   color: var(--text-gold); display: flex; align-items: center; gap: 10px;
 }
+.nav-icon { width: 28px; height: 28px; border-radius: 4px; flex-shrink: 0; }
 
 .nav-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
 
@@ -286,7 +287,7 @@ nav {
 }
 
 /* Form elements */
-input[type="text"], input[type="number"], select, textarea {
+input[type="text"], input[type="password"], input[type="number"], select, textarea {
   width: 100%; padding: 10px 14px; font-family: inherit; font-size: .88rem;
   background: rgba(0,0,0,.25); color: var(--text);
   border: 1px solid var(--border); border-radius: var(--r-sm);

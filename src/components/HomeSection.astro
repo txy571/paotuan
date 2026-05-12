@@ -80,7 +80,11 @@
             <label>API Key</label>
             <input type="password" id="kpApiKey" placeholder="粘贴你的 API Key...">
           </div>
-          <div><button class="btn btn-save btn-sm" data-action="kp:saveConfig">保存配置</button></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn btn-save btn-sm" data-action="kp:saveConfig">保存配置</button>
+            <button class="btn btn-secondary btn-sm" data-action="kp:testConnection" id="kpTestConnBtn">测试连通</button>
+            <span id="kpTestResult" style="font-size:.72rem;align-self:center;"></span>
+          </div>
         </div>
         <p style="font-size:.7rem;color:var(--text-dim);margin-top:8px;">⚠️ API Key 仅保存在浏览器本地存储中，不会上传到任何第三方服务器。</p>
       </div>

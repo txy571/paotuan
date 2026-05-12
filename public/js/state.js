@@ -161,6 +161,7 @@ export const kpState = {
   active: false,
   provider: 'anthropic',
   apiKey: '',
+  apiBase: 'https://api.anthropic.com',
   model: 'claude-sonnet-4-6',
   chatHistory: [],
   apiHistory: [],

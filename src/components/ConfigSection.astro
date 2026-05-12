@@ -8,86 +8,81 @@
     <!-- LLM Config -->
     <div class="panel">
       <h3><i class="fas fa-brain"></i> LLM 大模型配置</h3>
-      <p style="font-size:.82rem;color:var(--text-dim);margin-bottom:12px;">
+      <p style="font-size:.85rem;color:var(--text-dim);margin-bottom:16px;">
         AI 主持人使用的大语言模型。支持 Anthropic Claude、DeepSeek 和 OpenAI 兼容接口。配置保存后在首页 AI 主持人面板中生效。
       </p>
-      <div class="kp-config">
-        <div>
-          <label>API 提供商</label>
-          <select id="kpProvider" data-action="kp:toggleProviderUI" data-action-event="change">
-            <option value="anthropic">Anthropic (Claude)</option>
-            <option value="deepseek">DeepSeek</option>
-            <option value="openai">OpenAI 兼容</option>
-          </select>
-        </div>
-        <div id="kpModelAnthropicWrap">
-          <label>模型</label>
-          <select id="kpModelAnthropic">
-            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
-            <option value="claude-opus-4-7">Claude Opus 4.7</option>
-            <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
-            <option value="claude-sonnet-4-5-20250929">Claude Sonnet 4.5</option>
-          </select>
-        </div>
-        <div id="kpModelDeepSeekWrap" style="display:none;">
-          <label>模型</label>
-          <select id="kpModelDeepSeek">
-            <option value="deepseek-v4-flash">DeepSeek V4 Flash</option>
-            <option value="deepseek-v4-pro">DeepSeek V4 Pro</option>
-          </select>
-        </div>
-        <div id="kpModelOpenAIWrap" style="display:none;">
-          <label>模型</label>
-          <select id="kpModelOpenAI">
-            <option value="gpt-4o">GPT-4o</option>
-            <option value="gpt-4o-mini">GPT-4o Mini</option>
-            <option value="gpt-4-turbo">GPT-4 Turbo</option>
-          </select>
-        </div>
-        <div>
-          <label>API Key</label>
-          <input type="password" id="kpApiKey" placeholder="粘贴你的 API Key...">
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="btn btn-save btn-sm" data-action="kp:saveConfig">保存配置</button>
-          <button class="btn btn-secondary btn-sm" data-action="kp:testConnection" id="kpTestConnBtn">测试连通</button>
-          <span id="kpTestResult" style="font-size:.72rem;align-self:center;"></span>
+
+      <div class="config-field">
+        <label>API 提供商</label>
+        <select id="kpProvider" data-action="kp:onProviderChange" data-action-event="change">
+          <option value="anthropic">Anthropic (Claude)</option>
+          <option value="deepseek">DeepSeek</option>
+          <option value="openai">OpenAI 兼容</option>
+        </select>
+      </div>
+
+      <div class="config-field">
+        <label>API 端点 URL</label>
+        <input type="text" id="kpApiBase" placeholder="https://api.openai.com/v1" spellcheck="false">
+        <p style="font-size:.72rem;color:var(--text-dim);margin-top:2px;">不同提供商有默认地址，切换提供商自动填充，也可手动修改为自定义中转地址</p>
+      </div>
+
+      <div class="config-field">
+        <label>模型</label>
+        <div class="config-model-row">
+          <input type="text" id="kpModel" list="kpModelList" placeholder="选择或输入模型名称..." spellcheck="false">
+          <datalist id="kpModelList"></datalist>
+          <button class="btn btn-secondary btn-sm" data-action="kp:fetchModels" id="kpFetchModelsBtn" title="从 API 获取可用模型列表">🔄 获取模型列表</button>
         </div>
       </div>
-      <p style="font-size:.7rem;color:var(--text-dim);margin-top:8px;">⚠️ API Key 仅保存在浏览器本地存储中，不会上传到任何第三方服务器。</p>
+
+      <div class="config-field">
+        <label>API Key</label>
+        <input type="password" id="kpApiKey" placeholder="粘贴你的 API Key..." spellcheck="false">
+      </div>
+
+      <div class="config-actions">
+        <button class="btn btn-save" data-action="kp:saveConfig">保存配置</button>
+        <button class="btn btn-secondary" data-action="kp:testConnection" id="kpTestConnBtn">测试连通</button>
+        <span id="kpTestResult" style="font-size:.78rem;align-self:center;"></span>
+      </div>
+      <p style="font-size:.72rem;color:var(--text-dim);margin-top:10px;">⚠️ API Key 仅保存在浏览器本地存储中，不会上传到任何第三方服务器。</p>
     </div>
 
     <!-- TTS Config -->
     <div class="panel">
       <h3><i class="fas fa-volume-up"></i> 语音输出 (TTS)</h3>
-      <p style="font-size:.82rem;color:var(--text-dim);margin-bottom:12px;">
-        AI 主持人的回复可通过小米 MiMo TTS API 实时朗读。流式合成引擎按标点智能分句，当前句播放时下一句已预合成就绪，体验流畅无间隔。
+      <p style="font-size:.85rem;color:var(--text-dim);margin-bottom:16px;">
+        AI 主持人的回复可通过小米 MiMo TTS API 实时朗读。流式合成引擎按标点智能分句，当前句播放时下一句已预合成就绪。
       </p>
-      <div class="kp-config">
-        <div>
-          <label>小米 MiMo API Key</label>
-          <input type="password" id="ttsMimoApiKey" placeholder="输入小米 MIMO TTS API Key...">
-        </div>
-        <div>
-          <label>音色</label>
-          <select id="ttsVoiceSelect">
-            <option value="mimo_default">mimo_default (自然)</option>
-            <option value="default_zh">default_zh (清晰女声)</option>
-          </select>
-        </div>
-        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-          <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-size:.82rem;">
-            <input type="checkbox" id="ttsEnabled"> 启用语音输出
-          </label>
-          <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-size:.82rem;">
-            <input type="checkbox" id="ttsAutoStop"> 播完静音（每段输出结束后自动关闭语音）
-          </label>
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="btn btn-save btn-sm" data-action="tts:saveConfig">保存 TTS 配置</button>
-        </div>
+
+      <div class="config-field">
+        <label>小米 MiMo API Key</label>
+        <input type="password" id="ttsMimoApiKey" placeholder="输入小米 MIMO TTS API Key..." spellcheck="false">
       </div>
-      <p style="font-size:.7rem;color:var(--text-dim);margin-top:6px;">
+
+      <div class="config-field">
+        <label>音色</label>
+        <select id="ttsVoiceSelect">
+          <option value="mimo_default">mimo_default (自然)</option>
+          <option value="default_zh">default_zh (清晰女声)</option>
+        </select>
+      </div>
+
+      <div class="config-field-row">
+        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin:0;">
+          <input type="checkbox" id="ttsEnabled"> 启用语音输出
+        </label>
+        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin:0;">
+          <input type="checkbox" id="ttsAutoStop"> 播完静音（输出结束后自动关闭）
+        </label>
+      </div>
+
+      <div class="config-actions">
+        <button class="btn btn-save" data-action="tts:saveConfig">保存 TTS 配置</button>
+      </div>
+
+      <p style="font-size:.72rem;color:var(--text-dim);margin-top:10px;">
         🔑 前往 <a href="https://xiaomimimo.com" target="_blank" rel="noopener" style="color:var(--accent);">xiaomimimo.com</a> 注册获取 MiMo API Key
       </p>
     </div>
@@ -98,30 +93,108 @@
 .config-layout {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding-bottom: 30px;
-  max-width: 720px;
+  gap: 20px;
+  padding-bottom: 40px;
+  max-width: 780px;
 }
+
 .config-layout .panel h3 {
   font-family: var(--font-display);
   color: var(--text-gold);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   font-size: 1.05rem;
 }
-.config-layout .kp-config {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+
+/* ── Field groups ── */
+.config-field {
+  margin-bottom: 14px;
 }
-.config-layout .kp-config label {
-  font-size: .8rem;
-  color: var(--text-dim);
+
+.config-field:last-child {
+  margin-bottom: 0;
+}
+
+.config-field > label {
   display: block;
-  margin-bottom: 2px;
+  font-size: .82rem;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  margin-top: 0;
+  font-weight: 500;
 }
-.config-layout .kp-config input,
-.config-layout .kp-config select {
+
+.config-field input[type="text"],
+.config-field input[type="password"],
+.config-field select {
   width: 100%;
   box-sizing: border-box;
+  padding: 10px 14px;
+  font-size: .88rem;
+  background: rgba(0,0,0,.25);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  font-family: inherit;
+  transition: border-color var(--t) var(--ease-out);
+}
+
+.config-field input:focus,
+.config-field select:focus {
+  outline: none;
+  border-color: var(--border-bright);
+  box-shadow: 0 0 0 1px var(--accent-dim);
+}
+
+/* ── Model row with fetch button ── */
+.config-model-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.config-model-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.config-model-row .btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 10px 14px;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Action buttons row ── */
+.config-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.config-actions .btn {
+  min-height: 40px;
+  padding: 8px 20px;
+  font-size: .85rem;
+}
+
+/* ── Checkbox row ── */
+.config-field-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 8px 0;
+}
+
+/* ── Test result ── */
+#kpTestResult {
+  transition: color .2s;
 }
 </style>

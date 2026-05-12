@@ -9,7 +9,7 @@ import { fetchAPI, fetchAPIDetail } from './api-browser.js';
 import { initParticles } from './particles.js';
 import {
   openKPPanel, closeKPPanel, clearKPChat, sendKPMessage, sendQuickAction,
-  stopKPStreaming, toggleKPProviderUI, saveKPConfigFromUI,
+  stopKPStreaming, onProviderChange, saveKPConfigFromUI, fetchModels,
   loadKPConfig, loadKPChatHistory, renderKP, renderKPQuickActions, checkProxyAvailable,
   testKPConnection, selectHomeChar, renderHomeCharSelect, kpDiceRoll,
 } from './kp.js';
@@ -93,7 +93,8 @@ const actionMap = {
   'kp:send': () => sendKPMessage(),
   'kp:stop': () => stopKPStreaming(),
   // kp:config → now on config page via nav:go
-  'kp:toggleProviderUI': () => toggleKPProviderUI(),
+  'kp:onProviderChange': () => onProviderChange(),
+  'kp:fetchModels': () => fetchModels(),
   'kp:saveConfig': () => saveKPConfigFromUI(),
   'kp:testConnection': () => testKPConnection(),
   'kp:quick': (el) => sendQuickAction(el.dataset.actionName),

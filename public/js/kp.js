@@ -219,6 +219,45 @@ export function renderKPQuickActions() {
   ).join('');
 }
 
+// ── Provider Configuration ─────────────────────────
+const PROVIDER_CONFIG = {
+  anthropic: {
+    apiBase: 'https://api.anthropic.com/v1/messages',
+    models: ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5-20251001', 'claude-sonnet-4-5-20250929', 'claude-3-5-sonnet-20241022', 'claude-3-opus-20240229'],
+  },
+  deepseek: {
+    apiBase: 'https://api.deepseek.com/chat/completions',
+    models: ['deepseek-chat', 'deepseek-reasoner', 'deepseek-v4-flash', 'deepseek-v4-pro'],
+  },
+  openai: {
+    apiBase: 'https://api.openai.com/v1/chat/completions',
+    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo', 'o1', 'o1-mini', 'o3-mini'],
+  },
+};
+
+/** Derive model-list endpoint from the API endpoint URL */
+function _deriveModelsEndpoint(apiEndpoint) {
+  if (!apiEndpoint) return '';
+  try {
+    if (apiEndpoint.endsWith('/v1/messages')) {
+      return apiEndpoint.replace(/\/messages$/, '/models');
+    }
+    if (apiEndpoint.endsWith('/chat/completions')) {
+      return apiEndpoint.replace(/\/chat\/completions$/, '/models');
+    }
+    if (apiEndpoint.endsWith('/v1/chat/completions')) {
+      return apiEndpoint.replace(/\/chat\/completions$/, '/models');
+    }
+    // Fallback: remove last path segment, append /models
+    const url = new URL(apiEndpoint);
+    const parts = url.pathname.split('/').filter(Boolean);
+    if (parts.length > 0) parts.pop();
+    return `${url.origin}${parts.length ? '/' + parts.join('/') : ''}/models`;
+  } catch {
+    return apiEndpoint.replace(/\/[^/]+$/, '') + '/models';
+  }
+}
+
 // ── KP Config ──────────────────────────────────────
 export function getKPConfig() {
   const provEl = document.getElementById('kpProvider');
@@ -226,30 +265,26 @@ export function getKPConfig() {
     // Read from DOM (config page is visible)
     const provider = provEl.value;
     const key = document.getElementById('kpApiKey')?.value?.trim() || kpState.apiKey;
-    let model;
-    if (provider === 'anthropic') {
-      model = document.getElementById('kpModelAnthropic')?.value || kpState.model;
-    } else if (provider === 'deepseek') {
-      model = document.getElementById('kpModelDeepSeek')?.value || kpState.model;
-    } else {
-      model = document.getElementById('kpModelOpenAI')?.value || kpState.model;
-    }
-    return { provider, key, model };
+    const model = document.getElementById('kpModel')?.value?.trim() || kpState.model;
+    const apiBase = document.getElementById('kpApiBase')?.value?.trim() || kpState.apiBase;
+    return { provider, key, model, apiBase };
   }
   // Fallback to in-memory state (config page not visible, e.g. during gameplay)
   return {
     provider: kpState.provider,
     key: kpState.apiKey,
     model: kpState.model,
+    apiBase: kpState.apiBase,
   };
 }
 
 export function saveKPConfig(cfg) {
   kpState.provider = cfg.provider;
-  kpState.apiKey  = cfg.key;
-  kpState.model   = cfg.model;
+  kpState.apiKey   = cfg.key;
+  kpState.model    = cfg.model;
+  kpState.apiBase  = cfg.apiBase || PROVIDER_CONFIG[cfg.provider]?.apiBase || '';
   localStorage.setItem('ttrpg-kp-config', JSON.stringify({
-    provider: cfg.provider, apiKey: cfg.key, model: cfg.model,
+    provider: cfg.provider, apiKey: cfg.key, model: cfg.model, apiBase: kpState.apiBase,
   }));
 }
 
@@ -257,35 +292,147 @@ export function loadKPConfig() {
   try {
     const saved = JSON.parse(localStorage.getItem('ttrpg-kp-config') || '{}');
     if (saved.provider) kpState.provider = saved.provider;
-    if (saved.apiKey)  kpState.apiKey  = saved.apiKey;
-    if (saved.model)   kpState.model   = saved.model;
+    if (saved.apiKey)   kpState.apiKey   = saved.apiKey;
+    if (saved.model)    kpState.model    = saved.model;
+    if (saved.apiBase)  kpState.apiBase  = saved.apiBase;
+    else kpState.apiBase = PROVIDER_CONFIG[kpState.provider]?.apiBase || '';
+
     const provEl = document.getElementById('kpProvider');
     if (provEl) provEl.value = kpState.provider;
+
+    const baseEl = document.getElementById('kpApiBase');
+    if (baseEl) baseEl.value = kpState.apiBase;
+
+    const modelEl = document.getElementById('kpModel');
+    if (modelEl) modelEl.value = kpState.model;
+
     const keyEl = document.getElementById('kpApiKey');
     if (keyEl && kpState.apiKey) keyEl.value = kpState.apiKey;
 
-    if (kpState.provider === 'anthropic') {
-      const mEl = document.getElementById('kpModelAnthropic');
-      if (mEl) mEl.value = kpState.model;
-    } else if (kpState.provider === 'deepseek') {
-      const mEl = document.getElementById('kpModelDeepSeek');
-      if (mEl) mEl.value = kpState.model;
-    } else {
-      const mEl = document.getElementById('kpModelOpenAI');
-      if (mEl) mEl.value = kpState.model;
-    }
-    toggleKPProviderUI();
+    _updateModelDatalist();
   } catch(e) { /* ignore */ }
 }
 
-export function toggleKPProviderUI() {
-  const prov = document.getElementById('kpProvider')?.value || 'anthropic';
-  const aSel = document.getElementById('kpModelAnthropicWrap');
-  const dSel = document.getElementById('kpModelDeepSeekWrap');
-  const oSel = document.getElementById('kpModelOpenAIWrap');
-  if (aSel) aSel.style.display = prov === 'anthropic' ? '' : 'none';
-  if (dSel) dSel.style.display = prov === 'deepseek' ? '' : 'none';
-  if (oSel) oSel.style.display = prov === 'openai' ? '' : 'none';
+/** Update model datalist + API base for the currently selected provider */
+function _updateModelDatalist() {
+  const prov = document.getElementById('kpProvider')?.value || kpState.provider;
+  const baseEl = document.getElementById('kpApiBase');
+  const datalist = document.getElementById('kpModelList');
+
+  // Fill API base default only if empty or matches a known default
+  if (baseEl && !baseEl.value.trim()) {
+    baseEl.value = PROVIDER_CONFIG[prov]?.apiBase || '';
+  }
+
+  // Populate datalist with known models for this provider
+  if (datalist) {
+    const models = PROVIDER_CONFIG[prov]?.models || [];
+    datalist.innerHTML = models.map(m => `<option value="${m}">`).join('');
+  }
+}
+
+/** Called when provider select changes */
+export function onProviderChange() {
+  const provEl = document.getElementById('kpProvider');
+  if (!provEl) return;
+  const provider = provEl.value;
+  const baseEl = document.getElementById('kpApiBase');
+  const datalist = document.getElementById('kpModelList');
+
+  if (baseEl) {
+    baseEl.value = PROVIDER_CONFIG[provider]?.apiBase || '';
+  }
+  if (datalist) {
+    const models = PROVIDER_CONFIG[provider]?.models || [];
+    datalist.innerHTML = models.map(m => `<option value="${m}">`).join('');
+  }
+}
+
+/** Fetch model list from the current API endpoint (direct call — most APIs support CORS) */
+export async function fetchModels() {
+  const provEl = document.getElementById('kpProvider');
+  const baseEl = document.getElementById('kpApiBase');
+  const keyEl  = document.getElementById('kpApiKey');
+  const btn    = document.getElementById('kpFetchModelsBtn');
+
+  if (!baseEl || !keyEl) return;
+  const provider = provEl?.value || 'openai';
+  const apiEndpoint = baseEl.value.trim();
+  const apiKey = keyEl.value.trim();
+
+  if (!apiEndpoint) { showToast('请先填写 API 端点 URL'); return; }
+  if (!apiKey) { showToast('请先填写 API Key'); return; }
+
+  const modelsUrl = _deriveModelsEndpoint(apiEndpoint);
+  if (!modelsUrl) { showToast('无法解析模型列表地址'); return; }
+
+  if (btn) { btn.disabled = true; btn.textContent = '获取中…'; }
+
+  try {
+    const headers = provider === 'anthropic'
+      ? { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }
+      : { 'Authorization': `Bearer ${apiKey}` };
+
+    const resp = await fetch(modelsUrl, { headers, signal: AbortSignal.timeout(10000) });
+
+    if (!resp.ok) {
+      // Try through proxy as fallback (some proxies may support GET)
+      const proxyBase = await detectProxy();
+      if (proxyBase) {
+        const proxyResp = await fetch(proxyBase, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Proxy-Target': modelsUrl, ...headers },
+          body: JSON.stringify({}),
+          signal: AbortSignal.timeout(10000),
+        });
+        if (proxyResp.ok) {
+          const proxyData = await proxyResp.json();
+          // Proxy likely returned an error from the POST, not model list
+          throw new Error('代理不支持获取模型列表，请手动输入模型名称');
+        }
+      }
+      throw new Error(`HTTP ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    let modelNames = [];
+
+    if (data.data && Array.isArray(data.data)) {
+      // OpenAI format: { data: [{ id: 'gpt-4o', ... }, ...] }
+      modelNames = data.data.map(m => m.id).filter(Boolean);
+    } else if (Array.isArray(data.models)) {
+      // Anthropic format: { models: [{ name: 'claude-...', ... }] }
+      modelNames = data.models.map(m => m.name || m.display_name || m.id).filter(Boolean);
+    } else if (Array.isArray(data)) {
+      modelNames = data.map(m => m.id || m.name || m).filter(Boolean);
+    }
+
+    if (!modelNames.length) {
+      showToast('API 未返回可用模型列表', 'warn');
+      return;
+    }
+
+    // Update datalist
+    const datalist = document.getElementById('kpModelList');
+    if (datalist) {
+      datalist.innerHTML = modelNames.map(m => `<option value="${m}">`).join('');
+    }
+
+    const modelEl = document.getElementById('kpModel');
+    if (modelEl) modelEl.placeholder = `已加载 ${modelNames.length} 个模型，输入或选择...`;
+
+    showToast(`已获取 ${modelNames.length} 个模型`);
+  } catch (e) {
+    if (e.name === 'TimeoutError' || e.message.includes('timed out')) {
+      showToast('请求超时 — 请检查 API 地址和 Key 是否正确', 'warn');
+    } else if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+      showToast('网络请求失败 — API 可能不支持跨域获取模型列表，请手动输入模型名称', 'warn');
+    } else {
+      showToast(`获取失败: ${e.message}`, 'warn');
+    }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 获取模型列表'; }
+  }
 }
 
 export function saveKPConfigFromUI() {
@@ -498,8 +645,9 @@ async function _anthropic(cfg, systemPrompt, recentHistory, userMsg, controller)
   }
   messages.push({ role: 'user', content: userMsg });
 
+  const endpoint = cfg.apiBase || 'https://api.anthropic.com/v1/messages';
   return _stream(
-    'https://api.anthropic.com/v1/messages',
+    endpoint,
     { 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01' },
     { model: cfg.model, max_tokens: 4096, system: systemPrompt, messages, stream: true },
     controller,
@@ -524,14 +672,18 @@ async function _chatCompletions(endpoint, cfg, systemPrompt, recentHistory, user
   );
 }
 
-// ── Provider Registry ─────────────────────────────
-const _ENDPOINT = {
-  anthropic: 'https://api.anthropic.com/v1/messages',
-  deepseek:  'https://api.deepseek.com/chat/completions',
-  openai:    'https://api.openai.com/v1/chat/completions',
-};
-
 // ── Public API ────────────────────────────────────
+
+/** Get the chat completion endpoint for a given config */
+function _getEndpoint(cfg) {
+  if (cfg.apiBase) return cfg.apiBase;
+  const defaults = {
+    anthropic: 'https://api.anthropic.com/v1/messages',
+    deepseek:  'https://api.deepseek.com/chat/completions',
+    openai:    'https://api.openai.com/v1/chat/completions',
+  };
+  return defaults[cfg.provider] || defaults.openai;
+}
 
 /** Unified dispatch — preferred for all internal callers */
 export async function callAPI(cfg, systemPrompt, recentHistory, userMsg, controller) {
@@ -539,7 +691,7 @@ export async function callAPI(cfg, systemPrompt, recentHistory, userMsg, control
     return _anthropic(cfg, systemPrompt, recentHistory, userMsg, controller);
   }
   return _chatCompletions(
-    _ENDPOINT[cfg.provider] || _ENDPOINT.openai,
+    _getEndpoint(cfg),
     cfg, systemPrompt, recentHistory, userMsg, controller
   );
 }
@@ -551,7 +703,7 @@ export async function callAnthropicAPI(cfg, systemPrompt, recentHistory, userMsg
 
 export async function callOpenAIAPI(cfg, systemPrompt, recentHistory, userMsg, controller) {
   return _chatCompletions(
-    _ENDPOINT[cfg.provider] || _ENDPOINT.openai,
+    _getEndpoint(cfg),
     cfg, systemPrompt, recentHistory, userMsg, controller
   );
 }
@@ -984,24 +1136,23 @@ export async function testKPConnection() {
   if (btnEl) { btnEl.disabled = true; btnEl.textContent = '测试中…'; }
   if (resultEl) { resultEl.textContent = '⏳ 正在测试…'; resultEl.style.color = 'var(--text-dim)'; }
 
+  const endpoint = _getEndpoint(cfg);
   const startTime = Date.now();
   try {
     const proxyBase = await detectProxy();
     let resp;
+    const commonHeaders = { 'Content-Type': 'application/json' };
     if (cfg.provider === 'anthropic') {
       resp = await fetch(proxyBase, {
         method: 'POST',
-        headers: { 'X-Proxy-Target': _ENDPOINT.anthropic, 'Content-Type': 'application/json', 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01' },
+        headers: { 'X-Proxy-Target': endpoint, ...commonHeaders, 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({ model: cfg.model, max_tokens: 10, messages: [{ role: 'user', content: 'Hi' }] }),
         signal: AbortSignal.timeout(15000),
       });
     } else {
-      const headers = { 'Content-Type': 'application/json' };
-      if (cfg.provider === 'openai') headers['Authorization'] = `Bearer ${cfg.key}`;
-      else headers['Authorization'] = `Bearer ${cfg.key}`;
       resp = await fetch(proxyBase, {
         method: 'POST',
-        headers: { 'X-Proxy-Target': _ENDPOINT[cfg.provider] || _ENDPOINT.openai, 'Content-Type': 'application/json', ...headers },
+        headers: { 'X-Proxy-Target': endpoint, ...commonHeaders, 'Authorization': `Bearer ${cfg.key}` },
         body: JSON.stringify({ model: cfg.model, max_tokens: 5, messages: [{ role: 'user', content: 'Hi' }] }),
         signal: AbortSignal.timeout(15000),
       });

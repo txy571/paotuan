@@ -179,6 +179,29 @@
 [data-color-scheme="light"] .note-card:hover { background: rgba(0,0,0,0.05); }
 [data-color-scheme="light"] .skill-row-coc { background: rgba(0,0,0,0.03); }
 
+/* Theme badge readability in light mode */
+[data-color-scheme="light"] .theme-badge {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+[data-color-scheme="light"] .theme-badge:hover {
+  filter: brightness(1.12);
+}
+
+/* RPG cards in light mode — ensure light gradient background */
+[data-color-scheme="light"] .rpg-card {
+  background: linear-gradient(150deg, #ffffff 0%, #f5f5fa 55%, #eeeef5 100%);
+  border-color: #d0d0dc;
+}
+[data-color-scheme="light"] .rpg-card .subtitle,
+[data-color-scheme="light"] .rpg-card p { color: #5a5a7a; }
+[data-color-scheme="light"] .rpg-card .tag {
+  background: rgba(0,0,0,0.05);
+  color: #4a4a6a;
+  border-color: rgba(0,0,0,0.1);
+}
+
 /* Print styles: force light */
 @media print {
   [data-color-scheme="dark"] body {

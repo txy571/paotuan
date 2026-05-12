@@ -358,6 +358,7 @@ async function init() {
   Character.renderInitiative();
   Notes.renderSessions();
   renderKPQuickActions();
+  renderHomeCharSelect();
   updateApiSectionTheme();
   loadKPChatHistory();
   loadKPConfig();

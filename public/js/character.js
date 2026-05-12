@@ -86,19 +86,77 @@ function ptsRemaining() {
   return ATTR_POOL - ptsUsed();
 }
 
+// ── Attribute Drag & Drop ─────────────────────────
+let _dragSrcKey = null;
+
+function setupAttributeDrag() {
+  const grid = dom.attrGrid;
+  if (!grid || grid.dataset.dragSetup) return;
+  grid.dataset.dragSetup = 'true';
+
+  grid.addEventListener('dragstart', (e) => {
+    const row = e.target.closest('.attr-bar-row');
+    if (!row) return;
+    _dragSrcKey = row.dataset.attrKey;
+    row.style.opacity = '0.4';
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', _dragSrcKey);
+  });
+
+  grid.addEventListener('dragover', (e) => {
+    const row = e.target.closest('.attr-bar-row');
+    if (!row || row.dataset.attrKey === _dragSrcKey) return;
+    e.preventDefault();
+    row.style.borderColor = 'var(--accent)';
+    row.style.background = 'rgba(255,255,255,.06)';
+  });
+
+  grid.addEventListener('dragleave', (e) => {
+    const row = e.target.closest('.attr-bar-row');
+    if (!row) return;
+    row.style.borderColor = '';
+    row.style.background = '';
+  });
+
+  grid.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const row = e.target.closest('.attr-bar-row');
+    if (!row || !_dragSrcKey || row.dataset.attrKey === _dragSrcKey) return;
+    const targetKey = row.dataset.attrKey;
+    const order = state.attrOrder || [...ATTR_KEYS];
+    const srcIdx = order.indexOf(_dragSrcKey);
+    const tgtIdx = order.indexOf(targetKey);
+    if (srcIdx === -1 || tgtIdx === -1) return;
+    order.splice(srcIdx, 1);
+    order.splice(tgtIdx, 0, _dragSrcKey);
+    renderAttributes();
+  });
+
+  grid.addEventListener('dragend', () => {
+    _dragSrcKey = null;
+    grid.querySelectorAll('.attr-bar-row').forEach(row => {
+      row.style.opacity = '';
+      row.style.borderColor = '';
+      row.style.background = '';
+    });
+  });
+}
+
 export function renderAttributes() {
   const grid = dom.attrGrid;
   if (!grid) return;
   const remaining = ptsRemaining();
+  const order = state.attrOrder || [...ATTR_KEYS];
   let html = '';
 
-  for (const k of ATTR_KEYS) {
+  for (const k of order) {
     const v = state.attributes[k];
     const mod = modPct(v);
     const pct = v;
     const color = ATTR_COLORS[k];
     html += `
-      <div class="attr-bar-row">
+      <div class="attr-bar-row" draggable="true" data-attr-key="${k}">
+        <div class="attr-bar-drag" title="拖动排序">⋮⋮</div>
         <div class="attr-bar-name">${ATTR_NAMES[k]}</div>
         <div class="attr-bar-track">
           <div class="attr-bar-fill" style="width:${pct}%;background:${v < 30 ? '#555' : color};"></div>
@@ -115,6 +173,7 @@ export function renderAttributes() {
   }
 
   grid.innerHTML = html;
+  setupAttributeDrag();
 
   if (dom.ptsRemaining) {
     dom.ptsRemaining.textContent = `可分配点数: ${remaining} / ${ATTR_POOL}`;
@@ -511,6 +570,7 @@ export function getCharData() {
     ac:         document.getElementById('charAC')?.value,
     init:       document.getElementById('charInit')?.value,
     attributes: { ...state.attributes },
+    attrOrder:  state.attrOrder,
     skills:     JSON.parse(JSON.stringify(state.skills)),
     spells:     state.spells.map(s => ({ ...s })),
     traits:     state.traits.map(t => ({ ...t })),
@@ -543,6 +603,7 @@ export function loadCharData(data) {
   setVal('charAC', data.ac);
   setVal('charInit', data.init);
   state.attributes = data.attributes || Object.fromEntries(ATTR_KEYS.map(k => [k, ATTR_BASE]));
+  state.attrOrder  = data.attrOrder || [...ATTR_KEYS];
 
   // Skills: backward-compatible loading
   if (data.skills) {

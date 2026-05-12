@@ -617,6 +617,21 @@ export function renderHomeCharSelect() {
     list.innerHTML = '<div class="char-select-empty">请先在"人物卡"页面创建角色，或点击上方按钮快速创建</div>';
     return;
   }
+
+  // Auto-select first saved character if none is currently loaded
+  if (!hasCharacterCard() && entries.length > 0) {
+    const first = entries[0];
+    import('./character.js').then(mod => {
+      mod.loadCharData(first);
+      state.currentCharId = first.id;
+      // Re-render to reflect selected state
+      renderHomeCharSelect();
+      const badge = document.getElementById('kpHeroBadge');
+      if (badge) badge.textContent = '✓ 角色已就绪 — 点击这里，开始冒险';
+    });
+    return;
+  }
+
   const activeId = state.currentCharId;
   list.innerHTML = entries.map(c => `
     <div class="char-select-card${c.id === activeId ? ' selected' : ''}" data-action="kp:selectChar" data-id="${c.id}">
@@ -735,13 +750,13 @@ export function kpDiceRoll() {
     // Hide the dice card container after roll
     const container = document.getElementById('kpDiceCardContainer');
     if (container) container.style.display = 'none';
-    // Auto-send the result to AI for continuation
-    sendKPMessage(resultMsg);
+    // Auto-send the result to AI for continuation (skipPlayerMsg=true since already added above)
+    sendKPMessage(resultMsg, true);
   }, 800);
 }
 
 // ── Send Message ───────────────────────────────────
-export async function sendKPMessage(overrideText) {
+export async function sendKPMessage(overrideText, skipPlayerMsg) {
   const input = document.getElementById('kpInput');
   const isAuto = !!overrideText;
   const text = isAuto ? overrideText : (input ? input.value.trim() : '');
@@ -775,9 +790,13 @@ export async function sendKPMessage(overrideText) {
   // Clear previous action buttons before sending
   clearActionButtons();
 
-  // For manual messages only
-  if (!isAuto) {
+  // Add player message to chat (skip for dice roll results which are already added by kpDiceRoll)
+  if (!skipPlayerMsg) {
     addKPMsg('player', text);
+  }
+
+  // For manual messages only: auto-roll dice, input management
+  if (!isAuto) {
     // Auto-roll dice — but skip for dice result messages
     const diceMatch = text.match(/(\d*d\d+[\+\-]?\d*)/gi);
     if (diceMatch && !text.startsWith('【掷骰完成】')) {

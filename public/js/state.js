@@ -142,6 +142,7 @@ export const MAX_FEATS     = 6;    // 专长数量上限
 export const state = {
   theme: 'dnd',
   currentDice: 20,
+  attrOrder: ['str', 'dex', 'con', 'int', 'wis', 'cha'],
   attributes: { str:20, dex:20, con:20, int:20, wis:20, cha:20 },
   skills: {},      // { skillId: { value: number, proficient: boolean } }
   spells: [],      // [{ id, name, level, school, castingTime, range, components, duration, description, prepared, source }]

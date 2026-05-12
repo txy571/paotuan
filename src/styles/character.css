@@ -19,9 +19,27 @@
   display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
   padding: 6px 10px; border-radius: var(--r-sm);
   transition: background var(--t) var(--ease-out);
+  cursor: grab;
 }
 
+.attr-bar-row:active { cursor: grabbing; }
+
 .attr-bar-row:hover { background: rgba(255,255,255,.02); }
+
+.attr-bar-drag {
+  cursor: grab;
+  color: var(--text-dim);
+  font-size: .6rem;
+  letter-spacing: -2px;
+  user-select: none;
+  flex-shrink: 0;
+  width: 14px;
+  text-align: center;
+  opacity: .4;
+  transition: opacity var(--t) var(--ease-out);
+}
+
+.attr-bar-row:hover .attr-bar-drag { opacity: .8; }
 
 .attr-bar-name {
   width: 70px; font-family: var(--font-display); font-size: .8rem;

@@ -9,8 +9,7 @@ import { esc, showToast, modPct } from './utils.js';
 import { getGameSaveData } from './saves.js';
 import { parseAICommands, applyAICommands, stripAICommands } from './commands.js';
 import { renderCocStatus, renderCocChronicle } from './coc-status.js';
-import { getMemorySummary } from './memory-bank.js';
-import { detectCheckRequest, resolveD100Check } from './check-resolver.js';
+import { getMemorySummary, getNPCProfiles } from './memory-bank.js';
 
 // ── System Prompt ─────────────────────────────────
 export function buildSystemPrompt() {
@@ -345,141 +344,71 @@ async function detectProxy() {
 
 async function _stream(endpoint, reqHeaders, reqBody, controller, parseDelta) {
   const proxyBase = await detectProxy();
+  const MAX_RETRIES = 2;
+  let lastError;
 
-  let resp;
-  if (proxyBase) {
-    resp = await fetch(proxyBase, {
-      method: 'POST',
-      headers: { 'X-Proxy-Target': endpoint, 'Content-Type': 'application/json', ...reqHeaders },
-      body: JSON.stringify(reqBody),
-      signal: controller.signal,
-    });
-  } else {
-    resp = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...reqHeaders },
-      body: JSON.stringify(reqBody),
-      signal: controller.signal,
-    });
-  }
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error(err.error?.message || `HTTP ${resp.status}`);
-  }
-
-  const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
-  let text = '', buf = '';
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += decoder.decode(value, { stream: true });
-    const lines = buf.split('\n');
-    buf = lines.pop() || '';
-    for (const line of lines) {
-      if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
-      try {
-        const delta = parseDelta(JSON.parse(line.slice(6)));
-        if (delta) {
-          text += delta;
-          if (kpState.chatHistory.length) kpState.chatHistory[kpState.chatHistory.length - 1].content = text;
-          updateStreamingMsg(text);
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (controller.signal.aborted) throw new Error('已取消');
+    try {
+      let resp;
+      if (proxyBase) {
+        resp = await fetch(proxyBase, {
+          method: 'POST',
+          headers: { 'X-Proxy-Target': endpoint, 'Content-Type': 'application/json', ...reqHeaders },
+          body: JSON.stringify(reqBody),
+          signal: controller.signal,
+        });
+      } else {
+        resp = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...reqHeaders },
+          body: JSON.stringify(reqBody),
+          signal: controller.signal,
+        });
+      }
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        const status = resp.status;
+        // 4xx: no retry; 5xx / 529 (overloaded): retry
+        if (status >= 400 && status < 500 && status !== 429) {
+          throw new Error(err.error?.message || `HTTP ${status}`);
         }
-      } catch(e) { /* skip malformed SSE chunk */ }
-    }
-  }
-  return text;
-}
+        throw new Error(`HTTP ${status}${err.error?.message ? ': ' + err.error.message : ''}`);
+      }
 
-/** Anthropic Messages API — system as top-level field, x-api-key auth, SSE: delta.text */
-// ── Two-Pass Streaming with Check Detection ──────────
-const MAX_CHECK_LOOP_DEPTH = 3;
-
-async function _streamWithCheckDetection(endpoint, reqHeaders, reqBody, controller, parseDelta) {
-  const proxyBase = await detectProxy();
-  let resp;
-  if (proxyBase) {
-    resp = await fetch(proxyBase, {
-      method: 'POST',
-      headers: { 'X-Proxy-Target': endpoint, 'Content-Type': 'application/json', ...reqHeaders },
-      body: JSON.stringify(reqBody), signal: controller.signal,
-    });
-  } else {
-    resp = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...reqHeaders },
-      body: JSON.stringify(reqBody), signal: controller.signal,
-    });
-  }
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error(err.error?.message || `HTTP ${resp.status}`);
-  }
-  const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
-  let text = '', buf = '';
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += decoder.decode(value, { stream: true });
-    const lines = buf.split('\n');
-    buf = lines.pop() || '';
-    for (const line of lines) {
-      if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
-      try {
-        const delta = parseDelta(JSON.parse(line.slice(6)));
-        if (delta) {
-          text += delta;
-          if (kpState.chatHistory.length) kpState.chatHistory[kpState.chatHistory.length - 1].content = text;
-          updateStreamingMsg(text);
-          const { found, request, cleanText } = detectCheckRequest(text);
-          if (found) {
-            try { reader.cancel(); } catch {}
-            controller.abort();
-            return { needsCheck: true, checkRequest: request, partialText: cleanText };
-          }
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let text = '', buf = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
+          try {
+            const delta = parseDelta(JSON.parse(line.slice(6)));
+            if (delta) {
+              text += delta;
+              if (kpState.chatHistory.length) kpState.chatHistory[kpState.chatHistory.length - 1].content = text;
+              updateStreamingMsg(text);
+            }
+          } catch(e) { /* skip malformed SSE chunk */ }
         }
-      } catch(e) { /* skip */ }
+      }
+      return text;
+    } catch (e) {
+      lastError = e;
+      if (e.name === 'AbortError') throw e;
+      if (attempt < MAX_RETRIES && !controller.signal.aborted) {
+        const delay = 1000 * Math.pow(2, attempt); // 1s, 2s
+        try { kpState.chatHistory[kpState.chatHistory.length - 1].content = `[重试中… (${attempt + 1}/${MAX_RETRIES})]`; updateStreamingMsg('[重试中…]'); } catch {}
+        await new Promise(r => { const t = setTimeout(r, delay); controller.signal.addEventListener('abort', () => { clearTimeout(t); r(); }); });
+      }
     }
   }
-  return { needsCheck: false, text };
-}
-
-async function callAPIWithCheckLoop(cfg, systemPrompt, recentApi, userMsg, controller, depth) {
-  depth = depth || 0;
-  if (depth >= MAX_CHECK_LOOP_DEPTH) {
-    return callAPI(cfg, systemPrompt, recentApi, userMsg, controller);
-  }
-  const provider = cfg.provider;
-  const isAnth = provider === 'anthropic';
-  let reqHeaders, reqBody, parseDelta;
-  const messages = isAnth ? [] : [{ role: 'system', content: systemPrompt }];
-  if (isAnth) {
-    for (const m of recentApi) {
-      messages.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content });
-    }
-    messages.push({ role: 'user', content: userMsg });
-    reqHeaders = { 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01' };
-    reqBody = { model: cfg.model, max_tokens: 4096, system: systemPrompt, messages, stream: true };
-    parseDelta = data => data.delta?.text || data.content_block?.text || '';
-  } else {
-    for (const m of recentApi) {
-      messages.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content });
-    }
-    messages.push({ role: 'user', content: userMsg });
-    reqHeaders = { 'Authorization': `Bearer ${cfg.key}` };
-    reqBody = { model: cfg.model, max_tokens: 4096, messages, stream: true };
-    parseDelta = data => data.choices?.[0]?.delta?.content || '';
-  }
-  const endpoint = isAnth ? 'https://api.anthropic.com/v1/messages' : (_ENDPOINT[provider] || _ENDPOINT.openai);
-  const result = await _streamWithCheckDetection(endpoint, reqHeaders, reqBody, controller, parseDelta);
-  if (result.needsCheck) {
-    const resolution = resolveD100Check(result.checkRequest);
-    const followUpMsg = userMsg + '\n\n' + result.partialText + '\n' + resolution.resultText +
-      '\n请根据以上检定结果继续叙述。（不要再次输出检定请求，直接叙述检定结果和后续发展）';
-    return callAPIWithCheckLoop(cfg, systemPrompt, recentApi, followUpMsg, controller, depth + 1);
-  }
-  return result.text;
+  throw lastError;
 }
 
 async function _anthropic(cfg, systemPrompt, recentHistory, userMsg, controller) {
@@ -564,8 +493,10 @@ async function compressContextAsync() {
       return;
     }
     const memSummary = getMemorySummary();
-    const summaryPrompt = `你是跑团会话压缩助手。请将以下跑团对话记录压缩为结构化摘要（中文，800字以内），严格按以下7个类别组织：
+    const npcProfiles = getNPCProfiles();
+    const summaryPrompt = `你是跑团会话压缩助手。请将以下跑团对话记录压缩为结构化摘要（中文，800字以内），严格按以下8个类别组织：
 
+0. 【NPC人物档案——最高优先级保留】: 每个NPC的姓名、外貌特征、说话方式、习惯动作、秘密、动机、态度——这些是角色"活起来"的关键，压缩过程中绝对不可丢失
 1. 【关键NPC】: 所有出现过的具名NPC及其特征、态度、位置
 2. 【获得的线索】: 所有发现的线索和信息
 3. 【剧情进展】: 主要事件和剧情推进
@@ -574,6 +505,7 @@ async function compressContextAsync() {
 6. 【重要决策】: 玩家做出的关键选择
 7. 【战斗摘要】: 战斗结果和重要判定
 
+${npcProfiles ? '以下是之前建立的NPC人物档案，请在压缩中严格保留这些特征:\n' + npcProfiles + '\n\n' : ''}
 ${memSummary ? '当前记忆库内容供参考:\n' + memSummary + '\n\n' : ''}
 会话记录:\n${compressed.substring(compressed.length - 6000)}`;
     const controller = new AbortController();
@@ -708,9 +640,7 @@ export async function sendKPMessage() {
   try {
     const controller = new AbortController();
     kpState.streamingAbort = controller;
-    const fullResponse = state.theme === 'coc'
-      ? await callAPIWithCheckLoop(cfg, systemPrompt, recentApi, text, controller)
-      : await callAPI(cfg, systemPrompt, recentApi, text, controller);
+    const fullResponse = await callAPI(cfg, systemPrompt, recentApi, text, controller);
 
     const displayText = stripAICommands(fullResponse);
     kpState.chatHistory[kpState.chatHistory.length - 1].content = displayText;

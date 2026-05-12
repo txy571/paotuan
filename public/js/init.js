@@ -17,6 +17,7 @@ import {
 import { saveGame, loadGame, deleteGame, loadAutosave, renderGameSaves } from './saves.js';
 import * as Scenario from './scenario.js';
 import { renderCocStatus, renderCocChronicle } from './coc-status.js';
+import { initMemoryBank } from './memory-bank.js';
 import { Multiplayer } from './multiplayer/index.js';
 
 // ── Set up periodic tasks ──────────────────────────
@@ -74,6 +75,7 @@ const actionMap = {
 
   // notes
   'notes:save': () => Notes.saveSessionNote(),
+  'notes:export': () => Notes.exportNotes(),
 
   // api
   'api:fetch': (el) => fetchAPI(el.dataset.endpoint),
@@ -164,7 +166,7 @@ document.addEventListener('page-changed', (e) => {
   const page = e.detail;
   if (page === 'character') Character.renderAllCharacter();
   if (page === 'dice') Dice.renderRollHistory();
-  if (page === 'notes') Notes.renderSessions();
+  if (page === 'notes') { Notes.renderSessions(); Notes.renderNotesReference(); }
   if (page === 'home') {
     renderKPQuickActions(); renderKP(); renderCocStatus();
     renderCocChronicle(); renderGameSaves(); renderHomeCharSelect();
@@ -186,6 +188,7 @@ document.addEventListener('character-render', () => {
 document.addEventListener('render-game-saves', () => renderGameSaves());
 
 document.addEventListener('load-session', (e) => Notes.loadSession(e.detail));
+document.addEventListener('notes-filter', (e) => Notes.filterNotesByTag(e.detail));
 document.addEventListener('fetch-api', (e) => fetchAPI(e.detail));
 document.addEventListener('fetch-detail', (e) => fetchAPIDetail(e.detail.endpoint, e.detail.index));
 
@@ -198,6 +201,8 @@ document.addEventListener('equip-toggle', (e) => Character.toggleEquip(e.detail)
 document.addEventListener('spell-remove', (e) => Character.removeSpell(e.detail));
 document.addEventListener('preset-trait-add', (e) => Character.addPresetTrait(e.detail.name, e.detail.desc));
 document.addEventListener('preset-feat-add', (e) => Character.addPresetFeat(e.detail.name, e.detail.desc));
+document.addEventListener('preset-trait-save', (e) => Character.saveTraitPreset(e.detail.i));
+document.addEventListener('preset-feat-save', (e) => Character.saveFeatPreset(e.detail.i));
 document.addEventListener('skill-update', (e) => { Character.setSkillValue(e.detail.id, e.detail.value); Character.renderSkills(); });
 document.addEventListener('dice-rolled', (e) => {
   if (Multiplayer.connected) {
@@ -240,6 +245,9 @@ async function init() {
 
   // Set up portrait
   Character.setupPortrait();
+
+  // Load memory bank from localStorage
+  initMemoryBank();
 
   // Initial renders
   Character.renderAllCharacter();

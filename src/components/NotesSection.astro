@@ -2,16 +2,30 @@
   <div class="notes-layout">
     <div class="panel notes-editor">
       <h3>跑团笔记</h3>
-      <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
         <input type="text" id="sessionTitle" placeholder="给这篇笔记起个名字..." style="flex:1;">
-        <button class="btn btn-save btn-sm" data-action="notes:save">保存</button>
+        <input type="text" id="sessionTags" placeholder="标签, 用逗号分隔" style="width:180px;font-size:.75rem;">
       </div>
-      <textarea id="sessionContent" placeholder="写点什么吧，哪怕只是一句话...&#10;&#10;今天的遭遇、一段印象深刻的对白、战斗中差点团灭的瞬间、某个让你背后发凉的发现——都值得记下来。"></textarea>
+      <textarea id="sessionContent" placeholder="写点什么吧，哪怕只是一句话...&#10;&#10;今天的遭遇、一段印象深刻的对白、战斗中差点团灭的瞬间、某个让你背后发凉的发现——都值得记下来。&#10;&#10;提示：可以在这里梳理剧情脉络、记录NPC关系、标记未解谜团。"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-save btn-sm" data-action="notes:save">保存</button>
+        <button class="btn btn-ghost btn-sm" data-action="notes:export">导出全部笔记</button>
+        <span style="font-size:.68rem;color:var(--text-dim);margin-left:auto;" id="notesCount"></span>
+      </div>
     </div>
 
     <div class="panel">
-      <h3>历史笔记</h3>
+      <h3>历史笔记 <span style="font-size:.68rem;color:var(--text-dim);font-weight:normal;" id="notesFilterLabel"></span></h3>
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;" id="notesTagFilter"></div>
       <div class="notes-list" id="sessionsList"></div>
+    </div>
+
+    <div class="panel notes-reference">
+      <h3>剧情梳理面板</h3>
+      <p style="font-size:.68rem;color:var(--text-dim);margin-bottom:8px;">来自记忆库的NPC、线索、剧情线程，方便梳理</p>
+      <div id="notesRefContent">
+        <div style="color:var(--text-dim);font-size:.78rem;text-align:center;padding:12px;">游戏进行中时将自动填充...</div>
+      </div>
     </div>
   </div>
 </section>

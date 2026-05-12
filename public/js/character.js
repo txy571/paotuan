@@ -2,7 +2,7 @@
 import { state, ATTR_KEYS, ATTR_NAMES, ATTR_COLORS, ATTR_BASE, ATTR_MAX, ATTR_POOL, SKILL_MAX, SKILL_TOTAL, MAX_TRAITS, MAX_FEATS, SKILL_DEFINITIONS, COC_ERAS, SPELL_SCHOOLS, SPELL_LEVELS } from './state.js';
 import { esc, showToast, modPct, modPctNum } from './utils.js';
 import { dom } from './dom.js';
-import { PRESET_TRAITS, PRESET_FEATS } from './presets/index.js';
+import { PRESET_TRAITS, PRESET_FEATS, getAllTraits, getAllFeats, saveCustomTrait, saveCustomFeat } from './presets/index.js';
 
 // ── Proficiency ──────────────────────────────────
 function getProfBonus(level) {
@@ -249,7 +249,7 @@ export function renderTraits() {
   if (!dom.traitList) return;
   const count = state.traits.length;
   const remaining = MAX_TRAITS - count;
-  const presets = PRESET_TRAITS[state.theme] || [];
+  const presets = getAllTraits(state.theme);
   // Filter out presets already in the list
   const names = new Set(state.traits.map(t => t.name));
   const available = presets.filter(p => !names.has(p.name));
@@ -264,6 +264,7 @@ export function renderTraits() {
       <div class="trait-tag">
         <input class="inline-input" value="${esc(t.name)}" placeholder="名称" onchange="document.dispatchEvent(new CustomEvent('trait-update',{detail:{i:${i},k:'name',v:this.value}}))">
         <input class="inline-input wide" value="${esc(t.desc)}" placeholder="描述" onchange="document.dispatchEvent(new CustomEvent('trait-update',{detail:{i:${i},k:'desc',v:this.value}}))">
+        ${t.name ? `<span class="preset-save" title="保存为自定义预设" onclick="document.dispatchEvent(new CustomEvent('preset-trait-save',{detail:{i:${i}}}))">⬇</span>` : ''}
         <span class="trait-remove" onclick="document.dispatchEvent(new CustomEvent('trait-remove',{detail:${i}}))">×</span>
       </div>`).join(''))
     + `<div style="font-size:.7rem;color:var(--text-dim);margin-top:4px;">${count}/${MAX_TRAITS} ${remaining ? '还可添加 ' + remaining + ' 个' : '已达上限'}</div>`
@@ -297,6 +298,21 @@ export function addPresetFeat(name, desc) {
   renderFeats();
 }
 
+export function saveTraitPreset(i) {
+  const t = state.traits[i];
+  if (!t || !t.name.trim()) return;
+  saveCustomTrait(state.theme, t.name.trim(), t.desc.trim());
+  showToast(`特质"${t.name}"已保存为预设`);
+  renderTraits();
+}
+export function saveFeatPreset(i) {
+  const f = state.feats[i];
+  if (!f || !f.name.trim()) return;
+  saveCustomFeat(state.theme, f.name.trim(), f.desc.trim());
+  showToast(`专长"${f.name}"已保存为预设`);
+  renderFeats();
+}
+
 export function addTrait() {
   if (state.traits.length >= MAX_TRAITS) {
     showToast(`特质数量已达上限 (${MAX_TRAITS} 个)`, 'warn');
@@ -311,7 +327,7 @@ export function renderFeats() {
   if (!dom.featList) return;
   const count = state.feats.length;
   const remaining = MAX_FEATS - count;
-  const presets = PRESET_FEATS[state.theme] || [];
+  const presets = getAllFeats(state.theme);
   const names = new Set(state.feats.map(f => f.name));
   const available = presets.filter(p => !names.has(p.name));
   const presetHTML = available.length && remaining
@@ -325,6 +341,7 @@ export function renderFeats() {
       <div class="trait-tag">
         <input class="inline-input" value="${esc(f.name)}" placeholder="专长名" onchange="document.dispatchEvent(new CustomEvent('feat-update',{detail:{i:${i},k:'name',v:this.value}}))">
         <input class="inline-input wide" value="${esc(f.desc)}" placeholder="效果" onchange="document.dispatchEvent(new CustomEvent('feat-update',{detail:{i:${i},k:'desc',v:this.value}}))">
+        ${f.name ? `<span class="preset-save" title="保存为自定义预设" onclick="document.dispatchEvent(new CustomEvent('preset-feat-save',{detail:{i:${i}}}))">⬇</span>` : ''}
         <span class="trait-remove" onclick="document.dispatchEvent(new CustomEvent('feat-remove',{detail:${i}}))">×</span>
       </div>`).join(''))
     + `<div style="font-size:.7rem;color:var(--text-dim);margin-top:4px;">${count}/${MAX_FEATS} ${remaining ? '还可添加 ' + remaining + ' 个' : '已达上限'}</div>`

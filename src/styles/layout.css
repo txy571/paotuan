@@ -259,7 +259,7 @@ input[type="text"], input[type="number"], select, textarea {
 /* ============================================================
    SESSION NOTES
    ============================================================ */
-.notes-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+.notes-layout { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 20px; }
 
 .notes-editor textarea {
   min-height: 380px; resize: vertical; font-family: var(--font-display);
@@ -279,6 +279,23 @@ input[type="text"], input[type="number"], select, textarea {
 .note-card .note-date { font-size: .73rem; color: var(--text-dim); }
 
 .note-card .note-title { font-size: .9rem; color: var(--text); margin-top: 4px; font-weight: 500; }
+
+.note-tags { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+
+.note-tag {
+  display: inline-block; padding: 1px 8px; border-radius: 10px;
+  font-size: .65rem; cursor: pointer;
+  background: var(--border); color: var(--text-dim);
+  transition: background var(--t) var(--ease-out), color var(--t) var(--ease-out);
+}
+
+.note-tag:hover, .note-tag.active { background: var(--accent); color: #fff; }
+
+a.note-tag { text-decoration: none; }
+
+.note-ref-item { border-bottom: 1px solid var(--border-subtle); }
+
+.notes-reference { max-height: 520px; overflow-y: auto; }
 
 /* ============================================================
    INITIATIVE TRACKER

@@ -118,6 +118,12 @@
 
 .preset-tag:hover { background: var(--accent); color: #fff; transform: translateY(-1px); }
 
+.preset-save {
+  cursor: pointer; color: var(--text-dim); font-size: .75rem; padding: 0 2px;
+  transition: color var(--t) var(--ease-out);
+}
+.preset-save:hover { color: var(--accent); }
+
 .inline-input {
   background: transparent; border: none; border-bottom: 1px dotted var(--border-strong);
   color: var(--text); font-size: .82rem; padding: 2px 4px; width: 80px;

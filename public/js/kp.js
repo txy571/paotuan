@@ -135,8 +135,15 @@ export function addKPSystemMsg(content) {
   kpState.chatHistory.push({ role: 'system', content, time: Date.now() });
 }
 
-/** Format message text: escape HTML, then wrap 【】 with gray italic styling */
+/** Render markdown + wrap 【】 brackets with gray italic styling */
 function formatMsgContent(text) {
+  if (!text) return '';
+  if (typeof marked !== 'undefined') {
+    marked.setOptions({ breaks: true, gfm: true });
+    const html = marked.parse(text);
+    return html.replace(/【([^】]*)】/g, '<span class="msg-bracket">【$1】</span>');
+  }
+  // Fallback: escape HTML, wrap brackets
   const escaped = esc(text);
   return escaped.replace(/【([^】]*)】/g, '<span class="msg-bracket">【$1】</span>');
 }

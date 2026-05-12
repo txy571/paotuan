@@ -8,6 +8,13 @@ import { applyMemoryCommand } from './memory-bank.js';
 const CMD_TYPES = 'SAN|HP|LUCK|TRAIT|REMOVE_TRAIT|CHRONICLE|SKILL_CHECK|ITEM|REMOVE_ITEM|NPC|CLUE|PLOT|MEMORY|ACT|SCENARIO_META|TASK_UPDATE|OUTLINE_UPDATE|检定请求|检定结果|掷骰请求|ACTIONS|INITIATIVE|END_COMBAT|CHASE|END_CHASE';
 const CMD_RE = new RegExp(`【(${CMD_TYPES})[：:](.+?)】`);
 
+/** Convert Arabic numerals in act names to Chinese (e.g. "第1幕" → "第一幕") */
+function normalizeActCN(val) {
+  const CN = ['零','一','二','三','四','五','六','七','八','九','十'];
+  if (typeof val === 'number') return CN[val] || val;
+  return val.replace(/(\d+)/g, (_, d) => CN[parseInt(d)] || d);
+}
+
 export function parseAICommands(text) {
   const commands = [];
   const lines = text.split('\n');
@@ -124,7 +131,7 @@ export function applyAICommands(commands) {
             if (meta.幕数) {
               scenarioMeta.actCount = meta.幕数;
               for (let i = 1; i <= meta.幕数; i++) {
-                const actName = `第${i}幕`;
+                const actName = `第${normalizeActCN(i)}幕`;
                 if (!scenarioMeta.acts.find(a => a.name === actName)) {
                   scenarioMeta.acts.push({ name: actName, status: 'pending' });
                 }
@@ -139,7 +146,7 @@ export function applyAICommands(commands) {
         }
         case 'ACT': {
           const parts = cmd.value.split(/[：:]/);
-          const actName = parts[0]?.trim();
+          const actName = normalizeActCN(parts[0]?.trim());
           const status = parts[1]?.trim() || 'started';
           if (actName) {
             const act = scenarioMeta.acts.find(a => a.name === actName);

@@ -34,6 +34,7 @@
           <datalist id="kpModelList"></datalist>
           <button class="btn btn-secondary btn-sm" data-action="kp:fetchModels" id="kpFetchModelsBtn" title="从 API 获取可用模型列表">🔄 获取模型列表</button>
         </div>
+        <p style="font-size:.72rem;color:var(--text-dim);margin-top:2px;" id="kpModelHint">切换提供商自动更新建议列表，或点击"获取模型列表"从 API 拉取</p>
       </div>
 
       <div class="config-field">
@@ -96,6 +97,7 @@
   gap: 20px;
   padding-bottom: 40px;
   max-width: 780px;
+  margin: 0 auto;
 }
 
 .config-layout .panel h3 {

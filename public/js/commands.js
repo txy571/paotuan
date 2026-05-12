@@ -257,12 +257,24 @@ function parseStatCommand(raw, defaultSign) {
  * Parse a 【掷骰请求】 value into structured data.
  * Format: skill|expression|difficulty|description
  * Example: 侦察检定|d20+5|DC15|寻找隐藏线索
+ *
+ * Also handles cases where the expression has trailing Chinese text in brackets:
+ *   d10+4（智力调整-6+工程学基础10） → d10+4
  */
 export function parseDiceRequest(value) {
   const parts = value.split('|').map(s => s.trim());
+  let expression = parts[1] || 'd20';
+  // Strip everything after the first proper dice expression (Chinese/en brackets, trailing text)
+  // First: remove Chinese/parenthetical annotations: d10+4（...） or d10+4(...)
+  expression = expression.replace(/[（(][^)）]*[)）]/g, '');
+  // Second: if there's still non-dice text after the expression, extract just the dice part
+  const diceMatch = expression.match(/(\d*d\d+(?:[+-]\d+)?)/i);
+  if (diceMatch) {
+    expression = diceMatch[1];
+  }
   return {
     skill: parts[0] || '检定',
-    expression: parts[1] || 'd20',
+    expression: expression || 'd20',
     difficulty: parts[2] || '',
     description: parts[3] || '',
   };

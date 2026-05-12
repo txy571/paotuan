@@ -313,39 +313,46 @@ export function loadKPConfig() {
   } catch(e) { /* ignore */ }
 }
 
-/** Update model datalist + API base for the currently selected provider */
+/** Update model datalist for the currently selected provider */
 function _updateModelDatalist() {
   const prov = document.getElementById('kpProvider')?.value || kpState.provider;
-  const baseEl = document.getElementById('kpApiBase');
   const datalist = document.getElementById('kpModelList');
-
-  // Fill API base default only if empty or matches a known default
-  if (baseEl && !baseEl.value.trim()) {
-    baseEl.value = PROVIDER_CONFIG[prov]?.apiBase || '';
-  }
-
-  // Populate datalist with known models for this provider
+  const hint = document.getElementById('kpModelHint');
+  const models = PROVIDER_CONFIG[prov]?.models || [];
   if (datalist) {
-    const models = PROVIDER_CONFIG[prov]?.models || [];
     datalist.innerHTML = models.map(m => `<option value="${m}">`).join('');
+  }
+  if (hint) {
+    hint.textContent = `已预设 ${models.length} 个${Object.keys(PROVIDER_CONFIG).includes(prov) ? '' : '常用'}模型，输入时自动提示 · 也可点击"获取模型列表"从 API 拉取`;
   }
 }
 
-/** Called when provider select changes */
+/** Called when provider select changes — fills API base URL + model list */
 export function onProviderChange() {
   const provEl = document.getElementById('kpProvider');
   if (!provEl) return;
   const provider = provEl.value;
   const baseEl = document.getElementById('kpApiBase');
   const datalist = document.getElementById('kpModelList');
+  const hint = document.getElementById('kpModelHint');
+  const cfg = PROVIDER_CONFIG[provider];
 
-  if (baseEl) {
-    baseEl.value = PROVIDER_CONFIG[provider]?.apiBase || '';
+  // Always overwrite API base with the provider default
+  if (baseEl && cfg) {
+    baseEl.value = cfg.apiBase;
   }
-  if (datalist) {
-    const models = PROVIDER_CONFIG[provider]?.models || [];
-    datalist.innerHTML = models.map(m => `<option value="${m}">`).join('');
+
+  // Populate model datalist with known models for this provider
+  if (datalist && cfg) {
+    datalist.innerHTML = cfg.models.map(m => `<option value="${m}">`).join('');
   }
+  if (hint && cfg) {
+    hint.textContent = `已预设 ${cfg.models.length} 个模型，输入时自动提示 · 也可点击"获取模型列表"从 API 拉取`;
+  }
+
+  // Reset model input placeholder
+  const modelEl = document.getElementById('kpModel');
+  if (modelEl) modelEl.placeholder = '选择或输入模型名称...';
 }
 
 /** Fetch model list from the current API endpoint (direct call — most APIs support CORS) */
@@ -419,15 +426,25 @@ export async function fetchModels() {
     }
 
     const modelEl = document.getElementById('kpModel');
-    if (modelEl) modelEl.placeholder = `已加载 ${modelNames.length} 个模型，输入或选择...`;
+    if (modelEl) modelEl.placeholder = `输入模型名称... (共 ${modelNames.length} 个可用)`;
+
+    const hint = document.getElementById('kpModelHint');
+    if (hint) hint.textContent = `✅ 已从 API 获取 ${modelNames.length} 个模型，点击输入框开始输入筛选`;
 
     showToast(`已获取 ${modelNames.length} 个模型`);
   } catch (e) {
+    const hint = document.getElementById('kpModelHint');
     if (e.name === 'TimeoutError' || e.message.includes('timed out')) {
+      if (hint) hint.textContent = '⏱ 请求超时 — 请检查 API 地址和 Key 是否正确';
       showToast('请求超时 — 请检查 API 地址和 Key 是否正确', 'warn');
     } else if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+      if (hint) hint.textContent = '⚠️ 网络请求失败 — API 可能不支持跨域获取模型列表，请手动输入模型名称';
       showToast('网络请求失败 — API 可能不支持跨域获取模型列表，请手动输入模型名称', 'warn');
+    } else if (e.message.includes('HTTP 401') || e.message.includes('HTTP 403')) {
+      if (hint) hint.textContent = '⚠️ API Key 无效或无权访问模型列表';
+      showToast('API Key 无效 — 请检查后重试', 'warn');
     } else {
+      if (hint) hint.textContent = `⚠️ 获取失败: ${e.message}`;
       showToast(`获取失败: ${e.message}`, 'warn');
     }
   } finally {

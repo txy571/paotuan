@@ -1,7 +1,7 @@
 // ==================== AI KP (GAME MASTER) ====================
 import {
   state, kpState, cocState, initCocState, initScenarioMeta,
-  THEME_NAMES, ATTR_KEYS, ATTR_NAMES, KP_SYSTEM_PROMPTS, KP_QUICK_ACTIONS,
+  THEME_NAMES, ATTR_KEYS, ATTR_NAMES, KP_SYSTEM_PROMPTS, KP_QUICK_ACTIONS, SKILL_DEFINITIONS,
   scenarioDbContent, activeScenario, getCharSan, getCharHp, getCharMaxSan, getCharMaxHp,
   KP_SHARED_PREAMBLE,
 } from './state.js';
@@ -32,15 +32,20 @@ export function buildSystemPrompt() {
       extra += `  ${ATTR_NAMES[k]}: ${state.attributes[k]} (调整值 ${modPct(state.attributes[k])})\n`;
     }
     if (state.theme === 'coc') {
-      // CoC: show ALL skills with their percentage values (primary dice mechanic)
+      // CoC: show ALL skills with percentage values + Chinese name mapping
+      const cocSkillNameMap = {};
+      (SKILL_DEFINITIONS.coc || []).forEach(d => { cocSkillNameMap[d.id] = d.name; });
       const cocSkills = Object.entries(state.skills)
         .filter(([,v]) => typeof v === 'object' && typeof v.value === 'number')
-        .map(([k, v]) => `${k}:${v.value}%`);
+        .map(([k, v]) => `${cocSkillNameMap[k] || k}(${k}):${v.value}%`);
       if (cocSkills.length) extra += `技能值: ${cocSkills.join('、')}\n`;
     } else {
+      // D&D/Pathfinder: show skills with Chinese name mapping
+      const dndSkillNameMap = {};
+      (SKILL_DEFINITIONS.dnd || []).forEach(d => { dndSkillNameMap[d.id] = d.name; });
       const skillEntries = Object.entries(state.skills)
         .filter(([,v]) => typeof v === 'object' && (v.proficient || v.value > 0))
-        .map(([k, v]) => `${k}${v.proficient ? '*' : ''}:${typeof v.value === 'number' ? (v.value >= 0 ? '+' + v.value : v.value) : v.value}`);
+        .map(([k, v]) => `${dndSkillNameMap[k] || k}(${k})${v.proficient ? '*' : ''}:${typeof v.value === 'number' ? (v.value >= 0 ? '+' + v.value : v.value) : v.value}`);
       if (skillEntries.length) extra += `技能: ${skillEntries.join('、')}\n`;
     }
     if (state.traits.length) extra += `特质: ${state.traits.map(t=>t.name).filter(Boolean).join('、')}\n`;
@@ -96,6 +101,7 @@ export function buildSystemPrompt() {
     extra += '3. 在回复第一段用【ACT:第一幕:started】标记开始，然后直接进入叙事。\n';
     extra += '4. 开头场景必须与角色背景有逻辑关联。\n';
     extra += '5. 不要问"你想做什么"这类空洞的问题。给出具体、生动、有感官细节的开场场景。\n';
+    extra += '6. 进行检定时，必须使用角色卡中列出的实际技能值作为目标难度（DC/目标值）。例如：如果角色侦查技能值为60%，则侦查检定的目标值必须是60，不能自己编造。\n';
   }
 
   if (state.theme === 'coc') {
@@ -620,7 +626,9 @@ export function selectHomeChar(id) {
 
 // ── Execute a dice expression (e.g. "d20+5", "2d6+3", "d100") and return result details ──
 function executeDiceExpression(expr) {
-  const match = expr.match(/^(\d+)?d(\d+)([+-]\d+)?$/i);
+  // Normalize: strip all whitespace so "d20 + 5" → "d20+5"
+  const cleanExpr = expr.replace(/\s+/g, '');
+  const match = cleanExpr.match(/^(\d+)?d(\d+)([+-]\d+)?$/i);
   if (!match) return null;
   const count = parseInt(match[1]) || 1;
   const sides = parseInt(match[2]);
@@ -699,6 +707,9 @@ export function kpDiceRoll() {
   setTimeout(() => {
     const inp = document.getElementById('kpInput');
     if (inp) inp.disabled = false;
+    // Hide the dice card container after roll
+    const container = document.getElementById('kpDiceCardContainer');
+    if (container) container.style.display = 'none';
     // Auto-send the result to AI for continuation
     sendKPMessage(resultMsg);
   }, 800);

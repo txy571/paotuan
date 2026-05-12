@@ -104,12 +104,25 @@ const actionMap = {
   'saves:delete': (el) => deleteGame(el.dataset.name),
   'saves:autosave': () => loadAutosave(),
 
+  // tracking panel
+  'tracking:toggle': () => {
+    import('./tracking-panel.js').then(m => m.toggleTrackingPanel());
+  },
+
   // scenario
   'scenario:toggle': () => Scenario.toggleScenarioDB(),
   'scenario:close': () => Scenario.closeScenarioDB(),
-  'scenario:save': () => Scenario.saveScenarioDB(),
-  'scenario:export': () => Scenario.exportScenarioDB(),
-  'scenario:import': () => Scenario.importScenarioDBPrompt(),
+  'scenario:save': () => Scenario.saveScenarioFromForm(),
+  'scenario:export': () => Scenario.exportScenarioLibrary(),
+  'scenario:import': () => Scenario.importScenarioLibraryPrompt(),
+  'scenario:new': () => Scenario.showScenarioForm(),
+  'scenario:edit': (el) => Scenario.showScenarioForm(el.dataset.id),
+  'scenario:delete': (el) => Scenario.deleteScenario(el.dataset.id),
+  'scenario:activate': (el) => Scenario.activateScenario(el.dataset.id),
+  'scenario:cancelEdit': () => Scenario.hideScenarioForm(),
+  'scenario:addNpc': () => Scenario.addFormArrayField('npc'),
+  'scenario:addLocation': () => Scenario.addFormArrayField('loc'),
+  'scenario:addClue': () => Scenario.addFormArrayField('clue'),
 
   // multiplayer
   'mp:create': () => Multiplayer.createRoom(),
@@ -158,10 +171,36 @@ document.addEventListener('change', e => {
 });
 
 // ── Custom event listeners ─────────────────────────
+function updateApiSectionTheme() {
+  const dndEl = document.getElementById('apiBrowserControls');
+  const cocEl = document.getElementById('cocReference');
+  const cyberEl = document.getElementById('cyberpunkReference');
+  const titleEl = document.getElementById('apiSectionTitle');
+  if (dndEl) dndEl.style.display = 'none';
+  if (cocEl) cocEl.style.display = 'none';
+  if (cyberEl) cyberEl.style.display = 'none';
+  switch (state.theme) {
+    case 'dnd':
+    case 'pathfinder':
+      if (dndEl) dndEl.style.display = '';
+      if (titleEl) titleEl.textContent = 'D&D 5e 在线资源库';
+      break;
+    case 'coc':
+      if (cocEl) cocEl.style.display = '';
+      if (titleEl) titleEl.textContent = 'CoC 7e 规则参考';
+      break;
+    case 'cyberpunk':
+      if (cyberEl) cyberEl.style.display = '';
+      if (titleEl) titleEl.textContent = '赛博朋克 RED 规则参考';
+      break;
+  }
+}
+
 document.addEventListener('theme-changed', (e) => {
   renderKPQuickActions();
   renderCocStatus();
   renderCocChronicle();
+  updateApiSectionTheme();
   document.dispatchEvent(new CustomEvent('render-game-saves'));
 });
 
@@ -279,9 +318,12 @@ async function init() {
   Character.renderInitiative();
   Notes.renderSessions();
   renderKPQuickActions();
+  updateApiSectionTheme();
   loadKPChatHistory();
   loadKPConfig();
   Scenario.loadScenarioDB();
+  Scenario.loadScenarioLibrary();
+  Scenario.loadActiveScenario();
 
   // Particle background (starfield)
   initParticles();

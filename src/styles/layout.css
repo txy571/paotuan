@@ -180,7 +180,7 @@ nav {
 .editor-toolbar button:hover { color: var(--text); border-color: var(--border-bright); }
 
 /* ---------- Page Sections ---------- */
-.page { display: none; animation: fadeIn .35s var(--ease-out); }
+.page { display: none; animation: fadeIn .35s var(--ease-out); position: relative; }
 
 .page.active { display: block; }
 
@@ -264,6 +264,31 @@ nav {
 /* API Section */
 .api-section { margin-top: 10px; }
 
+/* ── Theme Reference Cards ── */
+.coc-reference-card {
+  display: flex; align-items: center; gap: 18px;
+  padding: 20px 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: rgba(0,0,0,.15);
+  transition: border-color var(--t) var(--ease-out);
+}
+
+.coc-reference-card:hover { border-color: var(--accent); }
+
+.coc-reference-icon { font-size: 2.4rem; flex-shrink: 0; }
+
+.coc-reference-content h4 {
+  color: var(--text-gold);
+  font-family: var(--font-display);
+  margin-bottom: 4px; font-size: .92rem;
+}
+
+.coc-reference-content p {
+  color: var(--text-dim); font-size: .78rem;
+  line-height: 1.5; margin-bottom: 8px;
+}
+
 .api-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
 
 .api-card {
@@ -285,6 +310,23 @@ nav {
   grid-template-columns: 280px 1fr 290px;
   gap: 20px; padding: 10px 0;
 }
+
+/* Character card lock overlay during active gameplay */
+.char-lock-overlay {
+  position: absolute; inset: 0; z-index: 10;
+  background: rgba(0,0,0,.55);
+  border-radius: var(--r-lg);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 120px;
+}
+.char-lock-banner {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg); border: 1px solid var(--accent2);
+  border-radius: var(--r-md); padding: 14px 24px;
+  font-size: .88rem; font-weight: 600; color: var(--accent2);
+  box-shadow: 0 4px 24px rgba(0,0,0,.5);
+}
+.char-lock-icon { font-size: 1.4rem; }
 
 /* Form elements */
 input[type="text"], input[type="password"], input[type="number"], select, textarea {

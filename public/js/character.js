@@ -1,5 +1,5 @@
 // ==================== CHARACTER SHEET ====================
-import { state, ATTR_KEYS, ATTR_NAMES, ATTR_COLORS, ATTR_BASE, ATTR_MAX, ATTR_POOL, SKILL_MAX, SKILL_TOTAL, MAX_TRAITS, MAX_FEATS, SKILL_DEFINITIONS, COC_ERAS, SPELL_SCHOOLS, SPELL_LEVELS } from './state.js';
+import { state, ATTR_KEYS, ATTR_NAMES, ATTR_COLORS, ATTR_BASE, ATTR_MAX, ATTR_POOL, SKILL_MAX, SKILL_TOTAL, MAX_TRAITS, MAX_FEATS, SKILL_DEFINITIONS, COC_ERAS, SPELL_SCHOOLS, SPELL_LEVELS, kpState } from './state.js';
 import { esc, showToast, modPct, modPctNum } from './utils.js';
 import { dom } from './dom.js';
 import { PRESET_TRAITS, PRESET_FEATS, getAllTraits, getAllFeats, saveCustomTrait, saveCustomFeat } from './presets/index.js';
@@ -533,10 +533,13 @@ export function loadCharData(data) {
   setVal('charXP', data.xp);
   setVal('charBackground', data.background);
   setVal('charAlignment', data.alignment);
-  setVal('charHP', data.hp || data.maxHp || 100);
-  setVal('charMaxHP', data.maxHp || 100);
-  setVal('charSan', data.san || data.maxSan || 100);
-  setVal('charMaxSan', data.maxSan || 100);
+  // During active gameplay, HP/SAN are managed live by the game — don't overwrite
+  if (!kpState.active) {
+    setVal('charHP', data.hp || data.maxHp || 100);
+    setVal('charMaxHP', data.maxHp || 100);
+    setVal('charSan', data.san || data.maxSan || 100);
+    setVal('charMaxSan', data.maxSan || 100);
+  }
   setVal('charAC', data.ac);
   setVal('charInit', data.init);
   state.attributes = data.attributes || Object.fromEntries(ATTR_KEYS.map(k => [k, ATTR_BASE]));
@@ -600,6 +603,14 @@ export function loadCharData(data) {
 export function renderAllCharacter() {
   renderAttributes(); renderSkills(); renderSpells(); renderTraits();
   renderFeats(); renderEquipment(); renderEraSelector(); renderSavedChars();
+  // Re-apply lock state in case game is active
+  setCharacterCardLock(kpState.active);
+}
+
+/** Lock/unlock the character card during active gameplay to prevent manual editing. */
+export function setCharacterCardLock(locked) {
+  const overlay = document.getElementById('charLockOverlay');
+  if (overlay) overlay.style.display = locked ? '' : 'none';
 }
 
 export function saveCharacter() {

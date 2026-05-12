@@ -310,3 +310,165 @@
 .kp-dice-card.rolled::before {
   display: none;
 }
+
+/* ── KP Main Layout (Chat + Tracking Panel) ── */
+.kp-main-layout {
+  display: flex; gap: 16px; align-items: flex-start;
+}
+
+.kp-left-column {
+  flex: 1; min-width: 0;
+}
+
+.kp-right-column {
+  width: 300px; flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: rgba(0,0,0,.15);
+  display: flex; flex-direction: column;
+  max-height: 560px; overflow: hidden;
+}
+
+.kp-tracking-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.kp-tracking-title {
+  font-size: .82rem; font-weight: 600;
+  color: var(--text-gold);
+  font-family: var(--font-display);
+}
+
+.kp-tracking-body {
+  flex: 1; overflow-y: auto;
+  padding: 12px 14px;
+  font-size: .78rem; line-height: 1.55;
+}
+
+/* Tracking Panel Internals */
+.tracking-empty {
+  text-align: center; color: var(--text-dim);
+  font-size: .78rem; padding: 24px 12px;
+}
+
+.tracking-empty-icon { font-size: 2rem; margin-bottom: 8px; }
+
+.tracking-section { margin-bottom: 16px; }
+
+.tracking-section-title {
+  font-size: .75rem; font-weight: 600;
+  color: var(--text-gold); margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tracking-field {
+  margin-bottom: 4px; line-height: 1.5; color: var(--text-dim);
+}
+
+.tracking-label {
+  display: inline-block; min-width: 44px;
+  color: var(--text); font-size: .7rem;
+  background: var(--accent-dim);
+  padding: 1px 6px; border-radius: 3px; margin-right: 6px;
+}
+
+.tracking-act-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 8px; border-radius: var(--r-sm);
+  margin-bottom: 3px; font-size: .76rem;
+}
+
+.act-current {
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  color: var(--text);
+}
+
+.act-done { color: var(--text-dim); opacity: .7; }
+.act-pending { color: var(--text-dim); opacity: .5; }
+
+.act-icon { font-size: .8rem; flex-shrink: 0; }
+.act-name { flex: 1; }
+
+.tracking-task {
+  padding: 3px 8px; font-size: .73rem;
+  border-radius: var(--r-sm); margin-bottom: 2px;
+}
+
+.tracking-task.active { color: var(--text); }
+.tracking-task.completed {
+  color: var(--text-dim); text-decoration: line-through; opacity: .65;
+}
+
+.tracking-outline {
+  color: var(--text-dim); font-size: .74rem;
+  line-height: 1.6; white-space: pre-wrap;
+}
+
+@media (max-width: 800px) {
+  .kp-main-layout { flex-direction: column; }
+  .kp-right-column { width: 100%; max-height: 260px; }
+}
+
+/* ── Scenario Library ── */
+.scenario-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 10px 14px; margin-bottom: 8px;
+  background: rgba(0,0,0,.12);
+  transition: border-color var(--t) var(--ease-out);
+}
+
+.scenario-card:hover { border-color: var(--accent); }
+
+.scenario-card.active-scenario {
+  border-color: var(--border-bright);
+  background: var(--accent-dim);
+}
+
+.scenario-card-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+}
+
+.scenario-card-name {
+  font-weight: 600; color: var(--text); font-size: .85rem;
+}
+
+.scenario-active-badge {
+  padding: 1px 8px; border-radius: 10px;
+  font-size: .65rem; background: var(--accent); color: #fff;
+}
+
+.scenario-card-meta {
+  font-size: .7rem; color: var(--text-dim); margin-bottom: 3px;
+}
+
+.scenario-card-desc {
+  font-size: .73rem; color: var(--text-dim);
+  line-height: 1.4; margin-bottom: 6px;
+}
+
+.scenario-card-actions { display: flex; gap: 4px; }
+
+.scenario-edit-form .form-row { margin-bottom: 10px; }
+
+.scenario-edit-form label {
+  display: block; font-size: .73rem; margin-bottom: 2px;
+}
+
+.scenario-edit-form input,
+.scenario-edit-form textarea,
+.scenario-edit-form select {
+  font-size: .78rem;
+}
+
+.scenario-array-field {
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 6px 8px; margin-bottom: 4px;
+  background: rgba(0,0,0,.08);
+}

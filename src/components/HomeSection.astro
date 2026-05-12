@@ -92,15 +92,29 @@
       <!-- CoC Status Mini -->
       <div class="coc-status-mini" id="cocStatusMini"></div>
 
-      <!-- Chat messages -->
-      <div class="kp-chat-panel" id="kpChatPanel">
-        <div class="kp-chat-msgs" id="kpMessages"></div>
-        <div id="kpDiceCardContainer" style="display:none;padding:0 4px 8px;"></div>
-        <div class="kp-quick-actions" id="kpQuickActions"></div>
-        <div class="kp-input-row">
-          <input type="text" id="kpInput" placeholder="输入你的行动、对话或问题... (Enter 发送)">
-          <button class="btn btn-primary btn-sm" id="kpSendBtn" data-action="kp:send">发送</button>
-          <button class="btn btn-danger btn-sm" id="kpStopBtn" data-action="kp:stop" style="display:none;">停止</button>
+      <!-- Main KP Layout: Chat (left) + Tracking (right) -->
+      <div class="kp-main-layout">
+        <!-- Left: Chat Column -->
+        <div class="kp-left-column">
+          <div class="kp-chat-panel" id="kpChatPanel">
+            <div class="kp-chat-msgs" id="kpMessages"></div>
+            <div id="kpDiceCardContainer" style="display:none;padding:0 4px 8px;"></div>
+            <div class="kp-quick-actions" id="kpQuickActions"></div>
+            <div class="kp-input-row">
+              <input type="text" id="kpInput" placeholder="输入你的行动、对话或问题... (Enter 发送)">
+              <button class="btn btn-primary btn-sm" id="kpSendBtn" data-action="kp:send">发送</button>
+              <button class="btn btn-danger btn-sm" id="kpStopBtn" data-action="kp:stop" style="display:none;">停止</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Tracking Panel -->
+        <div class="kp-right-column" id="kpRightColumn">
+          <div class="kp-tracking-header">
+            <span class="kp-tracking-title">📋 剧本追踪</span>
+            <button class="btn btn-ghost btn-xs" id="kpTrackingToggle" data-action="tracking:toggle">◀</button>
+          </div>
+          <div class="kp-tracking-body" id="kpTrackingPanel"></div>
         </div>
       </div>
     </div>
@@ -128,22 +142,25 @@
     </div>
   </div>
 
-  <!-- Scenario Knowledge Database -->
-  <div class="scenario-db-wrapper" id="scenarioDbWrapper" style="display:none;margin-bottom:20px;">
+  <!-- Structured Scenario Library -->
+  <div class="scenario-library-wrapper" id="scenarioLibraryWrapper" style="display:none;margin-bottom:20px;">
     <div class="panel">
       <div class="panel-header">
-        <h3>剧本知识库</h3>
+        <h3>📚 剧本库 <span style="font-size:.7rem;font-weight:400;color:var(--text-dim);" id="scenarioActiveLabel"></span></h3>
         <div class="panel-actions">
-          <button class="btn btn-ghost btn-xs" data-action="scenario:save" title="保存">保存</button>
-          <button class="btn btn-ghost btn-xs" data-action="scenario:export" title="导出">导出</button>
-          <button class="btn btn-ghost btn-xs" data-action="scenario:import" title="导入">导入</button>
-          <button class="btn btn-ghost btn-xs" data-action="scenario:close" title="收起">✕</button>
+          <button class="btn btn-ghost btn-xs" data-action="scenario:new">+ 新建</button>
+          <button class="btn btn-ghost btn-xs" data-action="scenario:export">导出</button>
+          <button class="btn btn-ghost btn-xs" data-action="scenario:import">导入</button>
+          <button class="btn btn-ghost btn-xs" data-action="scenario:close">✕</button>
         </div>
       </div>
       <p style="font-size:.75rem;color:var(--text-dim);margin-bottom:10px;">
-        NPC资料、地点描述、隐藏线索、剧情钩子等。AI主持人将参考此数据库进行游戏判定。
+        创建结构化剧本：设定背景、NPC、地点、线索和剧情钩子。激活剧本后，AI主持人将严格遵循设定推进故事。
       </p>
-      <textarea id="scenarioDbContent" placeholder="写下你的剧本设定...&#10;&#10;比如:&#10;NPC 艾尔文镇长 — 表面友善，暗中为邪教工作&#10;地点 旧图书馆地下室 — 隐藏着通往地下墓穴的密道&#10;线索 失踪的商队与月圆之夜有关&#10;核心冲突 远古封印正在松动，需要收集三枚符文..." style="min-height:200px;font-family:var(--font-body);font-size:.85rem;line-height:1.6;"></textarea>
+      <div id="scenarioLibraryList"></div>
+      <div id="scenarioEditForm" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px;"></div>
+      <!-- Legacy freeform textarea (hidden, kept for data compatibility) -->
+      <textarea id="scenarioDbContent" style="display:none;"></textarea>
     </div>
   </div>
 
@@ -187,17 +204,43 @@
     </div>
   </div>
 
-  <!-- API Data Browser -->
-  <div class="panel api-section">
-    <h3>D&amp;D 5e 在线资源库</h3>
-    <div class="btn-row">
-      <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="races">种族</button>
-      <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="classes">职业</button>
-      <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="spells">法术</button>
-      <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="monsters">怪物</button>
-      <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="equipment">装备</button>
-      <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="feats">专长</button>
+  <!-- Theme-conditional Reference Section -->
+  <div class="panel api-section" id="apiSection">
+    <h3 id="apiSectionTitle">D&amp;D 5e 在线资源库</h3>
+    <!-- D&D / Pathfinder: API browser -->
+    <div id="apiBrowserControls">
+      <div class="btn-row">
+        <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="races">种族</button>
+        <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="classes">职业</button>
+        <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="spells">法术</button>
+        <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="monsters">怪物</button>
+        <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="equipment">装备</button>
+        <button class="btn btn-secondary btn-sm" data-action="api:fetch" data-endpoint="feats">专长</button>
+      </div>
+      <div id="apiResults" style="max-height:500px;overflow-y:auto;margin-top:12px;"></div>
     </div>
-    <div id="apiResults" style="max-height:500px;overflow-y:auto;margin-top:12px;"></div>
+    <!-- CoC: cthulhuclub.com reference -->
+    <div id="cocReference" style="display:none;">
+      <div class="coc-reference-card">
+        <div class="coc-reference-icon">🐙</div>
+        <div class="coc-reference-content">
+          <h4>克苏鲁俱乐部 — CoC 7e 在线规则参考</h4>
+          <p>全面的克苏鲁的呼唤第七版规则资料、调查员创建指南、魔法典籍与怪物图鉴。</p>
+          <a href="https://www.cthulhuclub.com/" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+            访问 cthulhuclub.com ↗
+          </a>
+        </div>
+      </div>
+    </div>
+    <!-- Cyberpunk reference -->
+    <div id="cyberpunkReference" style="display:none;">
+      <div class="coc-reference-card">
+        <div class="coc-reference-icon">🤖</div>
+        <div class="coc-reference-content">
+          <h4>赛博朋克 RED 规则参考</h4>
+          <p>赛博朋克 RED 核心规则书。更多在线资源持续添加中。</p>
+        </div>
+      </div>
+    </div>
   </div>
 </section>

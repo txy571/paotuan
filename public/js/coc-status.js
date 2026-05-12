@@ -5,15 +5,21 @@ import { esc } from './utils.js';
 export function renderCocStatus() {
   const container = document.getElementById('cocStatusMini');
   if (!container) return;
+  const san = getCharSan(), maxSan = getCharMaxSan();
+  const hp = getCharHp(), maxHp = getCharMaxHp();
+  const sanPct = maxSan > 0 ? Math.max(0, Math.min(100, Math.round((san / maxSan) * 100))) : 100;
+  const hpPct = maxHp > 0 ? Math.max(0, Math.min(100, Math.round((hp / maxHp) * 100))) : 100;
   const luckPct = Math.round((cocState.luck / 99) * 100);
   container.innerHTML = `
     <div class="coc-stat">
       <span class="coc-stat-label">SAN</span>
-      <span class="coc-stat-val">${getCharSan()}/${getCharMaxSan()}</span>
+      <span class="coc-stat-val">${san}/${maxSan}</span>
+      <div class="coc-stat-bar"><div class="coc-stat-fill san" style="width:${sanPct}%;"></div></div>
     </div>
     <div class="coc-stat">
       <span class="coc-stat-label">HP</span>
-      <span class="coc-stat-val">${getCharHp()}/${getCharMaxHp()}</span>
+      <span class="coc-stat-val">${hp}/${maxHp}</span>
+      <div class="coc-stat-bar"><div class="coc-stat-fill hp" style="width:${hpPct}%;"></div></div>
     </div>
     <div class="coc-stat">
       <span class="coc-stat-label">LUCK</span>

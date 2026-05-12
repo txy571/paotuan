@@ -173,6 +173,40 @@ export const kpState = {
 export let scenarioDbContent = '';
 export function setScenarioDbContent(v) { scenarioDbContent = v; }
 
+// ── Scenario Metadata (act tracking + task management) ──
+export const scenarioMeta = {
+  background: '',
+  era: '',
+  playerCount: '',
+  actCount: 0,
+  estimatedDuration: '',
+  currentAct: 0,
+  currentActName: '',
+  acts: [],        // [{ name, status: 'pending'|'started'|'completed' }]
+  tasks: [],       // [{ id, description, status: 'active'|'completed', addedAt }]
+  outline: '',
+  lastUpdated: null,
+};
+
+export function initScenarioMeta() {
+  scenarioMeta.background = '';
+  scenarioMeta.era = '';
+  scenarioMeta.playerCount = '';
+  scenarioMeta.actCount = 0;
+  scenarioMeta.estimatedDuration = '';
+  scenarioMeta.currentAct = 0;
+  scenarioMeta.currentActName = '';
+  scenarioMeta.acts = [];
+  scenarioMeta.tasks = [];
+  scenarioMeta.outline = '';
+  scenarioMeta.lastUpdated = null;
+}
+
+// ── Structured Scenario Library ──
+export const scenarioLibrary = [];
+export let activeScenario = null;
+export function setActiveScenario(v) { activeScenario = v; }
+
 // SAN/HP now live on character card, not here. cocState keeps session-level mechanics only.
 export const cocState = {
   luck: 50,

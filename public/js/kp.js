@@ -1,8 +1,8 @@
 // ==================== AI KP (GAME MASTER) ====================
 import {
-  state, kpState, cocState, initCocState,
+  state, kpState, cocState, initCocState, initScenarioMeta,
   THEME_NAMES, ATTR_KEYS, ATTR_NAMES, KP_SYSTEM_PROMPTS, KP_QUICK_ACTIONS,
-  scenarioDbContent, getCharSan, getCharHp, getCharMaxSan, getCharMaxHp,
+  scenarioDbContent, activeScenario, getCharSan, getCharHp, getCharMaxSan, getCharMaxHp,
   KP_SHARED_PREAMBLE,
 } from './state.js';
 import { esc, showToast, modPct } from './utils.js';
@@ -10,6 +10,7 @@ import { getGameSaveData } from './saves.js';
 import { parseAICommands, applyAICommands, stripAICommands, parseDiceRequest } from './commands.js';
 import { renderCocStatus, renderCocChronicle } from './coc-status.js';
 import { getMemorySummary, getNPCProfiles } from './memory-bank.js';
+import { setCharacterCardLock } from './character.js';
 
 // ── System Prompt ─────────────────────────────────
 export function buildSystemPrompt() {
@@ -54,14 +55,47 @@ export function buildSystemPrompt() {
     extra += '\n请确保你的所有叙述与上述设定保持一致。\n';
   }
 
-  // New game instruction — AI must build scenario from character card
+  // Structured scenario (from scenario library) — takes priority over freeform DB
+  if (activeScenario) {
+    extra += '\n\n## 📚 激活剧本 — 必须严格遵循\n';
+    extra += '以下是你作为主持人必须严格执行的剧本。所有叙事、NPC扮演、场景描述必须严格基于此剧本。\n\n';
+    extra += `剧本名称: ${activeScenario.name}\n`;
+    if (activeScenario.background) extra += `背景: ${activeScenario.background}\n`;
+    if (activeScenario.era) extra += `年代: ${activeScenario.era}\n`;
+    if (activeScenario.playerCount) extra += `适合人数: ${activeScenario.playerCount}\n`;
+    if (activeScenario.suggestedActs) extra += `建议幕数: ${activeScenario.suggestedActs}\n`;
+    if (activeScenario.keyNPCs?.length) {
+      extra += '\n关键NPC:\n';
+      activeScenario.keyNPCs.forEach(n => extra += `  · ${n.name}: ${n.description || ''}\n`);
+    }
+    if (activeScenario.keyLocations?.length) {
+      extra += '\n关键地点:\n';
+      activeScenario.keyLocations.forEach(l => extra += `  · ${l.name}: ${l.description || ''}\n`);
+    }
+    if (activeScenario.keyClues?.length) {
+      extra += '\n关键线索:\n';
+      activeScenario.keyClues.forEach(c => extra += `  · ${c.name}: ${c.description || ''}\n`);
+    }
+    if (activeScenario.plotHooks?.length) {
+      extra += '\n剧情钩子:\n';
+      activeScenario.plotHooks.forEach(h => extra += `  · ${h}\n`);
+    }
+    extra += '\n【剧本约束——最高优先级】\n';
+    extra += '1. 你必须严格按照以上剧本设定推进故事。主要NPC、地点、线索和剧情钩子必须使用。\n';
+    extra += '2. 如果玩家的行动与剧本主题完全无关（例如在谋杀谜案中说"我想去健身房锻炼力量"），你必须以合理的叙事拒绝或引导回正轨。\n';
+    extra += '3. 拒绝非冒险相关的角色成长请求。能力提升只在冒险结束后通过系统机制进行。\n';
+    extra += '4. 即使玩家偏离，主线脉络的根基不会改变。用叙事引导而非生硬阻止。\n';
+  }
+
+  // New game instruction — AI must output scenario metadata and start narrative
   if (kpState.apiHistory.length === 0) {
     extra += '\n\n## 🎬 新游戏开始——必须遵循\n';
     extra += '这是冒险的开始。你必须做到以下几点：\n';
     extra += '1. 确认你已经理解了上述角色信息（姓名、职业、背景、技能等）。基于这些信息构思一个适合的开场场景和大致剧情方向。\n';
-    extra += '2. 在回复的第一段中，直接进入叙事，将角色自然地引入场景。\n';
-    extra += '3. 开头场景必须与角色背景有逻辑关联。\n';
-    extra += '4. 不要问"你想做什么"这类空洞的问题。给出具体、生动、有感官细节的开场场景，让角色自然进入故事。\n';
+    extra += '2. 随机决定幕数（3-5幕）和预估时长，用【SCENARIO_META:{"背景":"...","年代":"...","人数":"...","幕数":X,"预估时长":"..."}】设定剧本元数据。\n';
+    extra += '3. 在回复第一段用【ACT:第一幕:started】标记开始，然后直接进入叙事。\n';
+    extra += '4. 开头场景必须与角色背景有逻辑关联。\n';
+    extra += '5. 不要问"你想做什么"这类空洞的问题。给出具体、生动、有感官细节的开场场景。\n';
   }
 
   if (state.theme === 'coc') {
@@ -260,6 +294,7 @@ export function openKPPanel() {
     return;
   }
   kpState.active = true;
+  setCharacterCardLock(true);
   const hero = document.getElementById('kpHero');
   const panel = document.getElementById('kpChatWrapper');
   if (hero) hero.style.display = 'none';
@@ -268,9 +303,11 @@ export function openKPPanel() {
   if (state.theme === 'coc' && !cocState.chronicle.length && getCharSan() >= 99) {
     initCocState();
   }
+  initScenarioMeta();
   renderKP();
   renderCocStatus();
   renderCocChronicle();
+  import('./tracking-panel.js').then(m => m.renderTrackingPanel());
   document.dispatchEvent(new CustomEvent('render-game-saves'));
   if (!kpState.chatHistory.length) {
     const charName = document.getElementById('charName')?.value?.trim() || '调查员';
@@ -282,6 +319,7 @@ export function openKPPanel() {
 
 export function closeKPPanel() {
   kpState.active = false;
+  setCharacterCardLock(false);
   if (kpState.streamingAbort) { kpState.streamingAbort.abort(); kpState.streamingAbort = null; }
   kpState.streaming = false;
   const hero = document.getElementById('kpHero');
@@ -296,10 +334,11 @@ export function clearKPChat() {
   kpState.apiHistory  = [];
   if (kpState.streamingAbort) { kpState.streamingAbort.abort(); kpState.streamingAbort = null; }
   kpState.streaming = false;
-  if (state.theme === 'coc') initCocState();
+  if (state.theme === 'coc') { initCocState(); initScenarioMeta(); }
   renderKP();
   renderCocStatus();
   renderCocChronicle();
+  import('./tracking-panel.js').then(m => m.renderTrackingPanel());
   addKPSystemMsg(`对话已清空，角色状态已重置。当前规则: ${THEME_NAMES[state.theme]}。开始新的冒险吧!`);
 }
 
@@ -560,6 +599,10 @@ export function renderHomeCharSelect() {
 
 /** Handle character selection from home page */
 export function selectHomeChar(id) {
+  if (kpState.active) {
+    showToast('游戏进行中，请先关闭 AI 主持人面板再切换角色');
+    return;
+  }
   const chars = JSON.parse(localStorage.getItem('ttrpg-chars') || '{}');
   const c = chars[id];
   if (!c) return;

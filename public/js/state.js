@@ -175,6 +175,7 @@ export function setScenarioDbContent(v) { scenarioDbContent = v; }
 
 // ── Scenario Metadata (act tracking + task management) ──
 export const scenarioMeta = {
+  synopsis: '',       // 剧本梗概（一段话概括整体故事）
   background: '',
   era: '',
   playerCount: '',
@@ -189,6 +190,7 @@ export const scenarioMeta = {
 };
 
 export function initScenarioMeta() {
+  scenarioMeta.synopsis = '';
   scenarioMeta.background = '';
   scenarioMeta.era = '';
   scenarioMeta.playerCount = '';

@@ -404,6 +404,15 @@
   color: var(--text-dim); text-decoration: line-through; opacity: .65;
 }
 
+.tracking-synopsis {
+  color: var(--text); font-size: .76rem;
+  line-height: 1.65; white-space: pre-wrap;
+  padding: 8px 10px;
+  background: rgba(0,0,0,.2);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r-sm);
+}
+
 .tracking-outline {
   color: var(--text-dim); font-size: .74rem;
   line-height: 1.6; white-space: pre-wrap;

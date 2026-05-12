@@ -17,6 +17,15 @@ export function renderTrackingPanel() {
   }
 
   let metaHTML = '';
+  // Synopsis first — the most important overview
+  let synopsisHTML = '';
+  if (scenarioMeta.synopsis) {
+    synopsisHTML = `<div class="tracking-section">
+      <div class="tracking-section-title">📜 剧本梗概</div>
+      <div class="tracking-synopsis">${esc(scenarioMeta.synopsis)}</div>
+    </div>`;
+  }
+
   if (scenarioMeta.background || scenarioMeta.era || scenarioMeta.playerCount || scenarioMeta.actCount) {
     metaHTML = `<div class="tracking-section">
       <div class="tracking-section-title">📖 剧本信息</div>
@@ -69,7 +78,7 @@ export function renderTrackingPanel() {
     </div>`;
   }
 
-  container.innerHTML = metaHTML + actHTML + taskHTML + outlineHTML;
+  container.innerHTML = synopsisHTML + metaHTML + actHTML + taskHTML + outlineHTML;
 }
 
 export function toggleTrackingPanel() {

@@ -117,6 +117,7 @@ export function applyAICommands(commands) {
         case 'SCENARIO_META': {
           try {
             const meta = JSON.parse(cmd.value);
+            if (meta.梗概) scenarioMeta.synopsis = meta.梗概;
             if (meta.背景) scenarioMeta.background = meta.背景;
             if (meta.年代) scenarioMeta.era = meta.年代;
             if (meta.人数) scenarioMeta.playerCount = meta.人数;

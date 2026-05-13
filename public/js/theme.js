@@ -6,6 +6,15 @@
 import { state, kpState, THEME_NAMES, initCocState, cocState } from './state.js';
 import { showToast } from './utils.js';
 
+// Import for theme-scoped KP session switching (lazy to avoid circular)
+let _switchKPSession = null;
+async function ensureKPSessionSwitch() {
+  if (!_switchKPSession) {
+    const kp = await import('./kp.js');
+    _switchKPSession = kp.switchKPSession;
+  }
+}
+
 export const THEME_ORDER = ['dnd', 'coc', 'cyberpunk', 'pathfinder'];
 
 export function selectRPG(theme) {
@@ -29,6 +38,10 @@ export function selectRPG(theme) {
   if (theme === 'coc' && cocState.chronicle.length === 0) { initCocState(); }
   // render coc status via event
   document.dispatchEvent(new CustomEvent('coc-render'));
+  // Switch KP session to maintain per-theme game isolation
+  ensureKPSessionSwitch().then(() => {
+    if (_switchKPSession) _switchKPSession(theme);
+  });
   showToast(`已切换到 ${THEME_NAMES[theme]} 主题`);
 }
 

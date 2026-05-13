@@ -5,7 +5,7 @@ import { renderCocChronicle, renderCocStatus } from './coc-status.js';
 import { applyMemoryCommand } from './memory-bank.js';
 
 // All known command types
-const CMD_TYPES = 'SAN|HP|LUCK|TRAIT|REMOVE_TRAIT|CHRONICLE|SKILL_CHECK|ITEM|REMOVE_ITEM|NPC|CLUE|PLOT|MEMORY|ACT|SCENARIO_META|TASK_UPDATE|OUTLINE_UPDATE|检定请求|检定结果|掷骰请求|ACTIONS|INITIATIVE|END_COMBAT|CHASE|END_CHASE';
+const CMD_TYPES = 'SAN|HP|LUCK|TRAIT|REMOVE_TRAIT|CHRONICLE|SKILL_CHECK|ITEM|REMOVE_ITEM|NPC|CLUE|PLOT|MEMORY|ACT|SCENARIO_META|TASK_UPDATE|OUTLINE_UPDATE|检定请求|检定结果|掷骰请求|ACTIONS|INITIATIVE|END_COMBAT|CHASE|END_CHASE|GAME_COMPLETE|GAME_OVER';
 const CMD_RE = new RegExp(`【(${CMD_TYPES})[：:](.+?)】`);
 
 /** Convert Arabic numerals in act names to Chinese (e.g. "第1幕" → "第一幕") */

@@ -291,6 +291,104 @@
 
 .game-save-meta { font-size: .78rem; color: var(--text-dim); margin-top: 2px; }
 
+/* ── Universal Status Bar (HP/SAN for all themes) ── */
+.kp-status-bar {
+  display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
+  padding: 10px 14px; margin-bottom: 12px;
+  border: 1px solid var(--border); border-radius: var(--r-md);
+  background: rgba(0,0,0,.12); font-size: .78rem;
+}
+.kp-stat {
+  display: flex; align-items: center; gap: 8px;
+}
+.kp-stat-label {
+  font-weight: 600; color: var(--text-gold);
+  font-size: .72rem; text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.kp-stat-val {
+  font-weight: 700; color: var(--text);
+  font-size: .85rem; min-width: 50px;
+}
+.kp-stat-bar {
+  width: 80px; height: 6px;
+  background: rgba(0,0,0,.35);
+  border-radius: 3px; overflow: hidden;
+  border: 1px solid var(--border);
+}
+.kp-stat-fill {
+  height: 100%; border-radius: 3px;
+  transition: width .4s var(--ease-out);
+}
+.kp-stat-fill.san { background: linear-gradient(90deg, #6a5acd, #9b8aed); }
+.kp-stat-fill.hp  { background: linear-gradient(90deg, #d4443a, #e87870); }
+.kp-stat-fill.luck { background: linear-gradient(90deg, #e8a030, #f0c060); }
+
+/* ── Ending Screen ────────────────────────────── */
+.kp-ending-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,.85);
+  display: flex; align-items: center; justify-content: center;
+  animation: endingFadeIn .6s ease;
+  backdrop-filter: blur(8px);
+}
+@keyframes endingFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.kp-ending-card {
+  max-width: 560px; width: 90%;
+  background: var(--bg-panel);
+  border: 2px solid var(--border-bright);
+  border-radius: var(--r-xl);
+  padding: 40px 32px;
+  text-align: center;
+  animation: endingScaleIn .5s cubic-bezier(.68,-.55,.27,1.55);
+  box-shadow: 0 0 60px var(--accent-dim);
+}
+@keyframes endingScaleIn {
+  from { transform: scale(.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.kp-ending-icon {
+  font-size: 4rem; margin-bottom: 16px;
+}
+.kp-ending-title {
+  font-family: var(--font-display);
+  font-size: 2rem; color: var(--text-gold);
+  margin-bottom: 8px;
+}
+.kp-ending-subtitle {
+  font-size: 1rem; color: var(--text-dim);
+  margin-bottom: 20px; line-height: 1.6;
+}
+.kp-ending-stats {
+  display: flex; gap: 16px; justify-content: center;
+  flex-wrap: wrap; margin-bottom: 24px;
+}
+.kp-ending-stat {
+  padding: 12px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: rgba(0,0,0,.15);
+  min-width: 100px;
+}
+.kp-ending-stat-label {
+  font-size: .7rem; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.kp-ending-stat-val {
+  font-size: 1.3rem; font-weight: 700;
+  color: var(--text-gold); font-family: var(--font-display);
+}
+.kp-ending-actions {
+  display: flex; gap: 12px; justify-content: center;
+  flex-wrap: wrap;
+}
+.kp-ending-actions .btn {
+  min-width: 140px; justify-content: center;
+}
+
 /* ── KP Dice Card ─────────────────────────────── */
 .kp-dice-card {
   background: var(--bg-panel);

@@ -252,6 +252,46 @@ export function setCharHp(v) {
   const el = document.getElementById('charHP'); if (el) el.value = Math.max(-5, Math.min(getCharMaxHp(), v));
 }
 
+// ==================== THEME-SCOPED HELPERS ====================
+// Chat history and API history are stored per-theme so switching themes
+// isolates game sessions completely.
+export function getThemeChatKey(theme) {
+  return 'ttrpg-kp-chat-' + (theme || state.theme);
+}
+export function getThemeApiKey(theme) {
+  return 'ttrpg-kp-api-' + (theme || state.theme);
+}
+
+/** Load chat history for a given theme from localStorage */
+export function loadThemeChatHistory(theme) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(getThemeChatKey(theme)) || '[]');
+    return Array.isArray(saved) ? saved : [];
+  } catch(e) { return []; }
+}
+
+/** Save chat history for a given theme to localStorage */
+export function saveThemeChatHistory(theme, history) {
+  try {
+    localStorage.setItem(getThemeChatKey(theme), JSON.stringify(history.slice(-200)));
+  } catch(e) {}
+}
+
+/** Load API history for a given theme from localStorage */
+export function loadThemeApiHistory(theme) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(getThemeApiKey(theme)) || '[]');
+    return Array.isArray(saved) ? saved : [];
+  } catch(e) { return []; }
+}
+
+/** Save API history for a given theme to localStorage */
+export function saveThemeApiHistory(theme, history) {
+  try {
+    localStorage.setItem(getThemeApiKey(theme), JSON.stringify(history.slice(-120)));
+  } catch(e) {}
+}
+
 // ==================== AI KP SYSTEM-SPECIFIC PROMPTS ====================
 // Prompts are now in separate files under prompts/ for maintainability.
 // They extend KP_SHARED_PREAMBLE with rules specific to each RPG system.

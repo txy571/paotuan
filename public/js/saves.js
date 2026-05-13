@@ -1,9 +1,9 @@
 // ==================== GAME SAVE SYSTEM ====================
-import { state, cocState, kpState, setScenarioDbContent, scenarioDbContent } from './state.js';
+import { state, cocState, kpState, setScenarioDbContent, scenarioDbContent, saveThemeChatHistory, saveThemeApiHistory } from './state.js';
 import { showToast } from './utils.js';
 import { getCharData, loadCharData, renderAllCharacter } from './character.js';
 import { selectRPG } from './theme.js';
-import { renderKP, addKPSystemMsg } from './kp.js';
+import { renderKP, addKPSystemMsg, renderUniversalStatus } from './kp.js';
 import { renderCocStatus, renderCocChronicle } from './coc-status.js';
 import { THEME_NAMES } from './state.js';
 
@@ -33,9 +33,15 @@ export function loadGameSaveData(data) {
   }
   if (data.chatHistory) kpState.chatHistory = data.chatHistory;
   if (data.apiHistory) kpState.apiHistory = data.apiHistory;
+  // Persist loaded data to theme-scoped storage
+  if (kpState.chatHistory.length) {
+    saveThemeChatHistory(state.theme, kpState.chatHistory);
+    saveThemeApiHistory(state.theme, kpState.apiHistory);
+  }
   renderAllCharacter();
   renderKP();
   renderCocStatus();
+  renderUniversalStatus();
   renderCocChronicle();
   if (kpState.active) {
     const hero = document.getElementById('kpHero');
@@ -96,17 +102,24 @@ export function renderGameSaves() {
     .filter(([, data]) => data.theme === currentTheme)
     .sort(([,a],[,b]) => (b.timestamp||'').localeCompare(a.timestamp||''));
   if (!entries.length) {
-    container.innerHTML = '<div style="color:var(--text-dim);font-size:.75rem;padding:8px;text-align:center;">暂无存档</div>';
+    container.innerHTML = '<div style="color:var(--text-dim);font-size:.75rem;padding:8px;text-align:center;">暂无存档 — 点击"存档"保存当前游戏进度</div>';
     return;
   }
   container.innerHTML = entries.map(([name, data]) => {
     const charName = data.character?.name || '未知角色';
     const date = data.timestamp ? new Date(data.timestamp).toLocaleString('zh-CN') : '未知时间';
+    const msgCount = data.chatHistory?.filter(m => m.role === 'gm' && !m.content.startsWith('[')).length || 0;
+    const hp = data.character?.hp ?? data.character?.attributes?.stats?.hp ?? '?';
+    const san = data.character?.san ?? '?';
     const escName = name.replace(/'/g, "\\'");
     return `<div class="game-save-item" data-action="saves:load" data-name="${escName}">
-      <div style="flex:1;">
-        <div style="font-size:.82rem;font-weight:600;color:var(--text);">${name}</div>
-        <div style="font-size:.7rem;color:var(--text-dim);">${charName} · ${date}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:.82rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</span>
+        </div>
+        <div style="font-size:.7rem;color:var(--text-dim);margin-top:2px;">
+          ${charName} · ${msgCount}轮 · HP:${hp} SAN:${san} · ${date}
+        </div>
       </div>
       <button class="equip-del-btn" data-action="saves:delete" data-name="${escName}" title="删除">🗑️</button>
     </div>`;

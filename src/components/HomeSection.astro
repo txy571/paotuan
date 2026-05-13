@@ -21,7 +21,7 @@
       <div class="kp-hero-icon">AI</div>
       <div class="kp-hero-text">
         <h2>AI 主持人 (KP/DM) — 即刻开始跑团</h2>
-        <p>接入 AI 大模型作为你的专属游戏主持人。自动适配当前规则系统，实时叙述、判定、扮演 NPC。支持 Anthropic Claude 和 OpenAI 兼容接口。</p>
+        <p>接入 AI 大模型作为你的专属游戏主持人。自动适配当前规则系统，实时叙述、判定、扮演 NPC。支持 Anthropic Claude 和 OpenAI 兼容接口。不同规则系统下的游戏会话互相独立。</p>
         <span class="kp-hero-badge" id="kpHeroBadge">选择角色后，点击这里开始冒险</span>
       </div>
       <div class="kp-hero-arrow">▶</div>
@@ -34,6 +34,8 @@
       <div class="panel-header">
         <h3>AI 主持人 <span class="kp-theme-tag">(<span id="kpCurrentTheme">D&D 5e</span>)</span></h3>
         <div class="panel-actions">
+          <button class="btn btn-ghost btn-xs" data-action="kp:newGame" title="新建游戏">🆕 新建</button>
+          <button class="btn btn-ghost btn-xs" data-action="kp:endGame" title="结束游戏并存档">🏁 结束</button>
           <button class="btn btn-ghost btn-xs" data-action="nav:go" data-page="config" title="前往配置页">设置</button>
           <button class="btn btn-ghost btn-xs" data-action="scenario:toggle" title="剧本知识库">剧本库</button>
           <button class="btn btn-ghost btn-xs" data-action="kp:clear" title="清空对话">清空</button>
@@ -44,8 +46,11 @@
 
       <!-- Config moved to the Config page (#page-config) -->
 
-      <!-- CoC Status Mini -->
+      <!-- CoC Status Mini (CoC theme only) -->
       <div class="coc-status-mini" id="cocStatusMini"></div>
+
+      <!-- Universal Status Bar (HP/SAN for all themes, always visible during game) -->
+      <div class="kp-status-bar" id="kpUniversalStatus"></div>
 
       <!-- Main KP Layout: Chat (left) + Tracking (right) -->
       <div class="kp-main-layout">
@@ -81,9 +86,15 @@
     </div>
 
     <!-- Game Save & Chronicle -->
-    <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;">
+    <div class="game-save-chronicle" style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;">
       <div class="panel" style="flex:1;min-width:240px;">
-        <h3 style="margin-bottom:10px;">游戏存档</h3>
+        <div class="panel-header">
+          <h3 style="margin-bottom:0;">游戏存档</h3>
+          <div style="display:flex;gap:4px;">
+            <button class="btn btn-xs btn-ghost" data-action="kp:newGame" title="开始新游戏">🆕 新建</button>
+            <button class="btn btn-xs btn-ghost" data-action="kp:endGame" title="结束当前游戏">🏁 结束</button>
+          </div>
+        </div>
         <div style="display:flex;gap:6px;margin-bottom:8px;">
           <input type="text" id="gameSaveSlot" placeholder="存档名称..." style="flex:1;font-size:.82rem;">
           <button class="btn btn-save btn-xs" data-action="saves:save">存档</button>
@@ -91,7 +102,7 @@
         <div class="btn-row" style="margin-bottom:8px;">
           <button class="btn btn-ghost btn-xs" data-action="saves:autosave">读自动档</button>
         </div>
-        <div id="gameSavesList" style="max-height:180px;overflow-y:auto;"></div>
+        <div id="gameSavesList" style="max-height:200px;overflow-y:auto;"></div>
       </div>
       <div class="panel" style="flex:2;min-width:300px;">
         <h3 style="margin-bottom:10px;">冒险编年史</h3>

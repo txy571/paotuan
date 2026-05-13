@@ -12,6 +12,7 @@ import {
   stopKPStreaming, onProviderChange, saveKPConfigFromUI, fetchModels,
   loadKPConfig, loadKPChatHistory, renderKP, renderKPQuickActions, checkProxyAvailable,
   testKPConnection, selectHomeChar, renderHomeCharSelect, kpDiceRoll,
+  newGame, endGameSession, renderUniversalStatus, saveKPChatHistory,
 } from './kp.js';
 import { saveGame, loadGame, deleteGame, loadAutosave, renderGameSaves } from './saves.js';
 import * as Scenario from './scenario.js';
@@ -24,8 +25,7 @@ import { tts } from './tts.js';
 setInterval(() => {
   if (kpState.chatHistory.length) {
     try {
-      const toSave = kpState.chatHistory.slice(-200);
-      localStorage.setItem('ttrpg-kp-chat', JSON.stringify(toSave));
+      saveKPChatHistory();
     } catch(e) {}
   }
   const ta = document.getElementById('scenarioDbContent');
@@ -90,6 +90,8 @@ const actionMap = {
   'kp:open': () => openKPPanel(),
   'kp:close': () => closeKPPanel(),
   'kp:clear': () => clearKPChat(),
+  'kp:newGame': () => newGame(),
+  'kp:endGame': () => endGameSession(),
   'kp:send': () => sendKPMessage(),
   'kp:stop': () => stopKPStreaming(),
   // kp:config → now on config page via nav:go
@@ -103,6 +105,10 @@ const actionMap = {
     sendKPMessage(el.dataset.actionName);
   },
   'kp:diceRoll': () => kpDiceRoll(),
+  // ending buttons are handled by showEndingScreen(), but register here for data-action binding
+  'kp:endingContinue': () => {},  // handled in showEndingScreen
+  'kp:endingNewGame': () => {},   // handled in showEndingScreen
+  'kp:endingClose': () => {},     // handled in showEndingScreen
 
   // saves
   'saves:save': () => {

@@ -470,14 +470,11 @@ a.note-tag { text-decoration: none; }
   .nav-brand { font-size: 1.1rem; }
   .nav-tab { padding: 8px 12px; font-size: .78rem; min-height: 40px; }
   .dice-big-num { font-size: 3.5rem; }
-  .char-layout { gap: 12px; }
-  .skills-grid { grid-template-columns: 1fr; }
   .btn { min-height: 40px; font-size: .8rem; padding: 8px 14px; }
   .dice-die { width: 52px; height: 52px; }
   body { overscroll-behavior: contain; }
   .panel { padding: 12px 14px; }
   .dice-layout { gap: 12px; }
-  .notes-layout { gap: 12px; }
   .notes-preview { min-height: 150px; max-height: 300px; }
   /* Theme dropdown → native select on mobile */
   .theme-badge { display: none; }
@@ -489,6 +486,62 @@ a.note-tag { text-decoration: none; }
   .hero p { font-size: .9rem; }
   .kp-chat-panel { height: 380px; }
   .mp-lobby-card { padding: 24px 16px; }
+
+  /* ── Mobile: Character layout stacks vertically ── */
+  .char-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .char-layout > div:first-child {
+    order: 0;
+  }
+  .char-layout > div:nth-child(2) {
+    order: 1;
+  }
+  .char-layout > div:nth-child(3) {
+    order: 2;
+  }
+  .portrait-zone { max-width: 200px; margin: 0 auto 14px; }
+  .skills-grid { grid-template-columns: 1fr; max-height: none; }
+  .equip-table { font-size: .72rem; }
+  .equip-table th, .equip-table td { padding: 4px 6px; }
+  .spell-card-header { flex-wrap: wrap; }
+  .init-row { flex-wrap: wrap; gap: 4px; }
+
+  /* ── Mobile: Notes layout stacks vertically ── */
+  .notes-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .notes-layout .notes-editor {
+    order: 0;
+  }
+  .notes-layout > div:nth-child(2) {
+    order: 1;
+  }
+  .notes-layout .notes-reference {
+    order: 2;
+    max-height: none;
+  }
+  .notes-editor textarea { min-height: 220px; }
+  .editor-toolbar button { padding: 6px 10px; font-size: .78rem; }
+
+  /* ── Mobile: Config page ── */
+  .config-model-row { flex-direction: column; }
+  .config-model-row .btn { width: 100%; justify-content: center; }
+  .config-actions { flex-direction: column; }
+  .config-actions .btn { width: 100%; justify-content: center; }
+  .config-field-row { flex-direction: column; gap: 10px; }
+
+  /* ── Mobile: Game save / chronicle area ── */
+  .game-save-chronicle {
+    flex-direction: column;
+  }
+  .game-save-chronicle > .panel {
+    min-width: 0 !important;
+    flex: none !important;
+    width: 100%;
+  }
 }
 
 /* Tablet: compact nav, 2-column grid */

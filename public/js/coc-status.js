@@ -1,10 +1,16 @@
 // ==================== COC STATUS RENDERING ====================
-import { cocState, getCharSan, getCharHp, getCharMaxHp, getCharMaxSan } from './state.js';
+import { state, cocState, getCharSan, getCharHp, getCharMaxHp, getCharMaxSan } from './state.js';
 import { esc } from './utils.js';
 
 export function renderCocStatus() {
   const container = document.getElementById('cocStatusMini');
   if (!container) return;
+  // Only show CoC-specific status for CoC theme; universal HP/SAN is handled by renderUniversalStatus
+  if (state.theme !== 'coc') {
+    container.style.display = 'none';
+    return;
+  }
+  container.style.display = '';
   const san = getCharSan(), maxSan = getCharMaxSan();
   const hp = getCharHp(), maxHp = getCharMaxHp();
   const sanPct = maxSan > 0 ? Math.max(0, Math.min(100, Math.round((san / maxSan) * 100))) : 100;

@@ -4,6 +4,7 @@ import {
   THEME_NAMES, ATTR_KEYS, ATTR_NAMES, KP_SYSTEM_PROMPTS, KP_QUICK_ACTIONS, SKILL_DEFINITIONS,
   scenarioDbContent, activeScenario, getCharSan, getCharHp, getCharMaxSan, getCharMaxHp,
   KP_SHARED_PREAMBLE,
+  loadThemeChatHistory, saveThemeChatHistory, loadThemeApiHistory, saveThemeApiHistory,
 } from './state.js';
 import { esc, showToast, modPct } from './utils.js';
 import { getGameSaveData } from './saves.js';
@@ -463,21 +464,33 @@ export function toggleKPConfig() {
   if (cfg) cfg.style.display = cfg.style.display === 'none' ? '' : 'none';
 }
 
-// ── Chat History Persistence ───────────────────────
+// ── Chat History Persistence (theme-scoped) ───────
 export function loadKPChatHistory() {
-  try {
-    const saved = JSON.parse(localStorage.getItem('ttrpg-kp-chat') || '[]');
-    if (Array.isArray(saved) && saved.length) {
-      kpState.chatHistory = saved;
-    }
-  } catch(e) { /* ignore */ }
+  kpState.chatHistory = loadThemeChatHistory(state.theme);
+  kpState.apiHistory = loadThemeApiHistory(state.theme);
 }
 
 export function saveKPChatHistory() {
-  try {
-    const toSave = kpState.chatHistory.slice(-200);
-    localStorage.setItem('ttrpg-kp-chat', JSON.stringify(toSave));
-  } catch(e) { /* ignore */ }
+  saveThemeChatHistory(state.theme, kpState.chatHistory);
+  saveThemeApiHistory(state.theme, kpState.apiHistory);
+}
+
+/** Switch KP session context to a different theme — preserves history per-theme */
+export function switchKPSession(theme) {
+  if (kpState.chatHistory.length) {
+    saveThemeChatHistory(state.theme, kpState.chatHistory);
+    saveThemeApiHistory(state.theme, kpState.apiHistory);
+  }
+  kpState.chatHistory = loadThemeChatHistory(theme);
+  kpState.apiHistory = loadThemeApiHistory(theme);
+  if (kpState.streamingAbort) { kpState.streamingAbort.abort(); kpState.streamingAbort = null; }
+  kpState.streaming = false;
+  tts.stop();
+  renderKP();
+  renderCocStatus();
+  renderUniversalStatus();
+  import('./tracking-panel.js').then(m => m.renderTrackingPanel());
+  document.dispatchEvent(new CustomEvent('render-game-saves'));
 }
 
 // ── KP Panel Open/Close ────────────────────────────
@@ -501,6 +514,7 @@ export function openKPPanel() {
   initScenarioMeta();
   renderKP();
   renderCocStatus();
+  renderUniversalStatus();
   renderCocChronicle();
   import('./tracking-panel.js').then(m => m.renderTrackingPanel());
   document.dispatchEvent(new CustomEvent('render-game-saves'));
@@ -535,9 +549,153 @@ export function clearKPChat() {
   if (state.theme === 'coc') { initCocState(); initScenarioMeta(); }
   renderKP();
   renderCocStatus();
+  renderUniversalStatus();
   renderCocChronicle();
   import('./tracking-panel.js').then(m => m.renderTrackingPanel());
   addKPSystemMsg(`对话已清空，角色状态已重置。当前规则: ${THEME_NAMES[state.theme]}。开始新的冒险吧!`);
+}
+
+// ── New Game (theme-scoped fresh start) ────────────
+export function newGame() {
+  if (kpState.chatHistory.length > 0 && !confirm('当前有进行中的游戏，开始新游戏将清空当前对话。确定继续？')) return;
+  // Save current history first
+  saveThemeChatHistory(state.theme, kpState.chatHistory);
+  saveThemeApiHistory(state.theme, kpState.apiHistory);
+  // Reset state
+  kpState.chatHistory = [];
+  kpState.apiHistory = [];
+  if (kpState.streamingAbort) { kpState.streamingAbort.abort(); kpState.streamingAbort = null; }
+  kpState.streaming = false;
+  tts.stop();
+  if (state.theme === 'coc') { initCocState(); initScenarioMeta(); }
+  renderKP();
+  renderCocStatus();
+  renderUniversalStatus();
+  renderCocChronicle();
+  import('./tracking-panel.js').then(m => m.renderTrackingPanel());
+  // Close ending overlay if open
+  const endingOverlay = document.getElementById('kpEndingOverlay');
+  if (endingOverlay) endingOverlay.remove();
+  addKPSystemMsg(`🆕 新的冒险已开始！当前规则: ${THEME_NAMES[state.theme]}。请 AI 主持人开启你的故事吧！`);
+  showToast('已创建新游戏');
+}
+
+// ── End Game & Archive ────────────────────────────
+export function endGameSession() {
+  if (!confirm('确定要结束当前游戏吗？当前会话将被存档保存。')) return;
+  // Save to a permanent slot
+  const theme = state.theme;
+  const charName = document.getElementById('charName')?.value?.trim() || '未知角色';
+  const slotName = `${THEME_NAMES[theme]} - ${charName} - ${new Date().toLocaleString('zh-CN')}`;
+  // Import saves module and save
+  import('./saves.js').then(mod => {
+    mod.saveGame(slotName);
+    showToast(`游戏已结束，存档已保存为 "${slotName}"`);
+  });
+  // Clear active chat
+  closeKPPanel();
+  saveThemeChatHistory(theme, kpState.chatHistory);
+  saveThemeApiHistory(theme, kpState.apiHistory);
+  kpState.chatHistory = [];
+  kpState.apiHistory = [];
+  // Reset ending overlay
+  const endingOverlay = document.getElementById('kpEndingOverlay');
+  if (endingOverlay) endingOverlay.remove();
+  renderGameSavesList();
+}
+
+// ── Universal Status Bar (HP/SAN for ALL themes) ──
+export function renderUniversalStatus() {
+  const container = document.getElementById('kpUniversalStatus');
+  if (!container) return;
+  const san = getCharSan(), maxSan = getCharMaxSan();
+  const hp = getCharHp(), maxHp = getCharMaxHp();
+  const sanPct = maxSan > 0 ? Math.max(0, Math.min(100, Math.round((san / maxSan) * 100))) : 100;
+  const hpPct = maxHp > 0 ? Math.max(0, Math.min(100, Math.round((hp / maxHp) * 100))) : 100;
+  container.innerHTML = `
+    <div class="kp-stat">
+      <span class="kp-stat-label">HP</span>
+      <span class="kp-stat-val">${hp}/${maxHp}</span>
+      <div class="kp-stat-bar"><div class="kp-stat-fill hp" style="width:${hpPct}%;"></div></div>
+    </div>
+    <div class="kp-stat">
+      <span class="kp-stat-label">SAN</span>
+      <span class="kp-stat-val">${san}/${maxSan}</span>
+      <div class="kp-stat-bar"><div class="kp-stat-fill san" style="width:${sanPct}%;"></div></div>
+    </div>
+  `;
+}
+
+// ── Game Ending Screen ────────────────────────────
+/** Detect game ending commands in AI response: GAME_COMPLETE (victory) or GAME_OVER (death) */
+export function detectGameEnding(text) {
+  const completeMatch = text.match(/【GAME_COMPLETE[：:](.+?)】/);
+  if (completeMatch) {
+    const parts = completeMatch[1].split(/[,，]/).map(s => s.trim());
+    return { type: 'complete', title: parts[0] || '冒险完成', description: parts[1] || '你成功完成了这段冒险。故事虽已落幕，但传奇永不褪色。', icon: '🏆' };
+  }
+  const overMatch = text.match(/【GAME_OVER[：:](.+?)】/);
+  if (overMatch) {
+    const parts = overMatch[1].split(/[,，]/).map(s => s.trim());
+    return { type: 'over', title: parts[0] || '冒险终结', description: parts[1] || '你的冒险在此画上了句号。但也许下一个故事会更精彩...', icon: '🕯️' };
+  }
+  return null;
+}
+
+/** Build stats map and show the ending screen overlay */
+export function showEndingScreenFromResult(result) {
+  if (!result) return;
+  const msgCount = kpState.chatHistory.filter(m => m.role === 'gm' && !m.content.startsWith('[')).length;
+  let stats = result.type === 'complete'
+    ? { 'HP': `${getCharHp()}/${getCharMaxHp()}`, 'SAN': `${getCharSan()}/${getCharMaxSan()}`, '对话轮次': msgCount }
+    : { 'HP': `${getCharHp()}/${getCharMaxHp()}`, 'SAN': `${getCharSan()}/${getCharMaxSan()}`, '最终轮次': msgCount };
+  if (result.type === 'complete' && state.theme === 'coc') {
+    stats['克苏鲁神话'] = cocState.cthulhuMythos + '%';
+  }
+  _renderEndingOverlay(result.title, result.description, stats, result.icon);
+}
+
+/** Render the ending overlay DOM with stats and action buttons */
+function _renderEndingOverlay(title, description, stats, icon) {
+  const existing = document.getElementById('kpEndingOverlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'kpEndingOverlay';
+  overlay.className = 'kp-ending-overlay';
+
+  const statsHTML = Object.entries(stats).map(([k, v]) =>
+    `<div class="kp-ending-stat"><div class="kp-ending-stat-label">${k}</div><div class="kp-ending-stat-val">${v}</div></div>`
+  ).join('');
+
+  overlay.innerHTML = `
+    <div class="kp-ending-card">
+      <div class="kp-ending-icon">${icon || '🏆'}</div>
+      <h2 class="kp-ending-title">${esc(title)}</h2>
+      <div class="kp-ending-subtitle">${esc(description)}</div>
+      <div class="kp-ending-stats">${statsHTML}</div>
+      <div class="kp-ending-actions">
+        <button class="btn btn-primary" id="kpEndingContinueBtn">继续发展剧情</button>
+        <button class="btn btn-secondary" id="kpEndingNewGameBtn">开始新冒险</button>
+        <button class="btn btn-ghost" id="kpEndingCloseBtn">关闭</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  document.getElementById('kpEndingContinueBtn').addEventListener('click', () => {
+    overlay.remove();
+    addKPSystemMsg('冒险继续...故事在迎来高潮后，世界依然在转动。');
+    renderKP();
+  });
+  document.getElementById('kpEndingNewGameBtn').addEventListener('click', () => {
+    overlay.remove();
+    newGame();
+  });
+  document.getElementById('kpEndingCloseBtn').addEventListener('click', () => {
+    overlay.remove();
+    closeKPPanel();
+  });
 }
 
 // ── Quick Action ───────────────────────────────────
@@ -1051,10 +1209,23 @@ export async function sendKPMessage(overrideText, skipPlayerMsg) {
       const changes = applyAICommands(nonDiceCommands);
       if (changes.length > 0) {
         addKPSystemMsg(`角色状态已更新: ${changes.join('; ')}`);
-        renderCocStatus();
-        const data = getGameSaveData();
-        localStorage.setItem('ttrpg-game-autosave', JSON.stringify(data));
       }
+    }
+
+    // Always update status bars after AI response
+    renderCocStatus();
+    renderUniversalStatus();
+
+    // Always auto-save after AI response
+    const data = getGameSaveData();
+    localStorage.setItem('ttrpg-game-autosave', JSON.stringify(data));
+
+    // Detect game ending (uses GAME_COMPLETE / GAME_OVER from AI)
+    const ending = detectGameEnding(fullResponse);
+    if (ending) {
+      setTimeout(() => {
+        showEndingScreenFromResult(ending);
+      }, 500);
     }
 
     kpState.apiHistory.push({ role: 'user', content: text });

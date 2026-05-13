@@ -57,7 +57,7 @@ export function saveGame(slotName) {
   const saves = JSON.parse(localStorage.getItem('ttrpg-game-saves') || '{}');
   saves[slotName] = data;
   localStorage.setItem('ttrpg-game-saves', JSON.stringify(saves));
-  localStorage.setItem('ttrpg-game-autosave', JSON.stringify(data));
+  localStorage.setItem('ttrpg-game-autosave-' + state.theme, JSON.stringify(data));
   showToast(`游戏存档 "${slotName}" 已保存! (含角色数据+完整上下文)`);
 }
 
@@ -83,7 +83,7 @@ export function deleteGame(slotName) {
 }
 
 export function loadAutosave() {
-  const data = JSON.parse(localStorage.getItem('ttrpg-game-autosave') || 'null');
+  const data = JSON.parse(localStorage.getItem('ttrpg-game-autosave-' + state.theme) || 'null');
   if (data && loadGameSaveData(data)) {
     showToast('自动存档已加载!');
     return true;

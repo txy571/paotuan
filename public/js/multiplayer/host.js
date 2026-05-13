@@ -313,7 +313,7 @@ export async function processHostAIAction(playerId, playerName, actionText) {
         broadcastToAll({ type: 'system', content: changes.join('; '), _all: true });
         addChatMessage('system', null, changes.join('; '));
         const data = getGameSaveData();
-        localStorage.setItem('ttrpg-game-autosave', JSON.stringify(data));
+        localStorage.setItem('ttrpg-game-autosave-' + state.theme, JSON.stringify(data));
       }
       syncCharToPlayer(playerId);
       broadcastToAll({ type: 'player-list', players: M.players, _all: true });

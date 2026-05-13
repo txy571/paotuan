@@ -20,6 +20,7 @@ export const THEME_ORDER = ['dnd', 'coc', 'cyberpunk', 'pathfinder'];
 export function selectRPG(theme) {
   if (!THEME_NAMES[theme]) return;
   if (kpState.active) { showToast('游戏进行中，无法切换规则系统'); return; }
+  const prevTheme = state.theme;
   state.theme = theme;
   document.body.setAttribute('data-theme', theme);
   const themeBadge = document.getElementById('themeBadge');
@@ -38,9 +39,9 @@ export function selectRPG(theme) {
   if (theme === 'coc' && cocState.chronicle.length === 0) { initCocState(); }
   // render coc status via event
   document.dispatchEvent(new CustomEvent('coc-render'));
-  // Switch KP session to maintain per-theme game isolation
+  // Switch KP session to maintain per-theme game isolation (pass prevTheme to save correctly)
   ensureKPSessionSwitch().then(() => {
-    if (_switchKPSession) _switchKPSession(theme);
+    if (_switchKPSession) _switchKPSession(theme, prevTheme);
   });
   showToast(`已切换到 ${THEME_NAMES[theme]} 主题`);
 }

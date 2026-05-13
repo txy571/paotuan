@@ -12,7 +12,7 @@ import {
   stopKPStreaming, onProviderChange, saveKPConfigFromUI, fetchModels,
   loadKPConfig, loadKPChatHistory, renderKP, renderKPQuickActions, checkProxyAvailable,
   testKPConnection, selectHomeChar, renderHomeCharSelect, kpDiceRoll,
-  newGame, endGameSession, renderUniversalStatus, saveKPChatHistory,
+  newGame, endGameSession, renderUniversalStatus, saveKPChatHistory, addKPSystemMsg,
 } from './kp.js';
 import { saveGame, loadGame, deleteGame, loadAutosave, renderGameSaves } from './saves.js';
 import * as Scenario from './scenario.js';
@@ -106,9 +106,22 @@ const actionMap = {
   },
   'kp:diceRoll': () => kpDiceRoll(),
   // ending buttons are handled by showEndingScreen(), but register here for data-action binding
-  'kp:endingContinue': () => {},  // handled in showEndingScreen
-  'kp:endingNewGame': () => {},   // handled in showEndingScreen
-  'kp:endingClose': () => {},     // handled in showEndingScreen
+  'kp:endingContinue': () => {
+    const overlay = document.getElementById('kpEndingOverlay');
+    if (overlay) overlay.remove();
+    addKPSystemMsg('冒险继续...故事在迎来高潮后，世界依然在转动。');
+    renderKP();
+  },
+  'kp:endingNewGame': () => {
+    const overlay = document.getElementById('kpEndingOverlay');
+    if (overlay) overlay.remove();
+    newGame();
+  },
+  'kp:endingClose': () => {
+    const overlay = document.getElementById('kpEndingOverlay');
+    if (overlay) overlay.remove();
+    closeKPPanel();
+  },
 
   // saves
   'saves:save': () => {

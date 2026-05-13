@@ -476,21 +476,29 @@ export function saveKPChatHistory() {
 }
 
 /** Switch KP session context to a different theme — preserves history per-theme */
-export function switchKPSession(theme) {
+export function switchKPSession(newTheme, prevTheme) {
+  // Save current theme's history using PREVIOUS theme (state.theme may already be updated)
+  const saveAsTheme = prevTheme || state.theme;
   if (kpState.chatHistory.length) {
-    saveThemeChatHistory(state.theme, kpState.chatHistory);
-    saveThemeApiHistory(state.theme, kpState.apiHistory);
+    saveThemeChatHistory(saveAsTheme, kpState.chatHistory);
+    saveThemeApiHistory(saveAsTheme, kpState.apiHistory);
   }
-  kpState.chatHistory = loadThemeChatHistory(theme);
-  kpState.apiHistory = loadThemeApiHistory(theme);
+  kpState.chatHistory = loadThemeChatHistory(newTheme);
+  kpState.apiHistory = loadThemeApiHistory(newTheme);
   if (kpState.streamingAbort) { kpState.streamingAbort.abort(); kpState.streamingAbort = null; }
   kpState.streaming = false;
   tts.stop();
+  refreshAllDisplays();
+  document.dispatchEvent(new CustomEvent('render-game-saves'));
+}
+
+/** Refresh all status displays after state changes */
+function refreshAllDisplays() {
   renderKP();
   renderCocStatus();
   renderUniversalStatus();
+  renderCocChronicle();
   import('./tracking-panel.js').then(m => m.renderTrackingPanel());
-  document.dispatchEvent(new CustomEvent('render-game-saves'));
 }
 
 // ── KP Panel Open/Close ────────────────────────────
@@ -512,11 +520,7 @@ export function openKPPanel() {
     initCocState();
   }
   initScenarioMeta();
-  renderKP();
-  renderCocStatus();
-  renderUniversalStatus();
-  renderCocChronicle();
-  import('./tracking-panel.js').then(m => m.renderTrackingPanel());
+  refreshAllDisplays();
   document.dispatchEvent(new CustomEvent('render-game-saves'));
   if (!kpState.chatHistory.length) {
     const charName = document.getElementById('charName')?.value?.trim() || '调查员';
@@ -547,11 +551,7 @@ export function clearKPChat() {
   kpState.streaming = false;
   tts.stop();
   if (state.theme === 'coc') { initCocState(); initScenarioMeta(); }
-  renderKP();
-  renderCocStatus();
-  renderUniversalStatus();
-  renderCocChronicle();
-  import('./tracking-panel.js').then(m => m.renderTrackingPanel());
+  refreshAllDisplays();
   addKPSystemMsg(`对话已清空，角色状态已重置。当前规则: ${THEME_NAMES[state.theme]}。开始新的冒险吧!`);
 }
 
@@ -559,8 +559,7 @@ export function clearKPChat() {
 export function newGame() {
   if (kpState.chatHistory.length > 0 && !confirm('当前有进行中的游戏，开始新游戏将清空当前对话。确定继续？')) return;
   // Save current history first
-  saveThemeChatHistory(state.theme, kpState.chatHistory);
-  saveThemeApiHistory(state.theme, kpState.apiHistory);
+  saveKPChatHistory();
   // Reset state
   kpState.chatHistory = [];
   kpState.apiHistory = [];
@@ -568,11 +567,7 @@ export function newGame() {
   kpState.streaming = false;
   tts.stop();
   if (state.theme === 'coc') { initCocState(); initScenarioMeta(); }
-  renderKP();
-  renderCocStatus();
-  renderUniversalStatus();
-  renderCocChronicle();
-  import('./tracking-panel.js').then(m => m.renderTrackingPanel());
+  refreshAllDisplays();
   // Close ending overlay if open
   const endingOverlay = document.getElementById('kpEndingOverlay');
   if (endingOverlay) endingOverlay.remove();
@@ -584,24 +579,22 @@ export function newGame() {
 export function endGameSession() {
   if (!confirm('确定要结束当前游戏吗？当前会话将被存档保存。')) return;
   // Save to a permanent slot
-  const theme = state.theme;
   const charName = document.getElementById('charName')?.value?.trim() || '未知角色';
-  const slotName = `${THEME_NAMES[theme]} - ${charName} - ${new Date().toLocaleString('zh-CN')}`;
+  const slotName = `${THEME_NAMES[state.theme]} - ${charName} - ${new Date().toLocaleString('zh-CN')}`;
   // Import saves module and save
   import('./saves.js').then(mod => {
     mod.saveGame(slotName);
     showToast(`游戏已结束，存档已保存为 "${slotName}"`);
   });
-  // Clear active chat
+  // Save then clear
+  saveKPChatHistory();
   closeKPPanel();
-  saveThemeChatHistory(theme, kpState.chatHistory);
-  saveThemeApiHistory(theme, kpState.apiHistory);
   kpState.chatHistory = [];
   kpState.apiHistory = [];
   // Reset ending overlay
   const endingOverlay = document.getElementById('kpEndingOverlay');
   if (endingOverlay) endingOverlay.remove();
-  renderGameSavesList();
+  document.dispatchEvent(new CustomEvent('render-game-saves'));
 }
 
 // ── Universal Status Bar (HP/SAN for ALL themes) ──
@@ -670,32 +663,18 @@ function _renderEndingOverlay(title, description, stats, icon) {
 
   overlay.innerHTML = `
     <div class="kp-ending-card">
-      <div class="kp-ending-icon">${icon || '🏆'}</div>
+      <div class="kp-ending-icon">${esc(icon) || '🏆'}</div>
       <h2 class="kp-ending-title">${esc(title)}</h2>
       <div class="kp-ending-subtitle">${esc(description)}</div>
       <div class="kp-ending-stats">${statsHTML}</div>
       <div class="kp-ending-actions">
-        <button class="btn btn-primary" id="kpEndingContinueBtn">继续发展剧情</button>
-        <button class="btn btn-secondary" id="kpEndingNewGameBtn">开始新冒险</button>
-        <button class="btn btn-ghost" id="kpEndingCloseBtn">关闭</button>
+        <button class="btn btn-primary" data-action="kp:endingContinue">继续发展剧情</button>
+        <button class="btn btn-secondary" data-action="kp:endingNewGame">开始新冒险</button>
+        <button class="btn btn-ghost" data-action="kp:endingClose">关闭</button>
       </div>
     </div>`;
 
   document.body.appendChild(overlay);
-
-  document.getElementById('kpEndingContinueBtn').addEventListener('click', () => {
-    overlay.remove();
-    addKPSystemMsg('冒险继续...故事在迎来高潮后，世界依然在转动。');
-    renderKP();
-  });
-  document.getElementById('kpEndingNewGameBtn').addEventListener('click', () => {
-    overlay.remove();
-    newGame();
-  });
-  document.getElementById('kpEndingCloseBtn').addEventListener('click', () => {
-    overlay.remove();
-    closeKPPanel();
-  });
 }
 
 // ── Quick Action ───────────────────────────────────
@@ -1218,7 +1197,7 @@ export async function sendKPMessage(overrideText, skipPlayerMsg) {
 
     // Always auto-save after AI response
     const data = getGameSaveData();
-    localStorage.setItem('ttrpg-game-autosave', JSON.stringify(data));
+    localStorage.setItem('ttrpg-game-autosave-' + state.theme, JSON.stringify(data));
 
     // Detect game ending (uses GAME_COMPLETE / GAME_OVER from AI)
     const ending = detectGameEnding(fullResponse);

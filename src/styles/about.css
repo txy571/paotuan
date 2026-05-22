@@ -1,0 +1,102 @@
+/* ============================================================
+   CSS Module: About Page
+   — Layout cards, author, steps, API info, rules grid, features
+   ============================================================ */
+
+.about-layout { display: flex; flex-direction: column; gap: 18px; padding-bottom: 30px; }
+
+.about-card h3 { font-family: var(--font-display); color: var(--text-gold); margin-bottom: 10px; font-size: 1.1rem; }
+
+.about-card p { font-size: .85rem; line-height: 1.7; color: var(--text-dim); margin-bottom: 6px; }
+
+.about-card a { color: var(--accent); text-decoration: none; }
+
+.about-card a:hover { text-decoration: underline; }
+
+.about-links { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+.about-meta { font-size: .76rem !important; color: var(--text-dim); opacity: .7; }
+
+.about-author { display: flex; gap: 16px; align-items: flex-start; }
+
+.about-author-avatar { font-size: 3rem; flex-shrink: 0; color: var(--text-gold); }
+
+.about-steps { display: flex; flex-direction: column; gap: 14px; }
+
+.about-step { display: flex; gap: 14px; align-items: flex-start; }
+
+.about-step-num {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--accent-dim); color: var(--text-gold);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: bold; font-size: .9rem; flex-shrink: 0;
+  border: 1px solid var(--accent);
+}
+
+.about-step strong { color: var(--text); font-size: .88rem; }
+
+.about-step p { font-size: .8rem; margin-top: 2px; }
+
+.about-api-grid { display: flex; flex-direction: column; gap: 14px; }
+
+.about-api-item {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 12px; border-radius: var(--r-md);
+  background: rgba(0,0,0,.1);
+}
+
+.about-api-icon {
+  width: 44px; height: 44px; border-radius: var(--r-md);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; flex-shrink: 0; color: #fff;
+}
+
+.about-api-item strong { color: var(--text); font-size: .88rem; }
+.about-api-item p { font-size: .8rem; }
+
+.about-rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.about-rule {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 10px; border-radius: var(--r-md);
+  background: rgba(0,0,0,.08);
+}
+
+.about-rule-icon {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0; color: #fff;
+}
+
+.about-rule strong { color: var(--text); font-size: .85rem; }
+.about-rule p { font-size: .76rem; }
+
+.about-features { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.about-feature { padding: 10px 12px; border-radius: var(--r-md); background: rgba(0,0,0,.08); }
+
+.about-feature strong { color: var(--text-gold); font-size: .84rem; }
+
+.about-feature p { font-size: .78rem; }
+
+.about-shortcuts { display: flex; gap: 16px; flex-wrap: wrap; font-size: .82rem; color: var(--text-dim); }
+
+.about-shortcuts kbd {
+  padding: 2px 8px; border-radius: 4px;
+  background: var(--accent-dim); border: 1px solid var(--border-bright);
+  font-family: var(--font-body); font-size: .78rem; color: var(--text-gold);
+}
+
+.about-tech-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.about-tech-tags span {
+  padding: 4px 10px; border-radius: 12px; font-size: .72rem;
+  background: var(--accent-dim); color: var(--text-gold);
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 700px) {
+  .about-rules-grid, .about-features { grid-template-columns: 1fr; }
+  .about-author { flex-direction: column; align-items: center; text-align: center; }
+  .about-shortcuts { gap: 8px; font-size: .74rem; }
+}
